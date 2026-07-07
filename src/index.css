@@ -1,0 +1,225 @@
+@import '@fontsource-variable/inter';
+@import 'tailwindcss';
+
+/* ---------------------------------------------------------------------------
+   Design-System „Nordlicht" — kühles, dunkles Neutral mit Eis-Cyan-Akzent.
+   Alle Farben als Tailwind-v4-Tokens (nutzbar als bg-grund, text-tinte, …).
+--------------------------------------------------------------------------- */
+@theme {
+  --font-sans: 'Inter Variable', 'Segoe UI', system-ui, sans-serif;
+  --font-mono: ui-monospace, 'Cascadia Mono', 'JetBrains Mono', Consolas, monospace;
+
+  /* Flächen (leicht blau getönte Neutrale) */
+  --color-grund: oklch(0.16 0.012 235);
+  --color-flaeche: oklch(0.2 0.014 235);
+  --color-flaeche-2: oklch(0.24 0.016 235);
+  --color-einsatz: oklch(0.13 0.01 235);
+
+  /* Text */
+  --color-tinte: oklch(0.94 0.006 230);
+  --color-tinte-2: oklch(0.74 0.014 230);
+  --color-tinte-3: oklch(0.56 0.018 230);
+
+  /* Akzent: Eis-Cyan */
+  --color-akzent: oklch(0.82 0.1 205);
+  --color-akzent-hell: oklch(0.9 0.06 205);
+  --color-akzent-tief: oklch(0.35 0.055 215);
+
+  /* Status */
+  --color-fertig: oklch(0.78 0.13 155);
+  --color-entwurf: oklch(0.82 0.12 85);
+  --color-krank: oklch(0.72 0.15 25);
+  --color-urlaub: oklch(0.76 0.09 255);
+  --color-feiertag: oklch(0.78 0.1 310);
+
+  --ease-aus: cubic-bezier(0.23, 1, 0.32, 1);
+
+  /* Aurora-Schimmerfarben (folgen dem Akzent des jeweiligen Themes) */
+  --aurora-1: oklch(0.46 0.11 215 / 0.42);
+  --aurora-2: oklch(0.42 0.09 195 / 0.32);
+}
+
+/* ---------------------------------------------------------------------------
+   Farb-Themes. Umgeschaltet über data-theme am <html>. Jeder Block überschreibt
+   nur die Farb-Tokens; alle Tailwind-Utilities (bg-akzent, text-tinte …) ziehen
+   automatisch nach. `nordlicht` = Basiswerte oben, daher kein eigener Block.
+--------------------------------------------------------------------------- */
+[data-theme='polarnacht'] {
+  --color-grund: oklch(0.16 0.005 280);
+  --color-flaeche: oklch(0.2 0.006 280);
+  --color-flaeche-2: oklch(0.24 0.007 280);
+  --color-einsatz: oklch(0.13 0.004 280);
+  --color-tinte: oklch(0.94 0.004 285);
+  --color-tinte-2: oklch(0.74 0.006 285);
+  --color-tinte-3: oklch(0.56 0.009 285);
+  --color-akzent: oklch(0.76 0.13 285);
+  --color-akzent-hell: oklch(0.86 0.09 285);
+  --color-akzent-tief: oklch(0.37 0.09 285);
+  --aurora-1: oklch(0.48 0.14 285 / 0.44);
+  --aurora-2: oklch(0.42 0.11 265 / 0.32);
+}
+
+[data-theme='waldgruen'] {
+  --color-grund: oklch(0.16 0.005 165);
+  --color-flaeche: oklch(0.2 0.006 165);
+  --color-flaeche-2: oklch(0.24 0.007 165);
+  --color-einsatz: oklch(0.13 0.004 165);
+  --color-tinte: oklch(0.94 0.004 165);
+  --color-tinte-2: oklch(0.74 0.006 165);
+  --color-tinte-3: oklch(0.56 0.009 165);
+  --color-akzent: oklch(0.8 0.13 162);
+  --color-akzent-hell: oklch(0.88 0.09 162);
+  --color-akzent-tief: oklch(0.35 0.07 162);
+  --aurora-1: oklch(0.47 0.13 162 / 0.42);
+  --aurora-2: oklch(0.43 0.1 190 / 0.3);
+}
+
+[data-theme='bernstein'] {
+  --color-grund: oklch(0.16 0.005 65);
+  --color-flaeche: oklch(0.2 0.006 65);
+  --color-flaeche-2: oklch(0.24 0.007 65);
+  --color-einsatz: oklch(0.13 0.004 65);
+  --color-tinte: oklch(0.94 0.004 75);
+  --color-tinte-2: oklch(0.74 0.006 75);
+  --color-tinte-3: oklch(0.56 0.009 75);
+  --color-akzent: oklch(0.83 0.12 78);
+  --color-akzent-hell: oklch(0.9 0.09 82);
+  --color-akzent-tief: oklch(0.39 0.07 70);
+  --aurora-1: oklch(0.52 0.11 78 / 0.42);
+  --aurora-2: oklch(0.46 0.09 45 / 0.3);
+}
+
+[data-theme='rose'] {
+  --color-grund: oklch(0.16 0.005 350);
+  --color-flaeche: oklch(0.2 0.006 350);
+  --color-flaeche-2: oklch(0.24 0.007 350);
+  --color-einsatz: oklch(0.13 0.004 350);
+  --color-tinte: oklch(0.94 0.004 350);
+  --color-tinte-2: oklch(0.74 0.006 350);
+  --color-tinte-3: oklch(0.56 0.009 350);
+  --color-akzent: oklch(0.79 0.13 8);
+  --color-akzent-hell: oklch(0.87 0.09 8);
+  --color-akzent-tief: oklch(0.37 0.09 8);
+  --aurora-1: oklch(0.48 0.14 8 / 0.44);
+  --aurora-2: oklch(0.43 0.11 330 / 0.32);
+}
+
+[data-theme='graphit'] {
+  --color-grund: oklch(0.16 0.004 250);
+  --color-flaeche: oklch(0.2 0.005 250);
+  --color-flaeche-2: oklch(0.24 0.006 250);
+  --color-einsatz: oklch(0.13 0.004 250);
+  --color-tinte: oklch(0.94 0.003 250);
+  --color-tinte-2: oklch(0.74 0.006 250);
+  --color-tinte-3: oklch(0.56 0.009 250);
+  --color-akzent: oklch(0.8 0.05 240);
+  --color-akzent-hell: oklch(0.9 0.035 240);
+  --color-akzent-tief: oklch(0.37 0.035 240);
+  --aurora-1: oklch(0.44 0.05 240 / 0.34);
+  --aurora-2: oklch(0.4 0.04 250 / 0.26);
+}
+
+/* ------------------------------ Grundgerüst ------------------------------ */
+html,
+body,
+#root {
+  height: 100%;
+  overflow: hidden; /* Scrollen passiert nur in den Inhaltsbereichen */
+}
+
+body {
+  font-family: var(--font-sans);
+  background: var(--color-grund);
+  color: var(--color-tinte);
+  font-size: 14px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  user-select: none; /* App-Charakter; Texteingaben/Vorschau geben es frei */
+}
+
+input,
+textarea,
+.selektierbar {
+  user-select: text;
+}
+
+/* Fenster-Drag-Zonen für die rahmenlose Titlebar */
+.drag {
+  -webkit-app-region: drag;
+}
+.no-drag {
+  -webkit-app-region: no-drag;
+}
+
+/* ------------------------------- Feinschliff ----------------------------- */
+::selection {
+  background: var(--color-akzent-tief);
+  color: var(--color-akzent-hell);
+}
+
+*:focus-visible {
+  outline: 2px solid var(--color-akzent);
+  outline-offset: 1px;
+  border-radius: 4px;
+}
+
+/* Schlanke, dezente Scrollbalken */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: oklch(0.34 0.02 235 / 0.6);
+  border-radius: 99px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: oklch(0.44 0.02 235 / 0.8);
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Zahlen (Daten, KW) laufen immer tabellarisch */
+.tabellarisch {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Native Datums-/Zahlenfelder ins Dunkle zwingen */
+input[type='date'],
+input[type='number'] {
+  color-scheme: dark;
+}
+
+/* Dezenter Aurora-Schimmer hinter dem Inhalt. Der Schimmer sitzt auf einem
+   ::before, das leicht größer ist als der Inhalt und sehr langsam driftet —
+   dadurch wirkt der Hintergrund lebendig, ohne abzulenken. Der Inhalt bleibt
+   dank `isolation` und z-index darüber; `overflow: hidden` beschneidet die Drift. */
+.aurora {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+.aurora::before {
+  content: '';
+  position: absolute;
+  inset: -25%;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(1300px 640px at 90% 12%, var(--aurora-1), transparent 62%),
+    radial-gradient(1150px 560px at 12% 88%, var(--aurora-2), transparent 62%);
+  animation: aurora-drift 34s var(--ease-aus) infinite alternate;
+  will-change: transform;
+}
+@keyframes aurora-drift {
+  from {
+    transform: translate3d(-2%, -1%, 0) scale(1);
+  }
+  to {
+    transform: translate3d(3%, 2%, 0) scale(1.1);
+  }
+}

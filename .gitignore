@@ -1,0 +1,27 @@
+# Abhängigkeiten
+node_modules/
+
+# Build-Artefakte (werden bei Bedarf neu erzeugt)
+dist/
+release/
+*.tmp
+
+# App-Daten: daten.json ist portabel & nutzerspezifisch — nie einchecken
+daten.json
+daten.json.tmp
+
+# Persönliches Referenzmaterial / lokale Dateien (bleiben nur lokal)
+/Claude Vorgaben/
+Berichtsheft.lnk
+
+# Logs
+*.log
+npm-debug.log*
+yarn-error.log*
+
+# Editor / Betriebssystem
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
