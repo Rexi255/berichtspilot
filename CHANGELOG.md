@@ -4,6 +4,17 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Das Format orientiert sich an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionierung an [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.1.1] - 2026-07-08
+
+### Behoben
+
+- **Release-Workflow** lief nie grün durch: electron-builder löste bei einem
+  Git-Tag ein implizites GitHub-Publishing aus und brach ohne `GH_TOKEN` ab —
+  obwohl Installer, portable `.exe` und AppImage erfolgreich gebaut wurden. Die
+  Build-Scripts rufen electron-builder jetzt mit `--publish never` auf; das
+  Hochladen ans Release übernimmt allein der `action-gh-release`-Step. App
+  ansonsten unverändert gegenüber 1.1.0.
+
 ## [1.1.0] - 2026-07-08
 
 ### Hinzugefügt

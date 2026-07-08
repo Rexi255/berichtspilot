@@ -1,7 +1,7 @@
 {
   "name": "berichtspilot",
   "productName": "Berichtspilot",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Ausbildungsnachweis-Generator für das digitale IHK-Berichtsheft",
   "author": "Rexi255",
   "license": "MIT",
