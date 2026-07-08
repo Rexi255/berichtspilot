@@ -1,36 +1,94 @@
-// Electron-Hauptprozess: Fenster, portabler Basispfad, Datei-I/O über IPC.
+// Electron-Hauptprozess: Fenster, Ablageort + sicheres Speichern, Datei-I/O über IPC.
 const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron')
 const path = require('path')
 const fs = require('fs')
 const fsp = fs.promises
 
 // ---------------------------------------------------------------------------
-// Portabler Basispfad: daten.json liegt IMMER neben der Executable.
-//  1. Windows portable .exe  -> electron-builder setzt PORTABLE_EXECUTABLE_DIR
-//  2. Linux AppImage         -> APPIMAGE zeigt auf die .AppImage-Datei
-//  3. Dev-Modus              -> Projektordner (CWD)
+// Ablageort für daten.json. Ziel: die Datei liegt möglichst „portabel" neben
+// der Executable (Daten wandern mit, z. B. auf dem USB-Stick), aber die App
+// darf NIE abstürzen, wenn dieser Ort schreibgeschützt ist (Installation unter
+// C:\Program Files bzw. /usr/bin — dort blockt das OS Schreiben ohne Admin).
+//
+// Reihenfolge:
+//  1. Dev-Modus                     -> Projektordner (CWD), daten.json direkt sichtbar
+//  2. Portabler Ort neben der Exe   -> nur wenn wirklich beschreibbar
+//       - Windows portable .exe: electron-builder setzt PORTABLE_EXECUTABLE_DIR
+//       - Linux AppImage:        APPIMAGE zeigt auf die .AppImage-Datei
+//  3. Installiert / Ort nicht beschreibbar -> app.getPath('userData')
+//       (Windows: %APPDATA%\Berichtspilot, Linux: ~/.config/Berichtspilot) —
+//       immer nutzerspezifisch beschreibbar, kein Admin nötig.
 // ---------------------------------------------------------------------------
-function ermittleBasisPfad() {
-  if (process.env.PORTABLE_EXECUTABLE_DIR) {
-    return process.env.PORTABLE_EXECUTABLE_DIR
+
+// Echter Schreibtest statt fs.access(W_OK): Letzteres ist unter Windows wegen
+// ACLs/Virtualisierung unzuverlässig. Wir legen kurz eine Probedatei an.
+function istBeschreibbar(verzeichnis) {
+  const probe = path.join(verzeichnis, `.schreibtest-${process.pid}`)
+  try {
+    fs.writeFileSync(probe, '')
+    fs.unlinkSync(probe)
+    return true
+  } catch {
+    return false
   }
-  if (process.env.APPIMAGE) {
-    return path.dirname(process.env.APPIMAGE)
-  }
-  if (app.isPackaged) {
-    // Gepackt, aber weder portable.exe noch AppImage (z. B. entpackter Ordner)
-    return path.dirname(app.getPath('exe'))
-  }
-  return process.cwd()
 }
 
-const DATEN_PFAD = path.join(ermittleBasisPfad(), 'daten.json')
+function ermittleDatenVerzeichnis() {
+  if (!app.isPackaged) return process.cwd()
 
-// Atomar schreiben: erst Temp-Datei, dann umbenennen — verhindert kaputte
-// daten.json bei Absturz mitten im Schreibvorgang.
+  const portabel =
+    process.env.PORTABLE_EXECUTABLE_DIR ||
+    (process.env.APPIMAGE && path.dirname(process.env.APPIMAGE)) ||
+    null
+  if (portabel && istBeschreibbar(portabel)) return portabel
+
+  return app.getPath('userData')
+}
+
+const DATEN_PFAD = path.join(ermittleDatenVerzeichnis(), 'daten.json')
+
+// Wie viele rollierende Sicherungen (daten.json.bak1 … .bakN) wir vorhalten.
+const MAX_BACKUPS = 3
+
+/**
+ * Vorherigen Speicherstand rollierend sichern, BEVOR daten.json überschrieben
+ * wird: .bak2 -> .bak3, .bak1 -> .bak2, daten.json -> .bak1 (Kopie). Es wird
+ * kopiert, nicht verschoben, damit daten.json bis zum finalen atomaren rename
+ * durchgehend existiert. So bleiben die letzten MAX_BACKUPS Stände erhalten;
+ * eine kaputte daten.json kann daraus wiederhergestellt werden.
+ */
+async function rotiereBackups() {
+  try {
+    await fsp.access(DATEN_PFAD) // noch keine daten.json -> nichts zu sichern
+  } catch {
+    return
+  }
+  await fsp.rm(`${DATEN_PFAD}.bak${MAX_BACKUPS}`, { force: true }).catch(() => {})
+  for (let i = MAX_BACKUPS - 1; i >= 1; i--) {
+    await fsp.rename(`${DATEN_PFAD}.bak${i}`, `${DATEN_PFAD}.bak${i + 1}`).catch(() => {})
+  }
+  await fsp.copyFile(DATEN_PFAD, `${DATEN_PFAD}.bak1`).catch(() => {})
+}
+
+/**
+ * Atomar + abgesichert schreiben. Ein Absturz/Stromausfall darf das über Jahre
+ * gewachsene Berichtsheft nie zerstören:
+ *  1. Neue Daten vollständig in eine Temp-Datei schreiben und per fsync auf den
+ *     Datenträger zwingen — die alte daten.json bleibt dabei unberührt.
+ *  2. Bisherigen Stand rollierend sichern (.bak1 … .bakN).
+ *  3. Temp-Datei atomar an ihren Platz umbenennen (rename ist auf einer
+ *     Partition atomar — daten.json existiert nie halb geschrieben).
+ */
 async function schreibeDaten(json) {
   const tmp = DATEN_PFAD + '.tmp'
-  await fsp.writeFile(tmp, json, 'utf8')
+  const fh = await fsp.open(tmp, 'w')
+  try {
+    await fh.writeFile(json, 'utf8')
+    await fh.sync() // Puffer garantiert auf die Platte
+  } finally {
+    await fh.close()
+  }
+  await rotiereBackups()
   await fsp.rename(tmp, DATEN_PFAD)
 }
 
@@ -104,13 +162,27 @@ function erstelleFenster() {
 // IPC: Persistenz (Laden/Speichern) + Export/Import über native Dialoge
 // ---------------------------------------------------------------------------
 ipcMain.handle('daten:laden', async () => {
-  try {
-    const inhalt = await fsp.readFile(DATEN_PFAD, 'utf8')
-    return { ok: true, daten: JSON.parse(inhalt), pfad: DATEN_PFAD }
-  } catch (fehler) {
-    if (fehler.code === 'ENOENT') return { ok: true, daten: null, pfad: DATEN_PFAD }
-    return { ok: false, fehler: String(fehler), pfad: DATEN_PFAD }
+  // daten.json zuerst, dann die Sicherungen der Reihe nach. Ist die Hauptdatei
+  // kaputt (JSON-Fehler nach abgebrochenem Schreiben), wird automatisch der
+  // jüngste noch lesbare Backup-Stand genommen.
+  const kandidaten = [DATEN_PFAD]
+  for (let i = 1; i <= MAX_BACKUPS; i++) kandidaten.push(`${DATEN_PFAD}.bak${i}`)
+
+  let letzterFehler = null
+  for (const pfad of kandidaten) {
+    try {
+      const inhalt = await fsp.readFile(pfad, 'utf8')
+      const daten = JSON.parse(inhalt) // wirft bei korrupter Datei
+      return { ok: true, daten, pfad: DATEN_PFAD, ausBackup: pfad !== DATEN_PFAD }
+    } catch (fehler) {
+      if (fehler.code === 'ENOENT') continue // Datei existiert nicht -> nächste
+      letzterFehler = fehler // vorhanden, aber kaputt -> Backup versuchen
+    }
   }
+  // Keine der Dateien existierte -> echter Erststart (kein Fehler)
+  if (!letzterFehler) return { ok: true, daten: null, pfad: DATEN_PFAD }
+  // Vorhandene Dateien alle unlesbar/korrupt
+  return { ok: false, fehler: String(letzterFehler), pfad: DATEN_PFAD }
 })
 
 ipcMain.handle('daten:speichern', async (_ev, daten) => {

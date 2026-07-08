@@ -33,17 +33,25 @@ IHK-Heft.
   `contextBridge.exposeInMainWorld` als schmale API. Datei-I/O passiert **nur im
   Main-Prozess** und wird über IPC (`ipcMain.handle` / `ipcRenderer.invoke`)
   angeboten. Strikte CSP im Renderer.
-- **Portable Persistenz:** alle Daten (Konfiguration + sämtliche geschriebenen
-  Ausbildungsnachweise) in **einer `daten.json` neben der Executable**, nicht in
-  System-/AppData-Verzeichnissen. Basispfad im Main-Prozess ermitteln:
-  1. `process.env.PORTABLE_EXECUTABLE_DIR` (Windows electron-builder portable), sonst
-  2. `path.dirname(process.env.APPIMAGE)` (Linux AppImage), sonst
-  3. Projekt-/CWD-Fallback im Dev-Modus.
-  Ordner bzw. Datei kopieren = alle Daten wandern mit.
+- **Persistenz:** alle Daten (Konfiguration + sämtliche geschriebenen
+  Ausbildungsnachweise) in **einer `daten.json`**. Ablageort im Main-Prozess ermitteln:
+  1. Dev-Modus → Projekt-/CWD-Fallback.
+  2. Portabler Ort neben der Executable, **falls beschreibbar**
+     (`process.env.PORTABLE_EXECUTABLE_DIR` bei der Windows-portable-.exe bzw.
+     `path.dirname(process.env.APPIMAGE)` beim Linux-AppImage). Datei/Ordner
+     kopieren = Daten wandern mit.
+  3. Sonst (installiert oder Ort schreibgeschützt, z. B. `C:\Program Files`,
+     `/usr/bin`) → `app.getPath('userData')` — immer nutzerspezifisch beschreibbar,
+     kein Admin nötig.
+  **Sicher schreiben:** neue Daten erst in `daten.json.tmp` (mit `fsync`), dann atomar
+  umbenennen; vor dem Überschreiben rollierende Backups `daten.json.bak1`–`.bak3`
+  anlegen. Ist `daten.json` beim Laden beschädigt, automatisch das jüngste intakte
+  Backup verwenden.
 - Zusätzlich Export/Import der `daten.json` über einen nativen Dateidialog
   (`dialog.showSaveDialog` / `showOpenDialog`) als Extra-Backup.
-- **Build mit electron-builder**, Targets: **Windows portable .exe** und
-  **Linux AppImage**. Läuft auf Arch Linux und einem Windows-Notebook.
+- **Build mit electron-builder**, Targets: **Windows-Installer (NSIS)** und
+  zusätzlich **portable .exe** sowie **Linux AppImage**. Läuft auf Arch Linux und
+  einem Windows-Notebook.
 - **Feiertage komplett offline in JS berechnen** (keine API): feste Feiertage +
   bewegliche über die Osterformel (Gauß), inkl. landesspezifischer Feiertage je
   Bundesland. Default Schleswig-Holstein.
@@ -56,7 +64,7 @@ IHK-Heft.
 ```
 package.json            (scripts: dev, build; electron-builder config)
 electron/
-  main.js               (Fenster, IPC, Datei-I/O, portabler Basispfad)
+  main.js               (Fenster, IPC, Datei-I/O, Ablageort + sicheres Speichern)
   preload.js            (contextBridge-API: load/save/exportData/importData)
 src/
   App.jsx
@@ -212,8 +220,13 @@ LF05:
   richtige Profil gezogen.
 - Alle geschriebenen Nachweise bleiben in `daten.json` erhalten, sind in der
   Übersicht gelistet und jederzeit editierbar.
-- `daten.json` liegt neben der Executable; Kopieren auf anderen Rechner → Daten da.
-- Baut per electron-builder zu Windows portable .exe und Linux AppImage.
+- `daten.json` liegt bei der installierten App im nutzereigenen Datenordner (immer
+  beschreibbar, auch unter `C:\Program Files`/`/usr/bin`), in der portablen Version
+  neben der Executable (Kopieren auf anderen Rechner → Daten da). Speichern ist
+  atomar + `fsync`-abgesichert; rollierende `.bak1`–`.bak3`-Backups verhindern
+  Datenverlust und werden bei beschädigter Hauptdatei automatisch wiederhergestellt.
+- Baut per electron-builder zu Windows-Installer (NSIS) + portable .exe und Linux
+  AppImage.
 - Electron-Security-Vorgaben eingehalten (contextIsolation, kein nodeIntegration im
   Renderer, preload-Bridge, IPC-basiertes Datei-I/O, CSP).
 

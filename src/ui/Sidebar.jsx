@@ -19,11 +19,12 @@ const EINTRAEGE = [
   { id: 'einstellungen', label: 'Einstellungen', Icon: GearSixIcon },
 ]
 
-// Untertitel + Punktfarbe des Portabel-Badges je nach Speicherzustand
+// Untertitel + Punktfarbe des Speicher-Badges je nach Zustand. Der volle
+// Ablagepfad steht im Tooltip (title) des Badges.
 const SPEICHER_INFO = {
-  bereit: { text: 'Portabel · neben der App', punkt: 'bg-fertig' },
+  bereit: { text: 'Automatisch gesichert', punkt: 'bg-fertig' },
   speichert: { text: 'Speichert …', punkt: 'bg-entwurf' },
-  gespeichert: { text: 'Portabel · gesichert', punkt: 'bg-fertig' },
+  gespeichert: { text: 'Automatisch gesichert', punkt: 'bg-fertig' },
   fehler: { text: 'Fehler beim Speichern!', punkt: 'bg-krank' },
 }
 

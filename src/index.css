@@ -42,8 +42,28 @@
 /* ---------------------------------------------------------------------------
    Farb-Themes. Umgeschaltet über data-theme am <html>. Jeder Block überschreibt
    nur die Farb-Tokens; alle Tailwind-Utilities (bg-akzent, text-tinte …) ziehen
-   automatisch nach. `nordlicht` = Basiswerte oben, daher kein eigener Block.
+   automatisch nach.
+
+   `nordlicht` bekommt bewusst einen EIGENEN Block mit denselben Werten wie oben:
+   sonst hätte eine Theme-Vorschaukarte mit data-theme='nordlicht' keine eigene
+   Regel und würde die Farb-Tokens vom aktiven <html data-theme> erben — die
+   Nordlicht-Vorschau nähme also die Farbe des gerade gewählten Themes an.
 --------------------------------------------------------------------------- */
+[data-theme='nordlicht'] {
+  --color-grund: oklch(0.16 0.012 235);
+  --color-flaeche: oklch(0.2 0.014 235);
+  --color-flaeche-2: oklch(0.24 0.016 235);
+  --color-einsatz: oklch(0.13 0.01 235);
+  --color-tinte: oklch(0.94 0.006 230);
+  --color-tinte-2: oklch(0.74 0.014 230);
+  --color-tinte-3: oklch(0.56 0.018 230);
+  --color-akzent: oklch(0.82 0.1 205);
+  --color-akzent-hell: oklch(0.9 0.06 205);
+  --color-akzent-tief: oklch(0.35 0.055 215);
+  --aurora-1: oklch(0.46 0.11 215 / 0.42);
+  --aurora-2: oklch(0.42 0.09 195 / 0.32);
+}
+
 [data-theme='polarnacht'] {
   --color-grund: oklch(0.16 0.005 280);
   --color-flaeche: oklch(0.2 0.006 280);

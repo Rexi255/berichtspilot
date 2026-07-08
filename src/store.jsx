@@ -2,6 +2,7 @@
 // automatisch (entprellt) über die preload-Brücke in den Main-Prozess.
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
 import { seedDaten, neueWoche, wocheAusVorlage, neuesProfil } from './lib/model.js'
+import { zeigeToast } from './ui/toast.jsx'
 
 const StoreContext = createContext(null)
 
@@ -38,6 +39,12 @@ export function StoreProvider({ children }) {
       const d = res.ok && res.daten ? res.daten : seedDaten()
       geladenRef.current = true
       setDaten(d)
+      // Hauptdatei war kaputt und wurde aus einer Sicherung wiederhergestellt
+      if (res.ausBackup) {
+        zeigeToast('Daten aus Sicherung wiederhergestellt', { art: 'fehler', dauer: 5000 })
+      } else if (!res.ok) {
+        zeigeToast('Daten konnten nicht geladen werden', { art: 'fehler', dauer: 5000 })
+      }
     })
   }, [])
 

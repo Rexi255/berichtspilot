@@ -20,8 +20,8 @@ Der Code hält sich bewusst an ein paar einfache Konventionen:
 
 - **2 Leerzeichen** Einrückung, **keine** Semikolons (Standard-JS-Stil).
 - **Deutschsprachige** Bezeichner und Kommentare — passend zur Domäne.
-- Zentrale Logik (Datum, Feiertage, Ausgabeformat, portabler Basispfad, IPC/preload)
-  ist knapp kommentiert; bitte diesen Ton beibehalten.
+- Zentrale Logik (Datum, Feiertage, Ausgabeformat, Ablageort/sicheres Speichern,
+  IPC/preload) ist knapp kommentiert; bitte diesen Ton beibehalten.
 - Kein neuer Renderer-Zugriff auf Node/`fs`. Datei-I/O läuft **nur** im Main-Prozess
   und wird über die Preload-Bridge (`electron/preload.js`) freigegeben.
 

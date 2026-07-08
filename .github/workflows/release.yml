@@ -1,8 +1,8 @@
-# Baut bei einem Versions-Tag (z. B. v1.0.1) die portable Windows-.exe und das
-# Linux-AppImage und hängt sie an ein GitHub-Release.
+# Baut bei einem Versions-Tag (z. B. v1.1.0) den Windows-Installer (NSIS) samt
+# portabler .exe und das Linux-AppImage und hängt alles an ein GitHub-Release.
 #
-#   git tag v1.0.1
-#   git push origin v1.0.1
+#   git tag v1.1.0
+#   git push origin v1.1.0
 #
 name: Release
 

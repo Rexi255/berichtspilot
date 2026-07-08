@@ -8,7 +8,7 @@ Erzeugt pro Berichtswoche die drei fertig formatierten Textblöcke, die 1:1 ins
 IHK-Heft kopiert werden — Wochentage, Datum, Überschriften und Feiertage kommen
 automatisch. Man tippt nur noch die eigentlichen Tätigkeiten ein.
 
-<!-- Portable desktop app that turns weekly notes into the exact three text blocks
+<!-- Desktop app that turns weekly notes into the exact three text blocks
      the German IHK apprenticeship report ("Berichtsheft") expects. UI is in German. -->
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-informational.svg)](LICENSE)
@@ -45,8 +45,10 @@ Alles läuft lokal. Keine Cloud, kein Konto, keine Internetverbindung nötig.
   das passende Profil (z. B. „Mo = Schule" wird zu „Mo + Di = Schule").
 - 🎉 **Feiertage offline** für alle 16 Bundesländer, inkl. beweglicher Feiertage.
 - 🏷️ **Tagesstatus** Normal / Feiertag (auto) / Krank / Urlaub.
-- 💾 **Portabel:** alle Daten in **einer `daten.json` neben der App**. Datei kopieren =
-  Daten umgezogen. Zusätzlich Export/Import über native Dialoge.
+- 💾 **Robuste Speicherung:** alle Daten in **einer `daten.json`** — bei der
+  installierten App im nutzereigenen Datenordner, in der portablen Version neben der
+  App. **Atomares Schreiben** mit rollierenden **Backups** (`.bak1`–`.bak3`) schützt
+  das Berichtsheft vor Datenverlust bei Absturz/Stromausfall. Plus Export/Import.
 - 🎨 Rahmenloses Fenster mit eigener Titlebar, Dark Mode, weiche GSAP-Übergänge.
 
 ## Screenshots
@@ -61,12 +63,29 @@ Links wird getippt, rechts entsteht sofort das fertige Zielformat mit „Kopiere
 
 Fertige Builds gibt es unter **[Releases](https://github.com/Rexi255/berichtspilot/releases)**:
 
-- **Windows:** `Berichtspilot-<version>-portable.exe` — herunterladen, doppelklicken.
-  Keine Installation, keine Adminrechte.
+- **Windows (empfohlen):** `Berichtspilot-Setup-<version>.exe` — der Installer. Legt
+  Startmenü- und Desktop-Verknüpfung an, der Installationsordner ist frei wählbar
+  und standardmäßig **ohne Adminrechte** (Installation pro Benutzer).
+- **Windows portabel:** `Berichtspilot-<version>-portable.exe` — ohne Installation,
+  einfach doppelklicken (z. B. direkt vom USB-Stick).
 - **Linux:** `Berichtspilot-<version>.AppImage` — ausführbar machen (`chmod +x`) und starten.
 
-Die App legt ihre `daten.json` **neben der Executable** an. Am besten die Datei in
-einen eigenen Ordner (oder auf einen USB-Stick) legen — dann wandern die Daten mit.
+### Wo liegen meine Daten?
+
+- **Installiert:** im nutzereigenen Datenordner (`%APPDATA%\Berichtspilot` unter
+  Windows, `~/.config/Berichtspilot` unter Linux). Der ist **immer beschreibbar** —
+  auch wenn die App unter `C:\Program Files` bzw. `/usr/bin` liegt. Beim Deinstallieren
+  bleiben die Daten erhalten.
+- **Portabel:** in `daten.json` **neben der Executable** — Datei/Ordner kopieren, und
+  die Daten wandern mit. Liegt die portable Version ausnahmsweise an einem
+  schreibgeschützten Ort, weicht sie automatisch auf den nutzereigenen Datenordner aus,
+  statt abzustürzen.
+
+Den genauen Pfad zeigt die App unten links in der Seitenleiste (Tooltip). Neben der
+`daten.json` liegen automatisch bis zu drei rollierende Sicherungen (`.bak1`–`.bak3`);
+ist die Hauptdatei einmal beschädigt, stellt die App beim Start automatisch den
+jüngsten intakten Stand wieder her. Zum manuellen Sichern/Umziehen gibt es zusätzlich
+**Daten exportieren/importieren**.
 
 ## Entwicklung
 
@@ -78,12 +97,12 @@ npm run dev        # Vite-Devserver + Electron mit Hot-Reload
 npm start          # Renderer bauen + Electron auf dem Build starten
 ```
 
-## Build (portable)
+## Build
 
 ```bash
-npm run build:win    # Windows portable .exe  -> release/
-npm run build:linux  # Linux AppImage         -> release/ (auf Linux ausführen)
-npm run build        # beide Targets
+npm run build:win    # Windows: Installer (.exe) + portable .exe  -> release/
+npm run build:linux  # Linux AppImage                             -> release/ (auf Linux ausführen)
+npm run build        # beide Plattformen
 ```
 
 Wer die [CI](.github/workflows/release.yml) nutzt: Ein Versions-Tag pushen
@@ -124,7 +143,7 @@ Englisch:
 
 ```
 electron/
-  main.js        # Fenster, portabler Basispfad, Datei-I/O per IPC
+  main.js        # Fenster, Ablageort + sicheres Speichern, Datei-I/O per IPC
   preload.js     # schmale contextBridge-API für den Renderer
 src/
   lib/dates.js   # Wochentag/Datum, ISO-Kalenderwoche

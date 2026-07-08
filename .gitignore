@@ -6,9 +6,11 @@ dist/
 release/
 *.tmp
 
-# App-Daten: daten.json ist portabel & nutzerspezifisch — nie einchecken
+# App-Daten: daten.json ist nutzerspezifisch — nie einchecken
+# (inkl. Temp-Datei beim atomaren Schreiben und rollierende Sicherungen)
 daten.json
 daten.json.tmp
+daten.json.bak*
 
 # Persönliches Referenzmaterial / lokale Dateien (bleiben nur lokal)
 /Claude Vorgaben/
