@@ -15,6 +15,15 @@ contextBridge.exposeInMainWorld('api', {
   textExportieren: (dateiname, inhalt) =>
     ipcRenderer.invoke('text:exportieren', { dateiname, inhalt }),
 
+  // Zwischenablage lesen (Import von Stichpunkten aus Zeiterfassung/WebUntis)
+  zwischenablageLesen: () => ipcRenderer.invoke('zwischenablage:lesen'),
+
+  // Ordner der daten.json im Dateimanager anzeigen
+  pfadOeffnen: () => ipcRenderer.invoke('pfad:oeffnen'),
+
+  // Nativer Frage-Dialog; liefert den Index des geklickten Buttons
+  frageDialog: (optionen) => ipcRenderer.invoke('dialog:frage', optionen),
+
   // Fenstersteuerung (eigene Titlebar)
   minimieren: () => ipcRenderer.invoke('fenster:minimieren'),
   maximieren: () => ipcRenderer.invoke('fenster:maximieren'),

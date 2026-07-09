@@ -14,6 +14,7 @@ import {
   TrashIcon,
   DotsSixVerticalIcon,
   CalendarPlusIcon,
+  ClipboardTextIcon,
 } from '@phosphor-icons/react'
 import { useStore, api } from '../store.jsx'
 import { Knopf, IconKnopf, Eingabe, Textbereich, Segment, Panel, Pille, AbschnittTitel, cx } from '../ui/basics.jsx'
@@ -41,7 +42,94 @@ const verschieben = (arr, von, nach) => {
 
 /* ------------------------- Stichpunkt-Liste ------------------------- */
 
-function StichpunktListe({ punkte, onPunkte, platzhalter }) {
+// Eingabezeile mit Autocomplete: schlägt beim Tippen (ab 2 Zeichen) passende
+// Stichpunkte aus allen bisherigen Wochen + den Textbausteinen vor.
+function PunktEingabe({ punkt, platzhalter, vorschlaege, onWert, onEnter, onLeerBackspace }) {
+  const [offen, setOffen] = useState(false)
+  const [aktiv, setAktiv] = useState(0)
+
+  const eingabe = punkt.trim().toLowerCase()
+  const treffer =
+    offen && eingabe.length >= 2
+      ? vorschlaege
+          .filter((v) => v.toLowerCase().includes(eingabe) && v.toLowerCase() !== eingabe)
+          .slice(0, 6)
+      : []
+
+  const uebernehmen = (wert) => {
+    onWert(wert)
+    setOffen(false)
+  }
+
+  return (
+    <div className="relative min-w-0 flex-1">
+      <Eingabe
+        value={punkt}
+        placeholder={platzhalter}
+        onChange={(e) => {
+          onWert(e.target.value)
+          setOffen(true)
+          setAktiv(0)
+        }}
+        onBlur={() => setOffen(false)}
+        onKeyDown={(e) => {
+          if (treffer.length > 0) {
+            if (e.key === 'ArrowDown') {
+              e.preventDefault()
+              setAktiv((a) => (a + 1) % treffer.length)
+              return
+            }
+            if (e.key === 'ArrowUp') {
+              e.preventDefault()
+              setAktiv((a) => (a - 1 + treffer.length) % treffer.length)
+              return
+            }
+            if (e.key === 'Escape' || e.key === 'Tab') {
+              setOffen(false)
+              return
+            }
+            if (e.key === 'Enter') {
+              e.preventDefault()
+              uebernehmen(treffer[aktiv])
+              return
+            }
+          }
+          if (e.key === 'Enter') onEnter()
+          // Backspace auf leerem Punkt entfernt die Zeile (aber nie die letzte)
+          if (e.key === 'Backspace' && punkt === '') {
+            e.preventDefault()
+            onLeerBackspace()
+          }
+        }}
+        className="h-8"
+      />
+      {treffer.length > 0 && (
+        <div className="absolute left-0 right-0 top-full z-20 mt-1 overflow-hidden rounded-lg border border-white/[0.1] bg-flaeche-2/95 shadow-[0_10px_30px_-10px_oklch(0_0_0/0.7)] backdrop-blur">
+          {treffer.map((v, i) => (
+            <button
+              key={v}
+              type="button"
+              // mousedown statt click, damit das Input-blur die Liste nicht vorher schließt
+              onMouseDown={(e) => {
+                e.preventDefault()
+                uebernehmen(v)
+              }}
+              onMouseEnter={() => setAktiv(i)}
+              className={cx(
+                'block w-full truncate px-3 py-1.5 text-left text-[12.5px]',
+                i === aktiv ? 'bg-akzent/15 text-tinte' : 'text-tinte-2'
+              )}
+            >
+              {v}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function StichpunktListe({ punkte, onPunkte, platzhalter, vorschlaege = [] }) {
   const containerRef = useRef(null)
   // Drag&Drop-Umsortierung: Index des gezogenen bzw. überfahrenen Punkts
   const [ziehIndex, setZiehIndex] = useState(null)
@@ -68,6 +156,22 @@ function StichpunktListe({ punkte, onPunkte, platzhalter }) {
     if (ziehIndex !== null && ziehIndex !== ziel) onPunkte(verschieben(punkte, ziehIndex, ziel))
     setZiehIndex(null)
     setUeberIndex(null)
+  }
+
+  // Zeilen aus der Zwischenablage (Zeiterfassung/WebUntis) als Stichpunkte
+  // anhängen; führende Aufzählungszeichen/Nummerierungen werden entfernt.
+  const ausZwischenablage = async () => {
+    const text = await api.zwischenablageLesen()
+    const zeilen = (text ?? '')
+      .split(/\r?\n/)
+      .map((z) => z.replace(/^\s*(?:[-–—•*·]|\d+[.)])\s*/, '').trim())
+      .filter(Boolean)
+    if (zeilen.length === 0) {
+      zeigeToast('Zwischenablage enthält keinen Text', { art: 'fehler' })
+      return
+    }
+    onPunkte([...punkte.filter((p) => p.trim()), ...zeilen])
+    zeigeToast(zeilen.length === 1 ? '1 Stichpunkt eingefügt' : `${zeilen.length} Stichpunkte eingefügt`)
   }
 
   return (
@@ -108,19 +212,13 @@ function StichpunktListe({ punkte, onPunkte, platzhalter }) {
           >
             <DotsSixVerticalIcon size={14} />
           </button>
-          <Eingabe
-            value={punkt}
-            placeholder={platzhalter}
-            onChange={(e) => setzen(i, e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') einfuegen(i)
-              // Backspace auf leerem Punkt entfernt die Zeile (aber nie die letzte)
-              if (e.key === 'Backspace' && punkt === '' && punkte.length > 1) {
-                e.preventDefault()
-                entfernen(i)
-              }
-            }}
-            className="h-8"
+          <PunktEingabe
+            punkt={punkt}
+            platzhalter={platzhalter}
+            vorschlaege={vorschlaege}
+            onWert={(wert) => setzen(i, wert)}
+            onEnter={() => einfuegen(i)}
+            onLeerBackspace={() => punkte.length > 1 && entfernen(i)}
           />
           <div className="flex opacity-0 transition-opacity duration-150 group-focus-within/punkt:opacity-100 group-hover/punkt:opacity-100">
             <IconKnopf titel="Nach oben" disabled={i === 0} onClick={() => onPunkte(verschieben(punkte, i, i - 1))}>
@@ -135,20 +233,30 @@ function StichpunktListe({ punkte, onPunkte, platzhalter }) {
           </div>
         </div>
       ))}
-      <button
-        type="button"
-        onClick={() => einfuegen(punkte.length - 1)}
-        className="mt-0.5 flex h-7 w-fit items-center gap-1.5 rounded-md px-2 text-[12px] font-medium text-tinte-3 transition-colors duration-150 hover:bg-white/[0.05] hover:text-akzent"
-      >
-        <PlusIcon size={13} weight="bold" /> Stichpunkt
-      </button>
+      <div className="mt-0.5 flex items-center gap-1">
+        <button
+          type="button"
+          onClick={() => einfuegen(punkte.length - 1)}
+          className="flex h-7 w-fit items-center gap-1.5 rounded-md px-2 text-[12px] font-medium text-tinte-3 transition-colors duration-150 hover:bg-white/[0.05] hover:text-akzent"
+        >
+          <PlusIcon size={13} weight="bold" /> Stichpunkt
+        </button>
+        <button
+          type="button"
+          onClick={ausZwischenablage}
+          title="Zeilen aus der Zwischenablage (z. B. Zeiterfassung/WebUntis) als Stichpunkte anhängen"
+          className="flex h-7 w-fit items-center gap-1.5 rounded-md px-2 text-[12px] font-medium text-tinte-3 transition-colors duration-150 hover:bg-white/[0.05] hover:text-akzent"
+        >
+          <ClipboardTextIcon size={13} /> Aus Zwischenablage
+        </button>
+      </div>
     </div>
   )
 }
 
 /* ----------------------------- Tag-Karte ----------------------------- */
 
-function TagKarte({ tag, onTag }) {
+function TagKarte({ tag, onTag, vorschlaege }) {
   const statusInhalt = {
     feiertag: tag.feiertagName ? `Feiertag: ${tag.feiertagName}` : 'Feiertag',
     krank: 'Krankheitstag',
@@ -162,7 +270,8 @@ function TagKarte({ tag, onTag }) {
   }
 
   return (
-    <Panel data-tagkarte className="shrink-0 overflow-hidden">
+    // kein overflow-hidden: das Autocomplete-Dropdown ragt über den Kartenrand
+    <Panel data-tagkarte className="shrink-0">
       <div className="flex flex-wrap items-center gap-2 border-b border-white/[0.05] px-4 py-2.5">
         <div className="mr-auto flex items-baseline gap-2">
           <span className="text-[14px] font-semibold">{wochentagName(tag.datum)}</span>
@@ -199,10 +308,11 @@ function TagKarte({ tag, onTag }) {
             punkte={tag.stichpunkte}
             onPunkte={(stichpunkte) => onTag({ ...tag, stichpunkte })}
             platzhalter="Tätigkeit beschreiben …"
+            vorschlaege={vorschlaege.betrieb}
           />
         </div>
       ) : (
-        <SchulTag tag={tag} onTag={onTag} />
+        <SchulTag tag={tag} onTag={onTag} vorschlaege={vorschlaege} />
       )}
     </Panel>
   )
@@ -210,7 +320,7 @@ function TagKarte({ tag, onTag }) {
 
 /* --------------------------- Schultag (Fächer) --------------------------- */
 
-function SchulTag({ tag, onTag }) {
+function SchulTag({ tag, onTag, vorschlaege }) {
   const faecherSetzen = (faecher) => onTag({ ...tag, faecher })
   const fachSetzen = (i, fach) => faecherSetzen(tag.faecher.map((f, j) => (j === i ? fach : f)))
 
@@ -240,6 +350,7 @@ function SchulTag({ tag, onTag }) {
             punkte={fach.punkte}
             onPunkte={(punkte) => fachSetzen(i, { ...fach, punkte })}
             platzhalter="Unterrichtsthema …"
+            vorschlaege={vorschlaege.fuerFach(fach.label)}
           />
         </div>
       ))}
@@ -354,16 +465,48 @@ export default function WochenEditor({ montag, setMontag }) {
   const profil = profilFuerDatum(daten.profile, addDays(montag, 2))
   const bloecke = useMemo(() => (woche ? formatAlle(woche) : null), [woche])
 
+  // Autocomplete-Vorschläge: alle bisher geschriebenen Stichpunkte (Betrieb bzw.
+  // je Fach) + die in den Einstellungen gepflegten Textbausteine.
+  const vorschlaege = useMemo(() => {
+    const betrieb = new Set(daten.einstellungen.textbausteine ?? [])
+    const jeFach = new Map() // Fach-Label (klein) -> Set der Punkte
+    const schuleAlle = new Set()
+    for (const w of daten.wochen) {
+      for (const t of w.tage) {
+        for (const s of t.stichpunkte ?? []) if (s.trim()) betrieb.add(s.trim())
+        for (const f of t.faecher ?? []) {
+          const key = (f.label ?? '').trim().toLowerCase()
+          for (const p of f.punkte ?? []) {
+            if (!p.trim()) continue
+            schuleAlle.add(p.trim())
+            if (key) {
+              if (!jeFach.has(key)) jeFach.set(key, new Set())
+              jeFach.get(key).add(p.trim())
+            }
+          }
+        }
+      }
+    }
+    return {
+      betrieb: [...betrieb],
+      // Punkte des gleichen Fachs zuerst, dann alle übrigen Schul-Punkte
+      fuerFach: (label) => {
+        const eigene = jeFach.get((label ?? '').trim().toLowerCase()) ?? new Set()
+        return [...new Set([...eigene, ...schuleAlle])]
+      },
+    }
+  }, [daten])
+
   // Eine Woche vor/zurück — merkt sich die Richtung für den Slide-Übergang
   const wocheWechseln = (delta) => {
     richtungRef.current = delta > 0 ? 1 : -1
+    setLoeschBestaetigung(false)
     setMontag(addDays(montag, delta))
   }
 
   // Wochenwechsel-Übergang: bei ←/→ gleitet der ganze Inhalt aus der
   // Navigationsrichtung herein; beim Datum-Sprung staffeln nur die Tag-Karten.
   useEffect(() => {
-    setLoeschBestaetigung(false)
     const richtung = richtungRef.current
     richtungRef.current = 0
     if (!woche) return
@@ -385,6 +528,43 @@ export default function WochenEditor({ montag, setMontag }) {
 
   const tagAendern = (datum, neuerTag) =>
     wocheAendern(montag, (w) => ({ ...w, tage: w.tage.map((t) => (t.datum === datum ? neuerTag : t)) }))
+
+  // Editor-Tastaturkürzel: Alt+←/→ Woche wechseln, Strg+Shift+1/2/3 Block
+  // kopieren, Strg+N Woche anlegen. Über e.code, damit es auch mit dem
+  // deutschen Layout funktioniert (Shift+1 wäre sonst „!").
+  useEffect(() => {
+    const kopiereBlock = async (index) => {
+      if (!bloecke) return
+      const eintraege = [
+        ['Betriebliche Tätigkeiten', bloecke.betrieb],
+        ['Unterweisungen', bloecke.unterweisungen],
+        ['Berufsschule', bloecke.berufsschule],
+      ]
+      const [name, text] = eintraege[index]
+      if (!text) {
+        zeigeToast(`„${name}" ist leer`, { art: 'fehler' })
+        return
+      }
+      await navigator.clipboard.writeText(text)
+      zeigeToast(`„${name}" kopiert`)
+    }
+
+    const handler = (e) => {
+      if (e.altKey && !e.ctrlKey && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
+        e.preventDefault()
+        wocheWechseln(e.key === 'ArrowLeft' ? -7 : 7)
+      } else if (e.ctrlKey && e.shiftKey && ['Digit1', 'Digit2', 'Digit3'].includes(e.code)) {
+        e.preventDefault()
+        kopiereBlock(Number(e.code.slice(-1)) - 1)
+      } else if (e.ctrlKey && !e.shiftKey && !e.altKey && e.code === 'KeyN' && !woche) {
+        e.preventDefault()
+        wocheAnlegen(montag)
+      }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [montag, woche, bloecke])
 
   const wocheLoeschenBestaetigt = () => {
     wocheLoeschen(montag)
@@ -421,7 +601,11 @@ export default function WochenEditor({ montag, setMontag }) {
           <Eingabe
             type="date"
             value={montag}
-            onChange={(e) => e.target.value && setMontag(montagVon(parseISO(e.target.value)))}
+            onChange={(e) => {
+              if (!e.target.value) return
+              setLoeschBestaetigung(false)
+              setMontag(montagVon(parseISO(e.target.value)))
+            }}
             title="Datum wählen — die App springt zum Montag dieser Woche"
           />
         </div>
@@ -479,7 +663,7 @@ export default function WochenEditor({ montag, setMontag }) {
           {/* Linke Spalte: Tage + Unterweisungen */}
           <div ref={spalteRef} className="flex min-h-0 flex-col gap-3 overflow-y-auto pr-1">
             {woche.tage.map((tag) => (
-              <TagKarte key={tag.datum} tag={tag} onTag={(t) => tagAendern(tag.datum, t)} />
+              <TagKarte key={tag.datum} tag={tag} onTag={(t) => tagAendern(tag.datum, t)} vorschlaege={vorschlaege} />
             ))}
             <Panel data-tagkarte className="shrink-0">
               <div className="border-b border-white/[0.05] px-4 py-2.5">

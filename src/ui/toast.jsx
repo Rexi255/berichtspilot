@@ -8,9 +8,12 @@ import { cx } from './basics.jsx'
 
 let idZaehler = 0
 
-/** Toast auslösen — von überall aufrufbar, ohne Context/Props. */
-export function zeigeToast(text, { art = 'erfolg', dauer = 2200 } = {}) {
-  window.dispatchEvent(new CustomEvent('app:toast', { detail: { text, art, dauer } }))
+/**
+ * Toast auslösen — von überall aufrufbar, ohne Context/Props.
+ * Optional mit Aktion (z. B. „Rückgängig"): `aktion: { label, onKlick }`.
+ */
+export function zeigeToast(text, { art = 'erfolg', dauer = 2200, aktion = null } = {}) {
+  window.dispatchEvent(new CustomEvent('app:toast', { detail: { text, art, dauer, aktion } }))
 }
 
 function ToastZeile({ toast, onWeg }) {
@@ -54,6 +57,18 @@ function ToastZeile({ toast, onWeg }) {
         {fehler ? <WarningIcon size={14} weight="bold" /> : <CheckIcon size={14} weight="bold" />}
       </span>
       {toast.text}
+      {toast.aktion && (
+        <button
+          type="button"
+          onClick={() => {
+            toast.aktion.onKlick()
+            onWeg()
+          }}
+          className="ml-1 rounded-md border border-akzent/30 bg-akzent/10 px-2 py-1 text-[12px] font-semibold text-akzent transition-colors duration-150 hover:bg-akzent/20"
+        >
+          {toast.aktion.label}
+        </button>
+      )}
     </div>
   )
 }

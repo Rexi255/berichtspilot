@@ -4,6 +4,57 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Das Format orientiert sich an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionierung an [Semantic Versioning](https://semver.org/lang/de/).
 
+## [1.2.0] - 2026-07-09
+
+### Hinzugefügt
+
+- **Autocomplete im Editor:** beim Tippen werden passende Stichpunkte aus allen
+  bisherigen Wochen (Betrieb bzw. je Fach) vorgeschlagen — plus frei pflegbare
+  **Textbausteine** in den Einstellungen.
+- **Lücken-Erkennung:** die Übersicht zeigt fehlende Wochen zwischen
+  Ausbildungsbeginn und der Vorwoche (einzeln oder als aufklappbarer Block) mit
+  Ein-Klick-Anlegen, dazu die Stat-Kacheln „Wochen fehlen" und „Wochen in Serie".
+  Die laufende Woche und Wochen nach dem Ausbildungsende zählen nicht als fehlend.
+- **Jahres-Heatmap** in der Übersicht: eine Zelle pro Kalenderwoche
+  (Fertig/Entwurf/Fehlt), Klick öffnet die Woche.
+- **Suche & Filter:** Volltextsuche über Stichpunkte, Fächer, Unterweisungen und
+  Feiertage; Statusfilter (Alle/Entwürfe/Fertig); Jahres-Zwischenüberschriften.
+- **Zeiträume (Urlaub/Schulferien):** einmal eintragen — Urlaub markiert leere
+  Tage automatisch (auch rückwirkend), Schulferien machen Schultage beim Anlegen
+  neuer Wochen zu Betriebstagen.
+- **Profil duplizieren** für den Halbjahreswechsel + **Gültigkeits-Prüfung**
+  (Warnungen bei Überlappungen, Lücken und fehlenden Zeiträumen) +
+  **„Fächer übernehmen von …"** zwischen Schultagen/Profilen.
+- **Import mit Zusammenführen:** beim Import wählbar, ob nur fehlende
+  Wochen/Profile ergänzt oder alles ersetzt wird; importierte Dateien werden
+  vorab strukturell validiert.
+- **„Aus Zwischenablage einfügen":** Zeilen aus Zeiterfassung/WebUntis werden als
+  Stichpunkte übernommen (Aufzählungszeichen werden entfernt).
+- **Tastaturkürzel:** Strg+1–4 (Ansichten), Alt+←/→ (Woche), Strg+Shift+1/2/3
+  (Block kopieren), Strg+N (Woche anlegen) — Referenz in den Einstellungen.
+- **Undo beim Löschen:** gelöschte Wochen/Profile lassen sich 6 Sekunden lang
+  per Toast wiederherstellen.
+- **Deutsche Rechtschreibprüfung** in allen Eingabefeldern inkl.
+  Korrektur-Kontextmenü und „Zum Wörterbuch hinzufügen".
+- **Einstellungen ausgebaut:** Start-Ansicht wählbar, Speicherort mit
+  „Ordner öffnen", Textbausteine, Kürzel-Übersicht.
+- **Tests + CI:** Vitest-Suite für Format- (exakte IHK-Beispiele), Feiertags-,
+  Datums- und Modelllogik; ESLint; CI-Workflow prüft Lint + Tests bei jedem Push,
+  der Release-Workflow vor jedem Build.
+
+### Geändert
+
+- **Schema-Migration:** `daten.json` trägt jetzt Version 2 (neu: Zeiträume,
+  Start-Ansicht, Textbausteine). Alte Dateien werden beim Laden/Import
+  automatisch migriert; Dateien aus neueren App-Versionen werden zum Schutz vor
+  Datenverlust nicht geladen.
+
+### Behoben
+
+- **Single-Instance-Lock:** eine zweite App-Instanz konnte die `daten.json`
+  der ersten überschreiben. Jetzt fokussiert ein zweiter Start nur noch das
+  bestehende Fenster.
+
 ## [1.1.1] - 2026-07-08
 
 ### Behoben

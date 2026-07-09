@@ -38,6 +38,11 @@ jobs:
 
       - run: npm ci
 
+      - name: Lint & Tests
+        run: |
+          npm run lint
+          npm test
+
       - name: Build
         run: npm run ${{ matrix.script }}
 

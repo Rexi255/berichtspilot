@@ -39,17 +39,30 @@ Alles läuft lokal. Keine Cloud, kein Konto, keine Internetverbindung nötig.
 ## Features
 
 - 🗂️ **Übersicht** aller Berichtswochen mit Kalenderwoche, Zeitraum, Status
-  (Entwurf/Fertig) und Fortschrittsanzeige.
-- ✍️ **Wochen-Editor** mit Live-Vorschau der drei Ausgabeblöcke und Kopier-Buttons.
-- 🧑‍🏫 **Profile pro Halbjahr** — die App zieht anhand des Wochendatums automatisch
-  das passende Profil (z. B. „Mo = Schule" wird zu „Mo + Di = Schule").
+  (Entwurf/Fertig), Fortschrittsanzeige, **Jahres-Heatmap** und **Lücken-Erkennung**
+  (fehlende Wochen mit Ein-Klick-Anlegen).
+- 🔎 **Volltextsuche & Filter** über alle Stichpunkte, Fächer und Feiertage —
+  praktisch auch als Nachschlagewerk („wann habe ich den Switch konfiguriert?").
+- ✍️ **Wochen-Editor** mit Live-Vorschau der drei Ausgabeblöcke, Kopier-Buttons,
+  **Autocomplete** aus allen bisherigen Stichpunkten + eigenen **Textbausteinen**
+  und **„Aus Zwischenablage einfügen"** (Zeiterfassung/WebUntis).
+- 🧑‍🏫 **Profile pro Halbjahr** — automatische Auswahl anhand des Wochendatums,
+  **Duplizieren** für den Halbjahreswechsel, Warnungen bei Überlappungen/Lücken,
+  Fächerlisten zwischen Tagen/Profilen übernehmbar.
+- 🏖️ **Zeiträume:** Urlaub und Schulferien einmal eintragen — Urlaub markiert die
+  Tage automatisch, in den Ferien werden Schultage zu Betriebstagen.
 - 🎉 **Feiertage offline** für alle 16 Bundesländer, inkl. beweglicher Feiertage.
 - 🏷️ **Tagesstatus** Normal / Feiertag (auto) / Krank / Urlaub.
+- ⌨️ **Tastaturkürzel** (Strg+1–4, Alt+←/→, Strg+Shift+1/2/3 zum Kopieren) und
+  **deutsche Rechtschreibprüfung** in allen Eingabefeldern.
 - 💾 **Robuste Speicherung:** alle Daten in **einer `daten.json`** — bei der
   installierten App im nutzereigenen Datenordner, in der portablen Version neben der
-  App. **Atomares Schreiben** mit rollierenden **Backups** (`.bak1`–`.bak3`) schützt
-  das Berichtsheft vor Datenverlust bei Absturz/Stromausfall. Plus Export/Import.
-- 🎨 Rahmenloses Fenster mit eigener Titlebar, Dark Mode, weiche GSAP-Übergänge.
+  App. **Atomares Schreiben** mit rollierenden **Backups** (`.bak1`–`.bak3`),
+  **Single-Instance-Schutz**, versioniertem Schema mit Migration sowie
+  Export/Import mit **Zusammenführen oder Ersetzen**. Löschen ist per
+  „Rückgängig"-Toast abgesichert.
+- 🎨 Rahmenloses Fenster mit eigener Titlebar, 6 dunkle Farbthemen, weiche
+  GSAP-Übergänge.
 
 ## Screenshots
 
@@ -95,6 +108,8 @@ Voraussetzung: **Node.js ≥ 20.19**.
 npm install
 npm run dev        # Vite-Devserver + Electron mit Hot-Reload
 npm start          # Renderer bauen + Electron auf dem Build starten
+npm test           # Vitest: Format- (exakte IHK-Beispiele), Feiertags-, Datumslogik
+npm run lint       # ESLint (läuft auch in der CI bei jedem Push/PR)
 ```
 
 ## Build
@@ -161,6 +176,18 @@ src/
   `sandbox: true`. Der Renderer bekommt über die Preload-Bridge nur eine schmale API;
   Datei-I/O passiert ausschließlich im Main-Prozess (IPC). Strikte CSP im Renderer.
 - **Offline by design:** Feiertage werden lokal berechnet, keine externen Requests.
+
+## Roadmap
+
+Ideen, die bewusst noch offen sind:
+
+- **Auto-Update** über GitHub Releases (electron-updater) für den NSIS-Installer.
+- **Light-Theme** + automatischer Wechsel nach Systemeinstellung.
+- **„Alle 3 Blöcke kopieren"** als Sammelaktion mit Kopier-Häkchen je Block.
+- **Gesamtexport** einer Woche bzw. des ganzen Berichtshefts als eine Datei/PDF.
+- **Einzelnen Tag aus der Vorwoche kopieren** (nicht nur die ganze Struktur).
+- **Zeichenzähler** in der Block-Vorschau (falls die IHK-Felder Limits haben).
+- **Erinnerung** am Freitag, wenn die aktuelle Woche noch Entwurf ist.
 
 ## Beitragen
 

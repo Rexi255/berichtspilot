@@ -1,0 +1,27 @@
+# Qualitäts-Check bei jedem Push/PR: Lint + Tests (Format-/Feiertags-/Datums-
+# Logik). Die Builds selbst laufen weiterhin nur im Release-Workflow.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request: {}
+
+jobs:
+  pruefen:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Tests
+        run: npm test

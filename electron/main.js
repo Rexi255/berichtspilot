@@ -1,5 +1,5 @@
 // Electron-Hauptprozess: Fenster, Ablageort + sicheres Speichern, Datei-I/O über IPC.
-const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron')
+const { app, BrowserWindow, ipcMain, dialog, shell, clipboard, Menu, MenuItem } = require('electron')
 const path = require('path')
 const fs = require('fs')
 const fsp = fs.promises
@@ -109,10 +109,50 @@ function erstelleFenster() {
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,
+      spellcheck: true,
     },
   })
 
   fenster.once('ready-to-show', () => fenster.show())
+
+  // Deutsche Rechtschreibprüfung in den Eingabefeldern. Kann fehlschlagen,
+  // wenn das OS kein deutsches Wörterbuch anbietet — dann einfach ohne.
+  try {
+    fenster.webContents.session.setSpellCheckerLanguages(['de-DE', 'de'])
+  } catch {
+    /* Sprache nicht verfügbar -> Spellcheck bleibt aus */
+  }
+
+  // Kontextmenü: Korrekturvorschläge des Spellcheckers + Standard-Bearbeiten
+  fenster.webContents.on('context-menu', (_ev, params) => {
+    const menu = new Menu()
+    for (const vorschlag of params.dictionarySuggestions.slice(0, 5)) {
+      menu.append(
+        new MenuItem({
+          label: vorschlag,
+          click: () => fenster.webContents.replaceMisspelling(vorschlag),
+        })
+      )
+    }
+    if (params.misspelledWord) {
+      menu.append(
+        new MenuItem({
+          label: 'Zum Wörterbuch hinzufügen',
+          click: () =>
+            fenster.webContents.session.addWordToSpellCheckerDictionary(params.misspelledWord),
+        })
+      )
+      menu.append(new MenuItem({ type: 'separator' }))
+    }
+    if (params.isEditable) {
+      menu.append(new MenuItem({ label: 'Ausschneiden', role: 'cut' }))
+      menu.append(new MenuItem({ label: 'Kopieren', role: 'copy' }))
+      menu.append(new MenuItem({ label: 'Einfügen', role: 'paste' }))
+    } else if (params.selectionText.trim()) {
+      menu.append(new MenuItem({ label: 'Kopieren', role: 'copy' }))
+    }
+    if (menu.items.length > 0) menu.popup()
+  })
 
   // Maximieren-Status an den Renderer melden (für das Titlebar-Icon)
   const meldeMax = () => {
@@ -241,6 +281,29 @@ ipcMain.handle('text:exportieren', async (_ev, { dateiname, inhalt }) => {
   }
 })
 
+// Zwischenablage lesen (für „Aus Zwischenablage einfügen" im Editor) —
+// der sandboxte Renderer hat keinen verlässlichen Clipboard-Lesezugriff.
+ipcMain.handle('zwischenablage:lesen', () => clipboard.readText())
+
+// Ordner der daten.json im Dateimanager anzeigen (Einstellungen -> Daten)
+ipcMain.handle('pfad:oeffnen', () => shell.showItemInFolder(DATEN_PFAD))
+
+// Generischer nativer Frage-Dialog (z. B. Import: Zusammenführen/Ersetzen).
+// Liefert den Index des geklickten Buttons.
+ipcMain.handle('dialog:frage', async (_ev, { titel, nachricht, detail, buttons, cancelId }) => {
+  const { response } = await dialog.showMessageBox(fenster, {
+    type: 'question',
+    title: titel,
+    message: nachricht,
+    detail,
+    buttons,
+    cancelId: cancelId ?? buttons.length - 1,
+    defaultId: 0,
+    noLink: true,
+  })
+  return response
+})
+
 // Fenstersteuerung für die eigene Titlebar
 ipcMain.handle('fenster:minimieren', () => fenster?.minimize())
 ipcMain.handle('fenster:maximieren', () => {
@@ -249,12 +312,27 @@ ipcMain.handle('fenster:maximieren', () => {
 })
 ipcMain.handle('fenster:schliessen', () => fenster?.close())
 
-app.whenReady().then(() => {
-  erstelleFenster()
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) erstelleFenster()
+// Nur EINE Instanz zulassen: zwei parallel laufende Instanzen würden sich
+// gegenseitig die daten.json überschreiben (letzter Speichervorgang gewinnt).
+// Ein zweiter Start gibt den Fokus an das bestehende Fenster ab und beendet sich.
+if (!app.requestSingleInstanceLock()) {
+  app.quit()
+} else {
+  app.on('second-instance', () => {
+    if (fenster && !fenster.isDestroyed()) {
+      if (fenster.isMinimized()) fenster.restore()
+      fenster.show()
+      fenster.focus()
+    }
   })
-})
+
+  app.whenReady().then(() => {
+    erstelleFenster()
+    app.on('activate', () => {
+      if (BrowserWindow.getAllWindows().length === 0) erstelleFenster()
+    })
+  })
+}
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit()

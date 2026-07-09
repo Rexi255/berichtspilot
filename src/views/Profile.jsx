@@ -1,11 +1,22 @@
-// Profile-Verwaltung: Halbjahres-Profile (Wochentage, Fächer, Bundesland)
-// + globale Ausbildungsdaten für die Fortschrittsanzeige.
-import { useState } from 'react'
-import { PlusIcon, XIcon, ArrowUpIcon, ArrowDownIcon, TrashIcon, CalendarBlankIcon } from '@phosphor-icons/react'
+// Profile-Verwaltung: Halbjahres-Profile (Wochentage, Fächer, Bundesland),
+// Zeiträume (Urlaub/Schulferien) + globale Ausbildungsdaten.
+import { useMemo, useState } from 'react'
+import {
+  PlusIcon,
+  XIcon,
+  ArrowUpIcon,
+  ArrowDownIcon,
+  TrashIcon,
+  CalendarBlankIcon,
+  CopyIcon,
+  WarningIcon,
+  SunIcon,
+} from '@phosphor-icons/react'
 import { useStore } from '../store.jsx'
 import { Knopf, IconKnopf, Eingabe, Auswahl, Segment, Panel, Feld, AbschnittTitel, Pille, cx } from '../ui/basics.jsx'
 import { WOCHENTAG_KEYS, WOCHENTAG_LABELS, formatDE } from '../lib/dates.js'
 import { BUNDESLAENDER } from '../lib/holidays.js'
+import { pruefeProfile } from '../lib/model.js'
 
 const verschieben = (arr, von, nach) => {
   if (nach < 0 || nach >= arr.length) return arr
@@ -65,8 +76,8 @@ function FaecherEditor({ faecher, onFaecher }) {
 
 /* --------------------------- Profil-Formular --------------------------- */
 
-function ProfilFormular({ profil }) {
-  const { profilAendern, profilLoeschen } = useStore()
+function ProfilFormular({ profil, onDupliziert }) {
+  const { daten, profilAendern, profilLoeschen } = useStore()
   const [loeschBestaetigung, setLoeschBestaetigung] = useState(false)
 
   const patch = (p) => profilAendern(profil.id, (alt) => ({ ...alt, ...p }))
@@ -76,6 +87,27 @@ function ProfilFormular({ profil }) {
       wochentage: { ...alt.wochentage, [key]: { ...alt.wochentage[key], ...p } },
     }))
 
+  // Quellen für „Fächer übernehmen von …": alle Schultage mit Fächern —
+  // aus diesem und allen anderen Profilen, außer dem Zieltag selbst.
+  const faecherQuellen = (zielKey) => {
+    const quellen = []
+    for (const p of daten.profile) {
+      for (const key of WOCHENTAG_KEYS) {
+        const tag = p.wochentage[key]
+        if (tag?.typ !== 'schule' || !(tag.faecher?.length > 0)) continue
+        if (p.id === profil.id && key === zielKey) continue
+        quellen.push({ profilId: p.id, key, label: `${WOCHENTAG_LABELS[key]} — ${p.name}` })
+      }
+    }
+    return quellen
+  }
+
+  const faecherUebernehmen = (zielKey, wert) => {
+    const [profilId, key] = wert.split('|')
+    const quelle = daten.profile.find((p) => p.id === profilId)?.wochentage[key]
+    if (quelle?.faecher?.length) tagPatch(zielKey, { faecher: [...quelle.faecher] })
+  }
+
   return (
     <div className="flex flex-col gap-5">
       <Panel className="flex flex-col gap-4 p-5">
@@ -83,6 +115,9 @@ function ProfilFormular({ profil }) {
           <Feld label="Name des Profils" className="flex-1">
             <Eingabe value={profil.name} onChange={(e) => patch({ name: e.target.value })} />
           </Feld>
+          <Knopf variante="ghost" onClick={onDupliziert} title="Kopie dieses Profils anlegen (z. B. fürs nächste Halbjahr)">
+            <CopyIcon size={15} /> Duplizieren
+          </Knopf>
           {loeschBestaetigung ? (
             <Knopf variante="gefahr" onClick={() => profilLoeschen(profil.id)} onBlur={() => setLoeschBestaetigung(false)}>
               Wirklich löschen?
@@ -148,7 +183,24 @@ function ProfilFormular({ profil }) {
                   </span>
                 </div>
                 {tag.typ === 'schule' && (
-                  <FaecherEditor faecher={tag.faecher ?? []} onFaecher={(faecher) => tagPatch(key, { faecher })} />
+                  <>
+                    <FaecherEditor faecher={tag.faecher ?? []} onFaecher={(faecher) => tagPatch(key, { faecher })} />
+                    {faecherQuellen(key).length > 0 && (
+                      <Auswahl
+                        value=""
+                        onChange={(e) => e.target.value && faecherUebernehmen(key, e.target.value)}
+                        className="mt-2 h-7 text-[11.5px] text-tinte-3"
+                        title="Fächerliste eines anderen Schultags in diesen Tag kopieren"
+                      >
+                        <option value="">Fächer übernehmen von …</option>
+                        {faecherQuellen(key).map((q) => (
+                          <option key={`${q.profilId}|${q.key}`} value={`${q.profilId}|${q.key}`}>
+                            {q.label}
+                          </option>
+                        ))}
+                      </Auswahl>
+                    )}
+                  </>
                 )}
               </Panel>
             )
@@ -159,16 +211,82 @@ function ProfilFormular({ profil }) {
   )
 }
 
+/* -------------------- Zeiträume (Urlaub / Schulferien) -------------------- */
+
+function ZeitraumPanel() {
+  const { daten, zeitraumAnlegen, zeitraumAendern, zeitraumLoeschen } = useStore()
+
+  return (
+    <Panel className="flex shrink-0 flex-col gap-3 p-4">
+      <AbschnittTitel className="flex items-center gap-1.5">
+        <SunIcon size={13} /> Zeiträume (Urlaub / Ferien)
+      </AbschnittTitel>
+      {daten.zeitraeume.map((z) => (
+        <div key={z.id} className="flex flex-col gap-1.5 rounded-lg border border-white/[0.06] bg-einsatz/40 p-2.5">
+          <div className="flex items-center gap-1.5">
+            <Auswahl
+              value={z.typ}
+              onChange={(e) => zeitraumAendern(z.id, { typ: e.target.value })}
+              className="h-8 flex-1 text-[12.5px]"
+            >
+              <option value="urlaub">Urlaub</option>
+              <option value="ferien">Schulferien</option>
+            </Auswahl>
+            <IconKnopf titel="Zeitraum löschen" gefahr onClick={() => zeitraumLoeschen(z.id)}>
+              <XIcon size={13} />
+            </IconKnopf>
+          </div>
+          <Eingabe
+            value={z.label}
+            placeholder="Bezeichnung (optional)"
+            onChange={(e) => zeitraumAendern(z.id, { label: e.target.value })}
+            className="h-8 text-[12.5px]"
+          />
+          <div className="grid grid-cols-2 gap-1.5">
+            <Eingabe
+              type="date"
+              value={z.von}
+              onChange={(e) => zeitraumAendern(z.id, { von: e.target.value })}
+              className="h-8 text-[12px]"
+            />
+            <Eingabe
+              type="date"
+              value={z.bis}
+              onChange={(e) => zeitraumAendern(z.id, { bis: e.target.value })}
+              className="h-8 text-[12px]"
+            />
+          </div>
+        </div>
+      ))}
+      <Knopf groesse="sm" onClick={zeitraumAnlegen} className="w-fit">
+        <PlusIcon size={13} weight="bold" /> Zeitraum
+      </Knopf>
+      <p className="text-[11.5px] text-tinte-3">
+        Urlaub setzt leere Tage im Zeitraum automatisch auf „Urlaub" (auch in bestehenden Wochen).
+        Schulferien machen Schultage beim Anlegen neuer Wochen zu Betriebstagen.
+      </p>
+    </Panel>
+  )
+}
+
 /* ------------------------------- Ansicht ------------------------------- */
 
 export default function Profile() {
-  const { daten, profilAnlegen, einstellungenAendern } = useStore()
+  const { daten, profilAnlegen, profilDuplizieren, einstellungenAendern } = useStore()
   const [aktivId, setAktivId] = useState(daten.profile[0]?.id ?? null)
   const aktiv = daten.profile.find((p) => p.id === aktivId) ?? daten.profile[0]
+
+  // Warnungen zu Gültigkeitszeiträumen (Überlappungen, Lücken, fehlende Daten)
+  const warnungen = useMemo(() => pruefeProfile(daten.profile), [daten.profile])
 
   const neuesAnlegen = () => {
     const p = profilAnlegen()
     setAktivId(p.id)
+  }
+
+  const dupliziere = () => {
+    const kopie = profilDuplizieren(aktiv.id)
+    if (kopie) setAktivId(kopie.id)
   }
 
   return (
@@ -184,6 +302,23 @@ export default function Profile() {
           <PlusIcon size={15} weight="bold" /> Neues Profil
         </Knopf>
       </div>
+
+      {warnungen.length > 0 && (
+        <div className="px-8 pb-4">
+          <Panel className="border-entwurf/25 bg-entwurf/[0.05] px-4 py-3">
+            <div className="flex items-start gap-2.5">
+              <WarningIcon size={16} className="mt-0.5 shrink-0 text-entwurf" />
+              <div className="flex min-w-0 flex-col gap-1">
+                {warnungen.map((w, i) => (
+                  <span key={i} className="text-[12.5px] leading-snug text-tinte-2">
+                    {w}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </Panel>
+        </div>
+      )}
 
       <div className="grid min-h-0 flex-1 grid-cols-[280px_1fr] gap-5 px-8 pb-8">
         {/* Liste */}
@@ -243,12 +378,15 @@ export default function Profile() {
               Aktiviert in der Übersicht die Anzeige „Woche X von ca. Y".
             </p>
           </Panel>
+
+          {/* Urlaub / Schulferien — wirken auf Status bzw. Tag-Typ neuer Wochen */}
+          <ZeitraumPanel />
         </div>
 
         {/* Formular */}
         <div className="min-h-0 overflow-y-auto pr-1">
           {aktiv ? (
-            <ProfilFormular key={aktiv.id} profil={aktiv} />
+            <ProfilFormular key={aktiv.id} profil={aktiv} onDupliziert={dupliziere} />
           ) : (
             <Panel className="grid h-40 place-items-center text-[13px] text-tinte-3">
               Kein Profil vorhanden — leg eines an.

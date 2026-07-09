@@ -1,10 +1,21 @@
-// Einstellungen: Bereich „Aussehen" mit Farbthema-Auswahl.
+// Einstellungen: Aussehen (Farbthemen), Verhalten (Start-Ansicht), Textbausteine
+// (Autocomplete-Vorlagen), Datenablage und Tastaturkürzel-Referenz.
 // Jede Theme-Karte trägt selbst data-theme={id}; dadurch rendern ihre
 // Vorschau-Farben (bg-grund, bg-akzent …) automatisch im jeweiligen Theme —
 // ohne die Farbwerte in JS zu duplizieren.
-import { CheckIcon, PaletteIcon } from '@phosphor-icons/react'
-import { useStore } from '../store.jsx'
-import { AbschnittTitel, cx } from '../ui/basics.jsx'
+import { useState } from 'react'
+import {
+  CheckIcon,
+  PaletteIcon,
+  SlidersHorizontalIcon,
+  TextAaIcon,
+  FolderOpenIcon,
+  KeyboardIcon,
+  PlusIcon,
+  XIcon,
+} from '@phosphor-icons/react'
+import { useStore, api } from '../store.jsx'
+import { AbschnittTitel, Knopf, IconKnopf, Eingabe, Segment, Panel, cx } from '../ui/basics.jsx'
 
 // Reihenfolge + Beschriftung der Themes; die Farben stehen in index.css.
 export const THEMES = [
@@ -80,8 +91,72 @@ function ThemeKarte({ theme, aktiv, onWaehle }) {
   )
 }
 
-export default function Einstellungen() {
+/* ------------------------ Textbausteine (B2) ------------------------ */
+
+function TextbausteineEditor() {
   const { daten, einstellungenAendern } = useStore()
+  const bausteine = daten.einstellungen.textbausteine ?? []
+  const [neu, setNeu] = useState('')
+
+  const setzen = (liste) => einstellungenAendern({ textbausteine: liste })
+  const hinzufuegen = () => {
+    const text = neu.trim()
+    if (!text || bausteine.includes(text)) return
+    setzen([...bausteine, text])
+    setNeu('')
+  }
+
+  return (
+    <div className="flex max-w-2xl flex-col gap-1.5">
+      {bausteine.map((baustein, i) => (
+        <div key={i} className="group/baustein flex items-center gap-1">
+          <Eingabe
+            value={baustein}
+            onChange={(e) => setzen(bausteine.map((b, j) => (j === i ? e.target.value : b)))}
+            className="h-8 text-[12.5px]"
+          />
+          <IconKnopf
+            titel="Textbaustein entfernen"
+            gefahr
+            onClick={() => setzen(bausteine.filter((_, j) => j !== i))}
+            className="opacity-0 transition-opacity duration-150 group-focus-within/baustein:opacity-100 group-hover/baustein:opacity-100"
+          >
+            <XIcon size={13} />
+          </IconKnopf>
+        </div>
+      ))}
+      <div className="mt-1 flex items-center gap-1.5">
+        <Eingabe
+          value={neu}
+          placeholder="z. B. Bearbeitung von Support-Tickets im Bereich …"
+          onChange={(e) => setNeu(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && hinzufuegen()}
+          className="h-8 text-[12.5px]"
+        />
+        <Knopf groesse="sm" onClick={hinzufuegen} disabled={!neu.trim()}>
+          <PlusIcon size={13} weight="bold" /> Hinzufügen
+        </Knopf>
+      </div>
+    </div>
+  )
+}
+
+/* --------------------- Tastaturkürzel-Referenz --------------------- */
+
+const KUERZEL = [
+  ['Strg + 1 … 4', 'Übersicht · Editor · Profile · Einstellungen öffnen'],
+  ['Alt + ← / →', 'Vorherige / nächste Woche (im Editor)'],
+  ['Strg + Shift + 1 / 2 / 3', 'Block Betrieb / Unterweisungen / Berufsschule kopieren (im Editor)'],
+  ['Strg + N', 'Woche anlegen, falls sie noch fehlt (im Editor)'],
+  ['Enter', 'Neuer Stichpunkt unter dem aktuellen'],
+  ['Backspace (leerer Punkt)', 'Stichpunkt entfernen'],
+  ['↑ / ↓ (bei Vorschlägen)', 'Autocomplete-Vorschlag wählen, Enter übernimmt'],
+]
+
+/* ------------------------------ Ansicht ------------------------------ */
+
+export default function Einstellungen() {
+  const { daten, speicherPfad, einstellungenAendern } = useStore()
   const aktivTheme = daten.einstellungen.theme || 'nordlicht'
 
   return (
@@ -91,7 +166,7 @@ export default function Einstellungen() {
         <p className="mt-1 text-[13px] text-tinte-2">Aussehen und Verhalten der App anpassen.</p>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto px-8 pb-8">
+      <div className="flex min-h-0 flex-1 flex-col gap-8 overflow-y-auto px-8 pb-8">
         <section className="max-w-4xl">
           <AbschnittTitel className="mb-1 flex items-center gap-1.5">
             <PaletteIcon size={14} /> Aussehen
@@ -109,6 +184,75 @@ export default function Einstellungen() {
               />
             ))}
           </div>
+        </section>
+
+        <section className="max-w-4xl">
+          <AbschnittTitel className="mb-1 flex items-center gap-1.5">
+            <SlidersHorizontalIcon size={14} /> Verhalten
+          </AbschnittTitel>
+          <p className="mb-3 text-[12.5px] text-tinte-3">Mit welcher Ansicht die App startet.</p>
+          <Segment
+            optionen={[
+              { wert: 'uebersicht', label: 'Übersicht' },
+              { wert: 'editor', label: 'Aktuelle Woche (Editor)' },
+            ]}
+            wert={daten.einstellungen.startAnsicht ?? 'uebersicht'}
+            onWert={(startAnsicht) => einstellungenAendern({ startAnsicht })}
+          />
+        </section>
+
+        <section className="max-w-4xl">
+          <AbschnittTitel className="mb-1 flex items-center gap-1.5">
+            <TextAaIcon size={14} /> Textbausteine
+          </AbschnittTitel>
+          <p className="mb-3 text-[12.5px] text-tinte-3">
+            Wiederkehrende Formulierungen — sie erscheinen im Editor als Autocomplete-Vorschläge,
+            zusätzlich zu allen bereits geschriebenen Stichpunkten.
+          </p>
+          <TextbausteineEditor />
+        </section>
+
+        <section className="max-w-4xl">
+          <AbschnittTitel className="mb-1 flex items-center gap-1.5">
+            <FolderOpenIcon size={14} /> Daten
+          </AbschnittTitel>
+          <p className="mb-3 text-[12.5px] text-tinte-3">
+            Alle Berichte liegen in einer daten.json mit rollierenden Sicherungen (.bak1–.bak3).
+            Export/Import als zusätzliches Backup findest du in der Seitenleiste.
+          </p>
+          <Panel className="flex max-w-2xl items-center gap-3 px-4 py-3">
+            <div className="min-w-0 flex-1">
+              <div className="text-[12px] font-medium text-tinte-2">Speicherort</div>
+              <div className="tabellarisch truncate text-[12px] text-tinte-3" title={speicherPfad}>
+                {speicherPfad || '—'}
+              </div>
+            </div>
+            <Knopf groesse="sm" onClick={() => api.pfadOeffnen()}>
+              <FolderOpenIcon size={14} /> Ordner öffnen
+            </Knopf>
+          </Panel>
+        </section>
+
+        <section className="max-w-4xl">
+          <AbschnittTitel className="mb-1 flex items-center gap-1.5">
+            <KeyboardIcon size={14} /> Tastaturkürzel
+          </AbschnittTitel>
+          <Panel className="mt-2 max-w-2xl overflow-hidden">
+            {KUERZEL.map(([taste, wirkung], i) => (
+              <div
+                key={taste}
+                className={cx(
+                  'flex items-center gap-4 px-4 py-2',
+                  i > 0 && 'border-t border-white/[0.05]'
+                )}
+              >
+                <kbd className="tabellarisch shrink-0 rounded-md border border-white/[0.1] bg-einsatz/60 px-2 py-0.5 text-[11.5px] font-medium text-tinte-2">
+                  {taste}
+                </kbd>
+                <span className="text-[12.5px] text-tinte-3">{wirkung}</span>
+              </div>
+            ))}
+          </Panel>
         </section>
       </div>
     </div>
