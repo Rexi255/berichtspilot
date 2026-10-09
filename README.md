@@ -167,6 +167,8 @@ src/
   lib/model.js   # Profile, Wochen, Seed-Daten
   views/         # Übersicht · WochenEditor · Profile · Einstellungen
   ui/            # Titlebar, Sidebar, Design-System-Bausteine
+docs/            # Architektur, Datenmodell, Ausgabeformat, Entscheidungen, Plan
+CLAUDE.md        # Arbeitsanweisungen für KI-Assistenten (Claude Code)
 ```
 
 ## Technik & Sicherheit
@@ -179,15 +181,9 @@ src/
 
 ## Roadmap
 
-Ideen, die bewusst noch offen sind:
-
-- **Auto-Update** über GitHub Releases (electron-updater) für den NSIS-Installer.
-- **Light-Theme** + automatischer Wechsel nach Systemeinstellung.
-- **„Alle 3 Blöcke kopieren"** als Sammelaktion mit Kopier-Häkchen je Block.
-- **Gesamtexport** einer Woche bzw. des ganzen Berichtshefts als eine Datei/PDF.
-- **Einzelnen Tag aus der Vorwoche kopieren** (nicht nur die ganze Struktur).
-- **Zeichenzähler** in der Block-Vorschau (falls die IHK-Felder Limits haben).
-- **Erinnerung** am Freitag, wenn die aktuelle Woche noch Entwurf ist.
+Berichtspilot wird gerade zum (weitgehend) automatischen Berichtsheft ausgebaut:
+Spracheingabe, WebUntis-Import, KI-Formulierung und Eintragen ins IHK-Portal.
+Stand, Reihenfolge und offene Fragen: **[docs/PLAN.md](docs/PLAN.md)**.
 
 ## Beitragen
 

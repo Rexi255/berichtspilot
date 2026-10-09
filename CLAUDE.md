@@ -1,239 +1,113 @@
-# Prompt: Ausbildungsnachweis-Generator (IHK-Berichtsheft-Helfer)
+# Berichtspilot — Arbeitshandbuch für die KI
 
-Bau mir eine **portable Electron-Desktop-App**, die das wöchentliche Ausfüllen des
-digitalen IHK-Berichtshefts vereinfacht. Sie soll **modern und hochwertig** aussehen,
-wie eine echte native App — nicht wie ein 08/15-Web-Formular. Ich bin Azubi
-Fachinformatiker Systemintegration in Schleswig-Holstein.
+Electron-Desktop-App, die das wöchentliche IHK-Berichtsheft eines Azubis
+(Fachinformatiker Systemintegration, Schleswig-Holstein) erzeugt. Aktueller Stand:
+v1.2.0 (manuelle Eingabe → drei exakt formatierte Textblöcke zum Kopieren).
+**Ziel des laufenden Umbaus:** den Weg dorthin weitgehend automatisieren
+(Spracheingabe, WebUntis, KI-Formulierung, IHK-Portal) — siehe `docs/PLAN.md`.
 
-## Ziel
+## Zu Beginn JEDER Session
 
-Die App erzeugt pro Berichtswoche drei fertig formatierte Textblöcke, die ich 1:1 in
-die drei Eingabefelder des IHK-Berichtshefts kopiere:
+1. `docs/PLAN.md` lesen → Abschnitt **„Nächster Schritt"** und **„Offene Fragen"**.
+2. Nur die Doku lesen, die für die Aufgabe nötig ist (Tabelle unten).
+3. Ist der nächste Schritt unklar oder eine offene Frage blockiert → den Nutzer
+   fragen, nicht raten.
 
-1. **Betriebliche Tätigkeiten**
-2. **Unterweisungen, betrieblicher Unterricht, sonstige Schulungen**
-3. **Berufsschule (Unterrichtsthemen)**
+## Am Ende JEDER Session (vor dem Commit)
 
-Ich will nur noch die eigentlichen Tätigkeiten/Stichpunkte eintippen.
-Wochentag, Datum und Überschriften (z. B. „Mittwoch, den 21.05.2026:", „LF03:")
-werden automatisch bzw. aus einer konfigurierbaren Vorlage erzeugt.
+1. `npm run lint && npm test` müssen grün sein.
+2. `docs/PLAN.md` aktualisieren: Erledigtes abhaken, **„Nächster Schritt"** so
+   konkret neu schreiben, dass ein frischer Chat ohne Vorwissen weitermachen kann.
+3. Neue Architektur-/Technikentscheidung → Eintrag in `docs/ENTSCHEIDUNGEN.md`.
+4. Nutzerrelevante Änderung → `CHANGELOG.md` unter `## [Unreleased]`.
+5. Schema geändert → `docs/DATENMODELL.md` mitpflegen.
 
-Aktueller Ist-Zustand (den die App ersetzt): Ich tippe die Tätigkeiten manuell aus
-der Zeiterfassung und aus WebUntis in .txt-Dateien und kopiere den Inhalt dann ins
-IHK-Heft.
+Die Skills `/weiter` (nächsten Plan-Schritt umsetzen) und `/abschluss`
+(obige Checkliste + Commit/PR) bilden genau diesen Ablauf ab.
 
-## Tech-Stack
+## Wissensbasis
 
-- **Electron** als Shell. Frontend: **Vite + React + Tailwind CSS**, Animationen mit
-  **GSAP** (View-Transitions, Micro-Interactions) und **Lenis** (smooth scroll in
-  der Übersicht). Die komplette Fachlogik (Datum, Feiertage, Ausgabeformat) läuft im
-  Renderer/JS.
-- **Electron-Security korrekt aufsetzen:** `contextIsolation: true`,
-  `nodeIntegration: false`, `sandbox: true`, ein **preload.js** mit
-  `contextBridge.exposeInMainWorld` als schmale API. Datei-I/O passiert **nur im
-  Main-Prozess** und wird über IPC (`ipcMain.handle` / `ipcRenderer.invoke`)
-  angeboten. Strikte CSP im Renderer.
-- **Persistenz:** alle Daten (Konfiguration + sämtliche geschriebenen
-  Ausbildungsnachweise) in **einer `daten.json`**. Ablageort im Main-Prozess ermitteln:
-  1. Dev-Modus → Projekt-/CWD-Fallback.
-  2. Portabler Ort neben der Executable, **falls beschreibbar**
-     (`process.env.PORTABLE_EXECUTABLE_DIR` bei der Windows-portable-.exe bzw.
-     `path.dirname(process.env.APPIMAGE)` beim Linux-AppImage). Datei/Ordner
-     kopieren = Daten wandern mit.
-  3. Sonst (installiert oder Ort schreibgeschützt, z. B. `C:\Program Files`,
-     `/usr/bin`) → `app.getPath('userData')` — immer nutzerspezifisch beschreibbar,
-     kein Admin nötig.
-  **Sicher schreiben:** neue Daten erst in `daten.json.tmp` (mit `fsync`), dann atomar
-  umbenennen; vor dem Überschreiben rollierende Backups `daten.json.bak1`–`.bak3`
-  anlegen. Ist `daten.json` beim Laden beschädigt, automatisch das jüngste intakte
-  Backup verwenden.
-- Zusätzlich Export/Import der `daten.json` über einen nativen Dateidialog
-  (`dialog.showSaveDialog` / `showOpenDialog`) als Extra-Backup.
-- **Build mit electron-builder**, Targets: **Windows-Installer (NSIS)** und
-  zusätzlich **portable .exe** sowie **Linux AppImage**. Läuft auf Arch Linux und
-  einem Windows-Notebook.
-- **Feiertage komplett offline in JS berechnen** (keine API): feste Feiertage +
-  bewegliche über die Osterformel (Gauß), inkl. landesspezifischer Feiertage je
-  Bundesland. Default Schleswig-Holstein.
-- **Kopieren-Buttons** legen den jeweiligen Block über `navigator.clipboard.writeText`
-  in die Zwischenablage.
-- Oberfläche auf **Deutsch**.
+| Datei | Wann lesen |
+|---|---|
+| `docs/PLAN.md` | **immer** — Roadmap, nächster Schritt, offene Fragen |
+| `docs/ARCHITEKTUR.md` | Arbeit über Prozessgrenzen (Main ↔ Preload ↔ Renderer), neue IPC-Kanäle, Netzwerk |
+| `docs/DATENMODELL.md` | Änderungen an `daten.json`, Profilen, Wochen, Migration |
+| `docs/AUSGABEFORMAT.md` | alles, was die drei Ausgabeblöcke berührt |
+| `docs/ENTSCHEIDUNGEN.md` | bevor eine grundlegende Entscheidung (neu) getroffen wird |
+| `docs/archiv/ursprungsauftrag.md` | nur historisch — der ursprüngliche Bauauftrag (v1.0) |
 
-### Projektstruktur (Vorschlag)
+Ordnerspezifische Regeln stehen in `electron/CLAUDE.md` und `src/lib/CLAUDE.md`.
 
-```
-package.json            (scripts: dev, build; electron-builder config)
-electron/
-  main.js               (Fenster, IPC, Datei-I/O, Ablageort + sicheres Speichern)
-  preload.js            (contextBridge-API: load/save/exportData/importData)
-src/
-  App.jsx
-  views/                (Uebersicht, WochenEditor, Profile)
-  lib/dates.js          (Wochentag/Datum, Kalenderwoche)
-  lib/holidays.js       (Feiertage je Bundesland, Osterformel)
-  lib/format.js         (Erzeugung der 3 Ausgabeblöcke)
-  ui/                   (Titlebar, Sidebar, Komponenten)
+## Befehle
+
+```bash
+npm ci                 # Abhängigkeiten (Cloud: ELECTRON_SKIP_BINARY_DOWNLOAD=1 davor)
+npm test               # Vitest — reine Logik in src/lib (schnell, <1 s)
+npm run lint           # ESLint (CI-Pflicht)
+npm run build:renderer # Vite-Build — prüft, dass der Renderer kompiliert
+npm run dev            # Vite + Electron mit Hot-Reload (braucht Display)
+electron . --screenshot=shot.png [--view=editor|profile|einstellungen]  # UI-Check headless
 ```
 
-## Look & Feel (wichtig)
+CI (`.github/workflows/ci.yml`) führt Lint + Tests bei jedem PR aus.
+Release: Tag `vX.Y.Z` pushen → `.github/workflows/release.yml` baut NSIS + portable
+.exe + AppImage.
 
-- **Rahmenloses Fenster** (`frame: false`) mit **eigener Titlebar** inkl.
-  Fenstersteuerung (Minimieren/Maximieren/Schließen) — echter App-Charakter.
-- **Dark Mode** als Default, moderne Typografie (z. B. Inter), klare Akzentfarbe,
-  dezente Glass-/Blur-Effekte, weiche Schatten, abgerundete Ecken.
-- **Sidebar-Navigation:** Übersicht · Woche bearbeiten · Profile.
-- Flüssige Übergänge zwischen Views (GSAP), spürbare aber dezente Micro-Interactions
-  (Buttons, Statuswechsel, Stichpunkt hinzufügen/löschen).
-- Eigenständiges, konsistentes Design-System — bewusst gestaltet, keine Default-
-  Bootstrap-/Framework-Optik.
-
-## Konfiguration (pro Halbjahr anpassbar)
-
-Meine Berufsschul- und Betriebstage ändern sich mit jedem Halbjahr. Es muss also
-mehrere „Profile" geben, und die App zieht anhand des Wochendatums automatisch das
-passende Profil. Ein Profil enthält:
-
-- `bundesland` (Default: Schleswig-Holstein) — steuert die Feiertagsberechnung
-- `gueltigVon` / `gueltigBis` (Datumsbereich des Halbjahrs)
-- `wochentage`: für jeden Wochentag (Mo–Fr, optional Sa) ein Typ:
-  - `betrieb` → landet im Block **Betriebliche Tätigkeiten**
-  - `schule`  → landet im Block **Berufsschule**
-  - `frei`    → wird ignoriert
-- Für **Schultage**: pro Wochentag eine geordnete, frei editierbare Liste von
-  Fächern/Lernfeldern (z. B. Mo: LF02, LF03, Englisch, WiPo — Di: LF04, LF05).
-  Labels frei benennbar (LF-Nummern wechseln je Halbjahr).
-- Für **Betriebstage**: Standard-Anzahl leerer Stichpunkte als Startvorlage (z. B. 2).
-- Optional `ausbildungVon` / `ausbildungBis` (für die Fortschrittsanzeige).
-
-Beispiel für den Halbjahreswechsel aus meinen echten Daten:
-- Halbjahr A: Mo = Schule, Di–Fr = Betrieb
-- Halbjahr B: Mo + Di = Schule, Mi–Fr = Betrieb
-
-## Übersicht / Fortschritt (Startbildschirm)
-
-- Liste **aller** bisher geschriebenen Berichtswochen, chronologisch, mit
-  Kalenderwoche + Datumsbereich und Status (**Entwurf** / **Fertig**).
-- Aktuelle Woche hervorgehoben; Klick öffnet sie im Editor (ansehen + bearbeiten).
-- Kurze Fortschrittszeile, z. B. „14 Wochen dokumentiert · 2 Entwürfe offen".
-  Falls `ausbildungVon`/`ausbildungBis` gesetzt: zusätzlich „Woche X von ca. Y".
-- Buttons „Neue Woche anlegen" und „Struktur der Vorwoche übernehmen"
-  (leere Kopie der letzten Wochenstruktur).
-
-## Wochen-Editor (Hauptworkflow)
-
-1. Berichtswoche über Kalenderwoche oder Montags-Startdatum wählen/anlegen. App wählt
-   automatisch das passende Profil anhand des Datums.
-2. Für jeden konfigurierten Wochentag werden konkretes Datum und deutscher
-   Wochentagsname berechnet.
-3. Feiertage im gewählten Bundesland werden automatisch erkannt, der Tag als
-   „Feiertag: <Name>" markiert (keine Stichpunkte nötig).
-4. Pro Tag ein Status: **Normal / Feiertag (auto) / Krank / Urlaub**.
-   - Krank → Ausgabe „Krankheitstag"
-   - Feiertag → „Feiertag: <Name>"
-5. Eingabe:
-   - Betriebstage: unter der Auto-Überschrift beliebig viele Stichpunkte
-     (hinzufügen / löschen / verschieben).
-   - Schultage: pro Fach/LF eigene Stichpunkte.
-   - Unterweisungen: ein freies Textfeld (meist leer).
-6. **Bearbeiten:** jede gespeicherte Woche (auch alte) jederzeit wieder öffnen,
-   ändern, neu speichern und neu kopieren. Status Entwurf ↔ Fertig umschaltbar.
-   Speichern schreibt sofort in `daten.json`.
-
-## Ausgabe — EXAKTES Format ist Pflicht
-
-Drei Textbereiche mit je einem „Kopieren"-Button. Das Format muss exakt den
-folgenden Beispielen (aus echten Berichten) entsprechen.
-
-### Block 1 — Betriebliche Tätigkeiten
-
-Header `<Wochentag>, den TT.MM.JJJJ:`, darunter Bullets `- …`, eine Leerzeile
-zwischen den Tagen:
+## Projektkarte
 
 ```
-Dienstag, den 20.01.2026:
-- Fehlerdiagnose bei DHCP-Zuweisungsproblemen und Behebung von lokalen Netzwerkstörungen an mobilen Endgeräten.
-- Verwaltung von WLAN-Zugangsdaten für Gäste sowie Bearbeitung von Support-Tickets im Bereich Telefonie
-
-Mittwoch, den 21.01.2026:
-- Aufbau und Inbetriebnahme eines neuen Mitarbeiter-Arbeitsplatzes inklusive Monitor-Setup und abschließendem Funktionstest der gesamten Peripherie
-- Durchführung von Patch-Arbeiten an der Netzwerkdose sowie Konfiguration der zugehörigen Switch-Ports
+electron/main.js     Fenster, Ablageort daten.json, atomares Speichern + Backups, alle IPC-Handler
+electron/preload.js  contextBridge → window.api (einzige Brücke zum Renderer)
+src/store.jsx        zentraler Zustand (React Context), Autosave 400 ms, alle Mutationen
+src/lib/             REINE Logik, voll getestet: dates · holidays · format · model
+src/views/           Uebersicht · WochenEditor · Profile · Einstellungen
+src/ui/              Design-System: Titlebar, Sidebar, basics, toast, Logo
+src/index.css        Tailwind v4 + Design-Tokens/Themes (data-theme am <html>)
+docs/                Wissensbasis (s. o.)
 ```
 
-Feiertag/Krank statt Bullets — nur die Statuszeile:
+## Harte Regeln (nie brechen)
 
-```
-Freitag, den 01.05.2026:
-- Feiertag: Tag der Arbeit
-```
+1. **Ausgabeformat ist heilig.** `src/lib/format.js` muss exakt `docs/AUSGABEFORMAT.md`
+   entsprechen (Leerzeilen-Regeln!). `src/lib/format.test.js` enthält echte IHK-Beispiele
+   — diese Tests nie anpassen, damit sie grün werden.
+2. **Keine Datenverluste.** `daten.json` enthält das komplette Berichtsheft des
+   Nutzers. Schemaänderung ⇒ `DATEN_VERSION` erhöhen + Migration in `migriereDaten()`
+   + Test. Atomares Schreiben/Backups in `electron/main.js` nicht aufweichen.
+3. **Electron-Security.** `contextIsolation: true`, `nodeIntegration: false`,
+   `sandbox: true`, strikte CSP. Renderer bekommt nie Node/`fs`/Netzwerk direkt —
+   alles über einen benannten IPC-Kanal in `preload.js`.
+4. **Netzwerk nur im Main-Prozess**, nur zu ausdrücklich erlaubten Zielen
+   (s. `docs/ARCHITEKTUR.md`). Die CSP des Renderers bleibt ohne externe Hosts.
+5. **Geheimnisse** (API-Keys, Passwörter, Tokens) **nie in `daten.json`** und nie im
+   Repo — nur verschlüsselt über Electron `safeStorage` in einer separaten Datei.
+   Grund: `daten.json` wird exportiert/geteilt.
+6. **Kundendaten-Schutz.** Texte, die die App verlassen (z. B. an eine KI-API),
+   vorher vom Nutzer sichtbar prüfen lassen; keine stillen Uploads.
+7. **Datum:** ISO-Strings `YYYY-MM-DD`, immer lokal parsen über `parseISO()` —
+   nie `new Date('YYYY-MM-DD')` (UTC-Versatz).
+8. **„Easy to use" bleibt Produktprinzip:** herunterladen → installieren → läuft.
+   Keine Pflicht-Zusatzinstallationen (Python, Docker, Ollama …) für Kernfunktionen.
 
-### Block 2 — Unterweisungen, betrieblicher Unterricht
+## Code-Konventionen
 
-Freier Text, meist leer.
+- 2 Leerzeichen, **keine Semikolons**, einfache Anführungszeichen.
+- **Deutsche Bezeichner, Kommentare und UI-Texte** (`wocheAnlegen`, `feiertagAm`).
+  Umlaute in Bezeichnern ausschreiben (`ae`, `oe`, `ue`, `ss`).
+- Zentrale Logik knapp kommentieren (warum, nicht was) — Ton der bestehenden Dateien.
+- Neue Fachlogik als reine Funktion in `src/lib/` + Vitest-Test daneben (`*.test.js`).
+- State-Änderungen immer immutabel über Mutationen in `src/store.jsx`.
+- Design: bestehende Komponenten aus `src/ui/basics.jsx` und Tokens aus
+  `src/index.css` nutzen; keine neuen UI-Frameworks.
 
-### Block 3 — Berufsschule (Unterrichtsthemen)
+## Git-Workflow
 
-Header, Leerzeile, dann je Fach `<Label>:` mit Bullets, eine Leerzeile zwischen
-Fächern, **zwei** Leerzeilen zwischen den Tagen:
+- Arbeit auf Feature-Branch, Abgabe als **Pull Request** gegen `main`; CI muss grün sein.
+- Commit-Messages auf Deutsch, Präfix nach Conventional Commits
+  (`feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:`).
+- Kleine, in sich fertige Schritte — lieber ein PR pro Plan-Schritt.
 
-```
-Montag, den 20.04.2026:
+## Nutzer
 
-LF02:
-- Wirtschaftssektoren
-- Tarifverträge
-- Betriebsrat
-
-LF03:
-- Server und Clients: Arbeiten mit Cisco PacketTracer
-
-Englisch:
-- Installing GUI components, explaining smartphone functions
-
-WiPo:
-- Nutzwertanalyse
-- Übungsaufgabe
-
-
-Dienstag, den 21.04.2026:
-
-LF04:
-- Klassenarbeit LF4
-
-LF05:
-- Weiterarbeit an Projekt (automatisierte Datenextraktion)
-```
-
-## Zusätzlich
-
-- Export der drei Blöcke optional auch als einzelne .txt-Dateien.
-- Kompakte, aufgeräumte UI. Klare Trennung: Übersicht/Fortschritt ·
-  Woche bearbeiten · Profile/Halbjahre verwalten.
-
-## Abnahmekriterien
-
-- Datumsberechnung korrekt (Wochentag ↔ Datum), Feiertage für Schleswig-Holstein
-  inkl. beweglicher (Karfreitag, Ostermontag, Christi Himmelfahrt, Pfingstmontag)
-  stimmen.
-- Kopieren-Buttons liefern **exakt** das gezeigte Zielformat (inkl. Leerzeilen-
-  Regeln).
-- Konfiguration pro Halbjahr getrennt speicherbar; je nach Wochendatum wird das
-  richtige Profil gezogen.
-- Alle geschriebenen Nachweise bleiben in `daten.json` erhalten, sind in der
-  Übersicht gelistet und jederzeit editierbar.
-- `daten.json` liegt bei der installierten App im nutzereigenen Datenordner (immer
-  beschreibbar, auch unter `C:\Program Files`/`/usr/bin`), in der portablen Version
-  neben der Executable (Kopieren auf anderen Rechner → Daten da). Speichern ist
-  atomar + `fsync`-abgesichert; rollierende `.bak1`–`.bak3`-Backups verhindern
-  Datenverlust und werden bei beschädigter Hauptdatei automatisch wiederhergestellt.
-- Baut per electron-builder zu Windows-Installer (NSIS) + portable .exe und Linux
-  AppImage.
-- Electron-Security-Vorgaben eingehalten (contextIsolation, kein nodeIntegration im
-  Renderer, preload-Bridge, IPC-basiertes Datei-I/O, CSP).
-
-## Vorgehen
-
-Frag nur nach, wenn wirklich etwas unklar ist. Bau in kleinen Schritten: erst
-Grundgerüst (Fenster, Titlebar, Navigation, Persistenz), dann Profile, dann
-Wochen-Editor, dann Ausgabe/Format, zuletzt der Feinschliff bei Look & Animationen.
-Kommentiere zentrale Logik (Datum, Feiertage, Ausgabeformat, portabler Basispfad,
-IPC/preload) knapp, damit ich es nachvollziehen kann.
+Azubi FISI (seit 2025), arbeitet unter Arch Linux und Windows. Kommunikation auf
+Deutsch. Technisches Vorwissen vorhanden — Erklärungen dürfen fachlich sein.

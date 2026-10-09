@@ -16,6 +16,9 @@ daten.json.bak*
 /Claude Vorgaben/
 Berichtsheft.lnk
 
+# Claude Code: persönliche lokale Einstellungen
+.claude/settings.local.json
+
 # Logs
 *.log
 npm-debug.log*

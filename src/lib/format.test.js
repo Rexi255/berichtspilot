@@ -1,5 +1,5 @@
 // Absicherung des EXAKTEN Ausgabeformats (Abnahmekriterium): die Beispiele
-// stammen 1:1 aus der Spezifikation (CLAUDE.md) bzw. echten IHK-Berichten.
+// stammen 1:1 aus der Spezifikation (docs/AUSGABEFORMAT.md) bzw. echten IHK-Berichten.
 import { describe, it, expect } from 'vitest'
 import { formatBetrieb, formatBerufsschule, formatUnterweisungen, tagesHeader } from './format.js'
 

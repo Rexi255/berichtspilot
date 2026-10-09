@@ -14,6 +14,15 @@ npm install
 npm run dev
 ```
 
+## Doku & Plan
+
+- **[docs/PLAN.md](docs/PLAN.md)** — aktueller Umbau, nächster Schritt, offene Fragen
+- **[docs/ARCHITEKTUR.md](docs/ARCHITEKTUR.md)** — Prozesse, IPC-Kanäle, Netzwerk
+- **[docs/DATENMODELL.md](docs/DATENMODELL.md)** — Aufbau der `daten.json`, Migration
+- **[docs/AUSGABEFORMAT.md](docs/AUSGABEFORMAT.md)** — verbindliches Zielformat
+- **[docs/ENTSCHEIDUNGEN.md](docs/ENTSCHEIDUNGEN.md)** — Entscheidungs-Log
+- **[CLAUDE.md](CLAUDE.md)** — Regeln und Ablauf für KI-Assistenten (gelten sinngemäß für alle)
+
 ## Codestil
 
 Der Code hält sich bewusst an ein paar einfache Konventionen:
@@ -28,7 +37,7 @@ Der Code hält sich bewusst an ein paar einfache Konventionen:
 ## Worauf man achten sollte
 
 - **Ausgabeformat** (`src/lib/format.js`) muss exakt bleiben — inkl. der
-  Leerzeilen-Regeln (siehe README). Änderungen hier bitte an Beispielen prüfen.
+  Leerzeilen-Regeln (siehe `docs/AUSGABEFORMAT.md`). Änderungen hier bitte an Beispielen prüfen.
 - **Feiertage** (`src/lib/holidays.js`): Neue/geänderte Feiertage mit dem jeweiligen
   Bundesland belegen. Bewegliche Feiertage leiten sich vom Ostersonntag ab.
 - **Datum** (`src/lib/dates.js`): ISO-Strings werden bewusst als *lokale* Daten

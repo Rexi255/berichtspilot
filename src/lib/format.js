@@ -1,5 +1,5 @@
 // Erzeugung der drei Ausgabeblöcke — das Format ist Pflicht und muss exakt
-// den echten IHK-Berichten entsprechen (siehe CLAUDE.md / Beispieldaten).
+// den echten IHK-Berichten entsprechen (Spezifikation: docs/AUSGABEFORMAT.md).
 import { formatDE, wochentagName } from './dates.js'
 
 /** "Mittwoch, den 21.01.2026:" */

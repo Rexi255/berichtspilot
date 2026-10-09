@@ -4,6 +4,16 @@ Alle nennenswerten Änderungen an diesem Projekt werden hier dokumentiert.
 Das Format orientiert sich an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 die Versionierung an [Semantic Versioning](https://semver.org/lang/de/).
 
+## [Unreleased]
+
+### Geändert
+
+- **Projektstruktur für KI-gestützte Entwicklung:** `CLAUDE.md` ist jetzt ein
+  Arbeitshandbuch (statt des ursprünglichen Bauauftrags, archiviert unter
+  `docs/archiv/`), neue Wissensbasis in `docs/` (Architektur, Datenmodell,
+  Ausgabeformat, Entscheidungen, Umbau-Plan), Claude-Code-Skills `/weiter` und
+  `/abschluss` sowie ein SessionStart-Hook für Cloud-Sessions.
+
 ## [1.2.0] - 2026-07-09
 
 ### Hinzugefügt
