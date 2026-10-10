@@ -6,6 +6,13 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- **Notes per day:** every day in the week editor has a collapsible "Notizen"
+  field for raw text (e.g. dictated or quick keywords). Notes never appear in
+  the output blocks but are included in the overview search. Schema v4 adds the
+  field automatically to all existing weeks.
+
 ### Changed
 
 - **Project structure for AI-assisted development:** `CLAUDE.md` is now a working

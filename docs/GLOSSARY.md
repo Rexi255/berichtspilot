@@ -39,7 +39,7 @@ names consistently. Add new terms here before using them.
 | Einstellungen | `settings` | |
 | Start-Ansicht | `startView` | |
 | Lücke (fehlende Woche) | gap / `missingWeeks` | |
-| Notizen (Rohtext) | `notes` | raw text per day (dictation), planned schema v4 |
+| Notizen (Rohtext) | `notes` | raw text per day (dictation/AI input), schema v4; never in the output |
 | Diktat / Spracheingabe | dictation / speech input | |
 | Zeiterfassung | time tracking | |
 

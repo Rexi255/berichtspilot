@@ -154,3 +154,18 @@ describe('formatInstructions (block 2)', () => {
     expect(formatInstructions({})).toBe('')
   })
 })
+
+describe('notes (raw text)', () => {
+  it('never appear in any output block', () => {
+    const week = {
+      instructions: '',
+      days: [
+        { ...workDay('2026-01-20', ['Ticket bearbeitet']), notes: 'GEHEIMER ROHTEXT' },
+        { ...schoolDay('2026-01-19', [{ label: 'LF02', bullets: ['Inhalt'] }]), notes: 'GEHEIMER ROHTEXT' },
+      ],
+    }
+    for (const text of [formatWork(week), formatSchool(week), formatInstructions(week)]) {
+      expect(text).not.toContain('GEHEIMER ROHTEXT')
+    }
+  })
+})

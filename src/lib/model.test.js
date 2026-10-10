@@ -92,10 +92,10 @@ const v2File = () => ({
 })
 
 describe('migrateData', () => {
-  it('migrates a full v2 file to v3 with English names and values', () => {
+  it('migrates a full v2 file to the current version with English names and values', () => {
     const d = migrateData(v2File())
     expect(d.version).toBe(DATA_VERSION)
-    expect(DATA_VERSION).toBe(3)
+    expect(DATA_VERSION).toBe(4)
 
     expect(d.settings).toEqual({
       trainingStart: '2025-08-01',
@@ -137,13 +137,14 @@ describe('migrateData', () => {
           type: 'school',
           status: 'normal',
           holidayName: null,
+          notes: '',
           bullets: ['', ''],
           subjects: [{ label: 'LF02', bullets: ['Tarifverträge'] }],
         },
-        { date: '2026-04-28', type: 'school', status: 'sick', holidayName: null, bullets: [], subjects: [] },
-        { date: '2026-04-29', type: 'work', status: 'vacation', holidayName: null, bullets: [''], subjects: [] },
-        { date: '2026-04-30', type: 'work', status: 'normal', holidayName: null, bullets: ['Switch-Ports konfiguriert'], subjects: [] },
-        { date: '2026-05-01', type: 'work', status: 'holiday', holidayName: 'Tag der Arbeit', bullets: [''], subjects: [] },
+        { date: '2026-04-28', type: 'school', status: 'sick', holidayName: null, notes: '', bullets: [], subjects: [] },
+        { date: '2026-04-29', type: 'work', status: 'vacation', holidayName: null, notes: '', bullets: [''], subjects: [] },
+        { date: '2026-04-30', type: 'work', status: 'normal', holidayName: null, notes: '', bullets: ['Switch-Ports konfiguriert'], subjects: [] },
+        { date: '2026-05-01', type: 'work', status: 'holiday', holidayName: 'Tag der Arbeit', notes: '', bullets: [''], subjects: [] },
       ],
     })
     expect(d.weeks[1]).toEqual({ id: '2026-05-04', status: 'draft', instructions: '', days: [] })
@@ -166,7 +167,7 @@ describe('migrateData', () => {
     }
   })
 
-  it('migrates v1 all the way to v3 and fills new fields', () => {
+  it('migrates v1 all the way to the current version and fills new fields', () => {
     const v1 = {
       version: 1,
       einstellungen: { theme: 'graphit', ausbildungVon: '', ausbildungBis: '' },
@@ -187,9 +188,34 @@ describe('migrateData', () => {
     expect(migrateData({ profile: [], wochen: [] }).version).toBe(DATA_VERSION)
   })
 
-  it('leaves v3 data unchanged', () => {
-    const seed = seedData()
+  it('leaves current data unchanged', () => {
+    const seed = { ...seedData(), weeks: [newWeek('2026-04-20', [profileWith({})])] }
     expect(migrateData(seed)).toEqual(seed)
+  })
+
+  it('v3 -> v4 adds empty notes to every day and keeps existing ones', () => {
+    const v3 = {
+      version: 3,
+      settings: {},
+      periods: [],
+      profiles: [],
+      weeks: [
+        {
+          id: '2026-04-20',
+          status: 'draft',
+          instructions: '',
+          days: [
+            { date: '2026-04-20', type: 'work', status: 'normal', holidayName: null, bullets: ['x'], subjects: [] },
+            { date: '2026-04-21', type: 'work', status: 'normal', holidayName: null, notes: 'schon da', bullets: [], subjects: [] },
+          ],
+        },
+      ],
+    }
+    const d = migrateData(v3)
+    expect(d.version).toBe(4)
+    expect(d.weeks[0].days.map((day) => day.notes)).toEqual(['', 'schon da'])
+    expect(d.weeks[0].days[0].bullets).toEqual(['x'])
+    expect(() => validateData(d)).not.toThrow()
   })
 
   it('keeps unknown enum values instead of dropping them', () => {
@@ -235,6 +261,9 @@ describe('validateData', () => {
     expect(() => validateData({ profiles: [], weeks: [{ id: 'kein-datum', days: [] }] })).toThrow(/Woche/)
     expect(() =>
       validateData({ profiles: [], weeks: [{ id: '2026-07-06', days: [{ date: 'x' }] }] })
+    ).toThrow(/Tag/)
+    expect(() =>
+      validateData({ profiles: [], weeks: [{ id: '2026-07-06', days: [{ date: '2026-07-06', notes: 42 }] }] })
     ).toThrow(/Tag/)
   })
 })
@@ -321,13 +350,15 @@ describe('newWeek / weekFromTemplate', () => {
     expect(week.days.map((d) => d.type)).toEqual(['school', 'work', 'work', 'work', 'work'])
     expect(week.days[0].subjects).toEqual([{ label: 'LF02', bullets: [''] }])
     expect(week.days[1].bullets).toEqual(['', ''])
+    expect(week.days.every((d) => d.notes === '')).toBe(true)
   })
 
   it('copies the structure of a previous week with empty bullets', () => {
     const template = newWeek('2026-04-20', [profileWith({})])
     template.days[0].subjects[0].bullets = ['Inhalt']
+    template.days[0].notes = 'Rohtext'
     const week = weekFromTemplate('2026-04-27', template, [profileWith({})])
-    expect(week.days[0]).toMatchObject({ date: '2026-04-27', type: 'school', subjects: [{ label: 'LF02', bullets: [''] }] })
+    expect(week.days[0]).toMatchObject({ date: '2026-04-27', type: 'school', notes: '', subjects: [{ label: 'LF02', bullets: [''] }] })
     expect(week.days[4]).toMatchObject({ date: '2026-05-01', status: 'holiday', holidayName: 'Tag der Arbeit' })
   })
 })

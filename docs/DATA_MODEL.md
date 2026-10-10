@@ -1,6 +1,6 @@
 # Data model — `daten.json`
 
-Current schema version: **3** (`DATA_VERSION` in `src/lib/model.js`).
+Current schema version: **4** (`DATA_VERSION` in `src/lib/model.js`).
 One JSON file holds the configuration **and** every training week. It is also the
 export/backup format. The file name stays German (`daten.json`) for compatibility
 with existing installations (DECISIONS E-014); all field names are English.
@@ -9,7 +9,7 @@ with existing installations (DECISIONS E-014); all field names are English.
 
 ```jsonc
 {
-  "version": 3,
+  "version": 4,
   "settings": {
     "trainingStart": "2025-08-01",   // optional; progress line + gap detection
     "trainingEnd": "2028-07-31",
@@ -47,6 +47,7 @@ with existing installations (DECISIONS E-014); all field names are English.
           "type": "work" | "school",
           "status": "normal" | "holiday" | "sick" | "vacation",
           "holidayName": null,       // set when status = holiday
+          "notes": "",               // raw text (dictation/AI input) — never in the output
           "bullets": ["…"],          // used when type = work
           "subjects": [{ "label": "LF02", "bullets": ["…"] }]  // used when type = school
         }
@@ -75,6 +76,7 @@ with existing installations (DECISIONS E-014); all field names are English.
 |---|---|
 | 1 → 2 | added `zeitraeume: []`, `einstellungen.startAnsicht`, `einstellungen.textbausteine` |
 | 2 → 3 | all field names and enum values German → English (full mapping in `GLOSSARY.md`) |
+| 3 → 4 | `notes: ''` added to every day (existing values kept) |
 
 Versions newer than `DATA_VERSION` are **rejected** (downgrade protection: otherwise
 autosave would overwrite the file with an older structure).

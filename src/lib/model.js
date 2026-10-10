@@ -7,7 +7,7 @@ export const DAY_STATUSES = ['normal', 'holiday', 'sick', 'vacation']
 
 // Current schema version of daten.json. Older files are upgraded on load/import
 // via migrateData(); newer ones are rejected (downgrade protection).
-export const DATA_VERSION = 3
+export const DATA_VERSION = 4
 
 let idCounter = 0
 export const newId = (prefix) =>
@@ -161,6 +161,17 @@ function migrateV2toV3(d) {
   return out
 }
 
+/** Schema v3 -> v4: raw `notes` per day (dictation/AI input, never in the output). */
+function migrateV3toV4(d) {
+  const out = { ...d, version: 4 }
+  out.weeks = mapList(d.weeks, (w) =>
+    isObject(w)
+      ? { ...w, days: mapList(w.days, (day) => (isObject(day) ? { notes: '', ...day } : day)) }
+      : w
+  )
+  return out
+}
+
 /**
  * Upgrade older daten.json files to the current schema version.
  * Throws for a file from a NEWER app version (downgrade protection).
@@ -179,6 +190,7 @@ export function migrateData(raw) {
     d.version = 2
   }
   if (d.version < 3) d = migrateV2toV3(d)
+  if (d.version < 4) d = migrateV3toV4(d)
 
   // Defensive defaults in case single fields are missing (e.g. hand-edited file)
   d.periods ??= []
@@ -216,7 +228,8 @@ export function validateData(d) {
     }
     for (const day of w.days) {
       if (!isObject(day) || !IS_ISO_DATE.test(day.date ?? '') ||
-          !Array.isArray(day.bullets ?? []) || !Array.isArray(day.subjects ?? [])) {
+          !Array.isArray(day.bullets ?? []) || !Array.isArray(day.subjects ?? []) ||
+          (day.notes !== undefined && typeof day.notes !== 'string')) {
         fail(`Die Woche ab ${w.id} enthält einen unvollständigen Tag.`)
       }
     }
@@ -281,6 +294,7 @@ export function newWeek(mondayISO, profiles, periods = []) {
       type,
       status,
       holidayName,
+      notes: '',
       bullets: Array.from({ length: count }, () => ''),
       subjects: type === 'school' ? (config.subjects ?? []).map((label) => ({ label, bullets: [''] })) : [],
     })
@@ -311,6 +325,7 @@ export function weekFromTemplate(mondayISO, template, profiles, periods = []) {
       type,
       status,
       holidayName,
+      notes: '',
       bullets: Array.from({ length: count }, () => ''),
       subjects: type === 'school' ? old.subjects.map((s) => ({ label: s.label, bullets: [''] })) : [],
     }

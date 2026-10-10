@@ -15,6 +15,7 @@ import {
   DotsSixVerticalIcon,
   CalendarPlusIcon,
   ClipboardTextIcon,
+  NotePencilIcon,
 } from '@phosphor-icons/react'
 import { useStore, api } from '../store.jsx'
 import { Button, IconButton, Input, TextArea, Segment, Panel, Pill, SectionTitle, cx } from '../ui/basics.jsx'
@@ -257,6 +258,10 @@ function BulletList({ bullets, onChange, placeholder, suggestions = [] }) {
 /* -------------------------------- Day card -------------------------------- */
 
 function DayCard({ day, onChange, suggestions }) {
+  // Raw notes (e.g. dictated) are collapsed unless they already have content
+  const hasNotes = Boolean(day.notes?.trim())
+  const [notesOpen, setNotesOpen] = useState(hasNotes)
+
   const statusText = {
     holiday: day.holidayName ? `Feiertag: ${day.holidayName}` : 'Feiertag',
     sick: 'Krankheitstag',
@@ -272,11 +277,26 @@ function DayCard({ day, onChange, suggestions }) {
   return (
     // no overflow-hidden: the autocomplete dropdown reaches over the card edge
     <Panel data-daycard className="shrink-0">
-      <div className="flex flex-wrap items-center gap-2 border-b border-white/[0.05] px-4 py-2.5">
-        <div className="mr-auto flex items-baseline gap-2">
+      <div className="flex flex-wrap items-center gap-1.5 border-b border-white/[0.05] px-4 py-2">
+        {/* date below the weekday keeps the header on one line next to the controls */}
+        <div className="mr-auto flex flex-col leading-tight">
           <span className="text-[14px] font-semibold">{weekdayName(day.date)}</span>
-          <span className="text-[12px] text-ink-3 tabular-nums">{formatDE(day.date)}</span>
+          <span className="text-[11.5px] text-ink-3 tabular-nums">{formatDE(day.date)}</span>
         </div>
+        <button
+          type="button"
+          onClick={() => setNotesOpen((open) => !open)}
+          aria-expanded={notesOpen}
+          title="Notizen — Rohtext zu diesem Tag (erscheint nicht in der Ausgabe)"
+          aria-label="Notizen"
+          className={cx(
+            'relative grid h-7 w-7 shrink-0 place-items-center rounded-md transition-colors duration-150',
+            notesOpen ? 'bg-white/[0.07] text-ink' : 'text-ink-3 hover:bg-white/[0.05] hover:text-ink-2'
+          )}
+        >
+          <NotePencilIcon size={15} />
+          {hasNotes && <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-accent" />}
+        </button>
         <Segment
           size="sm"
           options={[
@@ -288,6 +308,18 @@ function DayCard({ day, onChange, suggestions }) {
         />
         <Segment size="sm" options={STATUS_OPTIONS} value={day.status} onChange={setStatus} />
       </div>
+
+      {notesOpen && (
+        <div className="border-b border-white/[0.05] bg-inset/20 px-4 py-2.5">
+          <TextArea
+            rows={3}
+            value={day.notes ?? ''}
+            placeholder="Rohnotizen, z. B. diktiert — landen nicht in der Ausgabe."
+            onChange={(e) => onChange({ ...day, notes: e.target.value })}
+            className="text-[12.5px]"
+          />
+        </div>
+      )}
 
       {day.status !== 'normal' ? (
         <div className="flex items-center gap-3 px-4 py-3.5">

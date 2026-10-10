@@ -108,6 +108,7 @@ function searchMatch(week, query) {
   if ((week.instructions ?? '').toLowerCase().includes(query)) return week.instructions
   for (const day of week.days) {
     if ((day.holidayName ?? '').toLowerCase().includes(query)) return `Feiertag: ${day.holidayName}`
+    if ((day.notes ?? '').toLowerCase().includes(query)) return `Notiz: ${day.notes}`
     for (const b of day.bullets ?? []) {
       if (b.toLowerCase().includes(query)) return b
     }
