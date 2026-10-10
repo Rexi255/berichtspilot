@@ -18,6 +18,7 @@ import {
   NotePencilIcon,
   ListBulletsIcon,
   SparkleIcon,
+  CloudArrowDownIcon,
 } from '@phosphor-icons/react'
 import { useStore, api } from '../store.jsx'
 import { Button, IconButton, Input, TextArea, Segment, Panel, Pill, SectionTitle, cx } from '../ui/basics.jsx'
@@ -27,7 +28,9 @@ import { holidayOn } from '../lib/holidays.js'
 import { profileForDate } from '../lib/model.js'
 import { formatAll } from '../lib/format.js'
 import { splitNotes, BULLET_PREFIX } from '../lib/notes.js'
+import { fillWeekFromWebuntis } from '../lib/webuntis.js'
 import PhrasingPanel from './PhrasingPanel.jsx'
+import WebuntisPanel from './WebuntisPanel.jsx'
 
 const STATUS_OPTIONS = [
   { value: 'normal', label: 'Normal' },
@@ -520,6 +523,8 @@ export default function WeekEditor({ monday, setMonday }) {
   // The AI panel belongs to one week: remembering its Monday closes it on week change
   const [phrasingFor, setPhrasingFor] = useState(null)
   const phrasingOpen = phrasingFor === monday
+  const [webuntisFor, setWebuntisFor] = useState(null)
+  const webuntisOpen = webuntisFor === monday && data.settings.webuntis?.enabled === true
   const columnRef = useRef(null)
   const gridRef = useRef(null)
   const directionRef = useRef(0) // -1 = back, +1 = forward, 0 = jump (date picker)
@@ -650,6 +655,19 @@ export default function WeekEditor({ monday, setMonday }) {
     })
   }
 
+  // Apply the ticked WebUntis subjects (mapped days) — fills only empty subjects, undoable
+  const applyWebuntis = (picked) => {
+    const snapshot = week
+    const { week: filled, count } = fillWeekFromWebuntis(week, picked)
+    setWebuntisFor(null)
+    if (!count) return
+    updateWeek(monday, () => filled)
+    showToast(count === 1 ? '1 Fach übernommen' : `${count} Fächer übernommen`, {
+      duration: 6000,
+      action: { label: 'Rückgängig', onClick: () => updateWeek(monday, () => structuredClone(snapshot)) },
+    })
+  }
+
   return (
     <div className="flex h-full flex-col">
       {/* header: week selection + status */}
@@ -691,6 +709,15 @@ export default function WeekEditor({ monday, setMonday }) {
 
         {week && (
           <>
+            {data.settings.webuntis?.enabled && (
+              <Button
+                variant={webuntisOpen ? 'primary' : 'outline'}
+                onClick={() => setWebuntisFor(webuntisOpen ? null : monday)}
+                title="Schultage dieser Woche mit Fächern und Lehrstoff aus WebUntis füllen — mit Vorschau"
+              >
+                <CloudArrowDownIcon size={15} /> Aus WebUntis füllen
+              </Button>
+            )}
             <Button
               variant={phrasingOpen ? 'primary' : 'outline'}
               onClick={() => setPhrasingFor(phrasingOpen ? null : monday)}
@@ -748,6 +775,16 @@ export default function WeekEditor({ monday, setMonday }) {
         <div ref={gridRef} className="grid min-h-0 flex-1 grid-cols-[minmax(430px,7fr)_minmax(360px,5fr)] gap-5 px-8 pb-8">
           {/* left column: days + instructions */}
           <div ref={columnRef} className="flex min-h-0 flex-col gap-3 overflow-y-auto pr-1">
+            {webuntisOpen && (
+              <WebuntisPanel
+                key={monday}
+                monday={monday}
+                week={week}
+                profile={profile}
+                onApply={applyWebuntis}
+                onClose={() => setWebuntisFor(null)}
+              />
+            )}
             {phrasingOpen && (
               <PhrasingPanel
                 week={week}

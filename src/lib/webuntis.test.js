@@ -10,6 +10,8 @@ import {
   mapSubjects,
   unmappedSubjects,
   fillWeekFromWebuntis,
+  pickKey,
+  dropSubjects,
 } from './webuntis.js'
 
 const lesson = (start, subjectShort, topics = [], extra = {}) => ({
@@ -415,6 +417,75 @@ describe('fillWeekFromWebuntis', () => {
     expect(out.days[0].subjects).toEqual([
       { label: 'LF08', bullets: [''] },
       { label: 'LF10', bullets: ['Normalisierung'] },
+    ])
+  })
+})
+
+describe('pickKey / dropSubjects', () => {
+  const mapped = [
+    {
+      date: '2026-10-07',
+      schoolBreak: false,
+      cancelledSubjects: [],
+      ignored: [],
+      unmapped: [],
+      subjects: [
+        { label: 'LF08', topics: ['Fehlersuche'], from: ['LF08'] },
+        { label: 'LF10', topics: ['Datenbanken'], from: ['LF10'] },
+      ],
+    },
+    {
+      date: '2026-10-08',
+      schoolBreak: false,
+      cancelledSubjects: [],
+      ignored: [],
+      unmapped: [],
+      subjects: [{ label: 'LF08', topics: ['Subnetting'], from: ['LF08'] }],
+    },
+  ]
+
+  it('ignores case, spaces and leading zeros of the label', () => {
+    expect(pickKey('2026-10-07', 'LF 08')).toBe(pickKey('2026-10-07', 'lf8'))
+    expect(pickKey('2026-10-07', 'LF08')).not.toBe(pickKey('2026-10-08', 'LF08'))
+  })
+
+  it('drops only the unticked subject on that day', () => {
+    const out = dropSubjects(mapped, new Set([pickKey('2026-10-07', 'LF08')]))
+    expect(out[0].subjects.map((s) => s.label)).toEqual(['LF10'])
+    expect(out[1].subjects.map((s) => s.label)).toEqual(['LF08'])
+    expect(out[0].cancelledSubjects).toBe(mapped[0].cancelledSubjects)
+  })
+
+  it('returns the input unchanged when nothing is unticked', () => {
+    expect(dropSubjects(mapped, new Set())).toBe(mapped)
+    expect(dropSubjects(mapped, undefined)).toBe(mapped)
+  })
+
+  it('an unticked subject is not filled into the week', () => {
+    const week = {
+      id: '2026-10-05',
+      status: 'draft',
+      instructions: '',
+      days: [
+        {
+          date: '2026-10-07',
+          type: 'school',
+          status: 'normal',
+          holidayName: null,
+          notes: '',
+          bullets: [''],
+          subjects: [
+            { label: 'LF08', bullets: [''] },
+            { label: 'LF10', bullets: [''] },
+          ],
+        },
+      ],
+    }
+    const { week: out, count } = fillWeekFromWebuntis(week, dropSubjects(mapped, new Set([pickKey('2026-10-07', 'LF08')])))
+    expect(count).toBe(1)
+    expect(out.days[0].subjects).toEqual([
+      { label: 'LF08', bullets: [''] },
+      { label: 'LF10', bullets: ['Datenbanken'] },
     ])
   })
 })

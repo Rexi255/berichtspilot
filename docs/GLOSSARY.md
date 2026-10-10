@@ -45,6 +45,7 @@ names consistently. Add new terms here before using them.
 | Notizen (WebUntis, „für alle“) | `notesAll` | short lesson note (WebUntis field name); not the day `notes` of daten.json |
 | Entfall | cancelled (`status: CANCELLED`) | lesson that did not take place |
 | WebUntis-Fächer (Zuordnung) | `profile.webuntisSubjects` / subject mapping | WebUntis short name → profile subject label, `''` = ignore; schema v6 |
+| Aus WebUntis füllen | `fillWeekFromWebuntis()` / `WebuntisPanel` | import preview + apply in the week editor; `pickKey()` / `dropSubjects()` = untick |
 | Lücke (fehlende Woche) | gap / `missingWeeks` | |
 | Notizen (Rohtext) | `notes` | raw text per day (dictation/AI input), schema v4; never in the output |
 | Diktat / Spracheingabe | dictation / speech input | |

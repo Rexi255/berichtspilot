@@ -260,6 +260,14 @@ the profile/period data stays the source of truth for the day type. Unticking in
 the preview is done by filtering the mapped days before the call, so the same
 function produces the preview (`changes`) and the applied week.
 
+**Preview UI (step 4.6b, 2026-10-10):** the panel fetches once per open and keeps
+the normalised school days; mapping changes ("zuordnen") re-run `mapSubjects()`
+on that cache, so no second request. A mapping chosen in the preview is saved to
+the profile right away (it is a fact about the timetable, not about this import).
+Only subjects of days that would actually be filled are offered for mapping.
+"Übernehmen" recomputes `fillWeekFromWebuntis()` on the week as it is at click
+time (via `dropSubjects()`), so edits made while the panel is open are respected.
+
 ### E-014 · Keep the file name `daten.json` · accepted
 Field names became English in schema v3, but the file name stays: existing
 installations, portable copies, backups (`.bak1–3`) and the README all rely on it.

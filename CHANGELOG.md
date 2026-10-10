@@ -38,6 +38,13 @@ versioning follows [Semantic Versioning](https://semver.org/).
   ignore a WebUntis entry (e.g. a support teacher). Identical names like `LF07`
   need no entry. Schema v6 adds the (empty) list to existing profiles. Groundwork
   for "Woche aus WebUntis füllen".
+- **Woche aus WebUntis füllen:** with the WebUntis import on, the week editor
+  has a button "Aus WebUntis füllen". It loads the week's timetable incl. the
+  lesson topics ("Lehrstoff") and shows a preview per school day: which subjects
+  get filled, which are new, which already have text (never overwritten),
+  cancelled lessons and school breaks. Wrong lessons can be unticked, unknown
+  WebUntis subjects mapped or ignored right there (remembered in the profile).
+  Applying is undoable. Logged out? The panel offers "Anmelden" and retries.
 
 ### Changed
 

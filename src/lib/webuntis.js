@@ -242,3 +242,18 @@ export function fillWeekFromWebuntis(week, mappedDays) {
 
   return { week: count ? { ...week, days } : week, count, changes }
 }
+
+/** Key of one subject on one day — what the import preview ticks/unticks. */
+export const pickKey = (date, label) => `${date}|${subjectKey(label)}`
+
+/**
+ * Mapped days without the subjects the user unticked in the preview
+ * (`unticked`: Set of pickKey()), ready for fillWeekFromWebuntis().
+ */
+export function dropSubjects(mappedDays, unticked) {
+  if (!unticked?.size) return mappedDays
+  return (Array.isArray(mappedDays) ? mappedDays : []).map((m) => ({
+    ...m,
+    subjects: (m.subjects ?? []).filter((s) => !unticked.has(pickKey(m.date, s.label))),
+  }))
+}
