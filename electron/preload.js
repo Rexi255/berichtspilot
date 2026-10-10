@@ -31,6 +31,18 @@ contextBridge.exposeInMainWorld('api', {
   // One timetable week (Mon–Sat) incl. lesson topics → { ok, days } (see electron/webuntis.js)
   webuntisWeek: (mondayISO) => ipcRenderer.invoke('webuntis:week', String(mondayISO)),
 
+  // Auto-update (electron/updater.js) → { ok, state, current, version?, percent?, code?, error? }
+  updateStatus: () => ipcRenderer.invoke('update:status'),
+  updateCheck: () => ipcRenderer.invoke('update:check'),
+  updateDownload: () => ipcRenderer.invoke('update:download'),
+  // Quits the app — save daten.json first (installUpdate in src/store.jsx does) → { ok, error? }
+  updateInstall: () => ipcRenderer.invoke('update:install'),
+  onUpdateChanged: (callback) => {
+    const handler = (_ev, status) => callback(status)
+    ipcRenderer.on('update:changed', handler)
+    return () => ipcRenderer.removeListener('update:changed', handler)
+  },
+
   // Window controls (custom title bar)
   minimize: () => ipcRenderer.invoke('window:minimize'),
   maximize: () => ipcRenderer.invoke('window:maximize'),

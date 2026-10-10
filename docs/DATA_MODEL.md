@@ -1,6 +1,6 @@
 # Data model — `daten.json`
 
-Current schema version: **7** (`DATA_VERSION` in `src/lib/model.js`).
+Current schema version: **8** (`DATA_VERSION` in `src/lib/model.js`).
 One JSON file holds the configuration **and** every training week. It is also the
 export/backup format. The file name stays German (`daten.json`) for compatibility
 with existing installations (DECISIONS E-014); all field names are English.
@@ -19,8 +19,10 @@ with existing installations (DECISIONS E-014); all field names are English.
     "webuntis": { "enabled": false }, // WebUntis import on/off (schema v5) — only
                                      // the switch: server/school are fixed by the
                                      // allowlist, login state lives in main
-    "autoCreateWeek": true           // schema v7: create the current week on start
+    "autoCreateWeek": true,          // schema v7: create the current week on start
                                      // (Mon–Fri, inside the training period)
+    "updateCheck": true              // schema v8: look for a new app version on
+                                     // start (E-017); checking by hand always works
   },
   "periods": [                       // vacation / school breaks
     { "id": "period-…", "type": "vacation" | "schoolBreak", "label": "", "from": "YYYY-MM-DD", "to": "YYYY-MM-DD" }
@@ -89,13 +91,15 @@ with existing installations (DECISIONS E-014); all field names are English.
 | 4 → 5 | `settings.webuntis = { enabled: false }` (existing value kept); `validateData()` rejects a non-boolean `enabled` |
 | 5 → 6 | `webuntisSubjects: {}` added to every profile (existing value kept); `validateData()` rejects non-string values |
 | 6 → 7 | `settings.autoCreateWeek = true` (existing value kept); `validateData()` rejects a non-boolean value |
+| 7 → 8 | `settings.updateCheck = true` (existing value kept); `validateData()` rejects a non-boolean value |
 
 Defensive defaults after migration: `settings` that is not an object becomes `{}`;
 `settings.webuntis` that is not an object, or whose `enabled` isn't `true`, becomes
 "off" (`enabled: false`). `settings.autoCreateWeek` is only off for a real
-`false` — missing or malformed values become `true` (the default). Import "Ersetzen" (`replaceData()`) keeps the device's
-current `settings.webuntis` — the opt-in to network access is not taken from a
-shared file. `profile.webuntisSubjects` that is not an object becomes `{}`, and
+`false` — missing or malformed values become `true` (the default); the same
+holds for `settings.updateCheck`. Import "Ersetzen" (`replaceData()`) keeps the
+device's current `settings.webuntis` and `settings.updateCheck` — opt-ins to
+network access are not taken from a shared file. `profile.webuntisSubjects` that is not an object becomes `{}`, and
 entries with non-string values are dropped. Keys are compared with
 `subjectKey()` (`src/lib/webuntis.js`: case, spaces, leading zeros ignored);
 `setMapping()` keeps one entry per key. The map is part of the shared record (no

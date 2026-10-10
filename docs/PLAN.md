@@ -30,44 +30,43 @@ WebUntis "Lehrstoff" ─────────────┘    (daten.json) 
 
 ## Next step
 
-**Phase 5 — auto-update, step 5.2: main process.** Behaviour is decided (E-017):
-check on start, show "Update verfügbar", download and restart **only after a
-click**; no portable build any more. 5.1 (publish config, release workflow,
-allowlist rows) is done — read E-017 before starting.
+**Phase 5 — auto-update, step 5.3: UI.** The main process is done (5.2): read
+E-017 (incl. "Implementation") and the `update:*` rows in `ARCHITECTURE.md`.
+Everything the UI needs is already in the store (`src/store.jsx`, `useStore()`):
 
-- **Dependency:** `npm i electron-updater` (a `dependency`, not dev — it ships
-  in the app). Pin the version you checked (E-017 used 6.8.9's source).
-- **`electron/updater.js`** — `createUpdater({ app, autoUpdater, session })`
-  (injectable for tests, like `webuntis-session.js`):
-  - `autoDownload = false`, `autoInstallOnAppQuit = false`, logger off or to
-    console; never runs when `!app.isPackaged`.
-  - `canSelfUpdate()`: Windows (NSIS) or Linux with `process.env.APPIMAGE`;
-    otherwise status `unsupported` (no request at all).
-  - Allowlist on the partition `electron-updater` (electron-updater's own
-    session): `webRequest.onBeforeRequest` cancels everything that is not https
-    to `github.com` / `release-assets.githubusercontent.com`. Put the host list
-    next to `ALLOWED_HOSTS` in `electron/net.js` (e.g. `UPDATE_HOSTS`) and reuse
-    `isAllowedUrl(url, hosts)`; extend `net.test.mjs`.
-  - Status object for the renderer: `{ state: 'idle'|'checking'|'available'|
-    'none'|'downloading'|'ready'|'error'|'unsupported', current, version?,
-    percent?, code?, error? }` — German error texts via `describeFailure()`
-    from `net.js` where it fits (offline/timeout), a pure mapping function with
-    Vitest (`electron/updater.test.mjs`).
-- **IPC** (`electron/main.js` + `preload.js`, table in `ARCHITECTURE.md`):
-  `update:status`, `update:check`, `update:download`, `update:install`
-  (`quitAndInstall`), event `update:changed` main → renderer.
-- **Switch (E-007/E-017):** `settings.updateCheck` (default `true`) = "Beim
-  Start nach Updates suchen" → schema **v8** in `src/lib/model.js` (migration +
-  test, `DATA_MODEL.md`). The renderer calls `updateCheck()` once after load
-  only when it is on; the manual check always works. UI for it comes in 5.3.
-- **5.3 UI (next session):** quiet hint (sidebar badge or toast) "Update auf
-  vX.Y.Z verfügbar" → "Herunterladen" → progress → "Neu starten und
-  installieren"; Settings → "Verhalten" (or a new "Über" section): current
-  version, the switch, "Nach Updates suchen".
-- Verify: lint/test/build + `npm run build:win` (app must start; in the
-  unpacked build a check against the real repo should answer "none" for
-  v1.2.0 = no newer release with `latest.yml`). A real update test needs two
-  releases with the updater — see open questions.
+- `update` — status `{ ok, state, current, version?, percent?, code?, error? }`,
+  kept current by `update:changed` events (`null` until the first answer);
+  `state` = `idle` | `checking` | `available` | `none` | `downloading` | `ready` |
+  `error` | `unsupported` (dev, portable, browser mode — `error` holds a German
+  reason). On `error`, `version` is set if a download failed (retry = download
+  again), otherwise the check failed (retry = check again).
+- `checkForUpdate()`, `downloadUpdate()` → resolve with the new status;
+  `installUpdate()` saves `daten.json` first, then quits → `{ ok, error? }`.
+- The start check already runs (store, once after load, only while
+  `settings.updateCheck` is on).
+
+Build:
+
+- **Hint:** quiet, not modal. Proposal: an entry in the sidebar footer
+  (`src/ui/Sidebar.jsx`, next to the storage badge) that appears only for
+  `available` / `downloading` / `ready` / download `error`: "Update auf vX.Y.Z" →
+  button "Herunterladen" → progress bar (`percent`) → "Neu starten und
+  installieren". Plus one toast when `available` first appears (not on every
+  start-check repeat in the same session).
+- **Settings:** new section "Über" (or inside "Verhalten") in
+  `src/views/Settings.jsx`: current version (`update.current`), switch "Beim
+  Start nach Updates suchen" (`updateSettings({ updateCheck })`), button "Nach
+  Updates suchen" with the result inline ("Du hast die neueste Version" /
+  "Version X verfügbar" / German error / `unsupported` reason, button disabled
+  then). Reuse `Switch`, `Button`, `Pill`, `Panel` from `src/ui/basics.jsx`.
+- Verify: lint/test/build + browser smoke test (vite preview; mock
+  `window.api` update functions in the page to walk through all states incl.
+  progress) and `npm run build:win` + start the unpacked exe with
+  `--user-data-dir=<scratch>` (otherwise it uses `%APPDATA%\Berichtspilot`):
+  Settings must show v1.2.0 and "neueste Version". A scratch helper that
+  evaluates JS in the running app via `--remote-debugging-port` + CDP worked
+  well in 5.2.
+- Then ask the open question below (real update test).
 
 ## Open questions (for the user)
 
@@ -137,7 +136,9 @@ decision).
       download + restart only on click; portable build dropped
   - [x] 5.1 Decision E-017, `build.publish` (GitHub), release workflow attaches
         `latest*.yml` + `.blockmap`, tag/version guard, allowlist rows (2026-10-10)
-  - [ ] 5.2 Main process: `electron/updater.js`, IPC `update:*`, schema v8 switch
+  - [x] 5.2 Main process: `electron/updater.js`, IPC `update:*`, schema v8 switch
+        `settings.updateCheck`, start check from the store (2026-10-10; real
+        check against GitHub: v1.2.0 → `none`, allowlist verified in Electron)
   - [ ] 5.3 UI: update hint + Settings row
 - [x] ~~Friday reminder if the current week is still a draft~~ — dropped by the
       user (2026-10-10): neither an in-app hint nor a system notification
@@ -174,3 +175,4 @@ decision).
 | 2026-10-10 | Fix: WebUntis topics matched per subject (stray parallel lesson), one detail call per time range — re-run by the user: LF08 correct | abbe2bb |
 | 2026-10-10 | Phase 5: current week created on start (Mon–Fri, schema v7; browser smoke test with fixed clock Wed/Sat/Mon + v6 migration) | branch `claude/intelligent-curie-yxizss` |
 | 2026-10-10 | Step 5.1: auto-update decision E-017, release plumbing, portable build dropped (local `build:win` writes `latest.yml` + `.blockmap` + `app-update.yml`) | branch `claude/intelligent-curie-yxizss` |
+| 2026-10-10 | Step 5.2: `electron/updater.js` + IPC `update:*`, schema v8 `settings.updateCheck` (packaged build checked against the real repo → `none`; non-allowlisted host → `blocked`) | branch `claude/intelligent-curie-yxizss` |

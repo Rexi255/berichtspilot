@@ -63,6 +63,11 @@ the bridge with `localStorage` stubs — handy for smoke tests.
 | `webuntis:status` | `webuntisStatus()` | WebUntis session → `{ ok, loggedIn, personId?, code?, error?, school }` (never the token; `school` = `{ name, host }` for display) |
 | `webuntis:login` | `webuntisLogin()` | open the isolated login window; resolves on detected login or window close → same shape as status |
 | `webuntis:logout` | `webuntisLogout()` | wipe the `persist:webuntis` partition + token → `{ ok, error? }` |
+| `update:status` | `updateStatus()` | auto-update status (`electron/updater.js`) → `{ ok, state, current, version?, percent?, code?, error? }`; `state` = `idle`/`checking`/`available`/`none`/`downloading`/`ready`/`error`/`unsupported`, `ok` is false only for `error` |
+| `update:check` | `updateCheck()` | ask GitHub for a newer release (never downloads) → status. `unsupported` (dev, portable, Linux without AppImage) answers without a request. Called by `src/store.jsx` once after load while `settings.updateCheck` is on; by hand always |
+| `update:download` | `updateDownload()` | download the release found by the last check (only after a click) → status; progress via `update:changed` |
+| `update:install` | `updateInstall()` | `quitAndInstall(silent, runAfter)` — only in state `ready` → `{ ok, error? }`. The renderer calls it through `installUpdate()` in the store, which saves `daten.json` first |
+| `update:changed` (event main → renderer) | `onUpdateChanged(cb)` | every status change incl. whole-percent download progress |
 | `webuntis:week` | `webuntisWeek(mondayISO)` | timetable Mon–Sat + "Lehrstoff" per lesson block (`electron/webuntis.js`; ≤ 3 detail calls at once, a failed one leaves `topics` empty) → `{ ok, days: [{ date, holiday, lessons: [{ start, end, status, subjectShort, subjectLong, topics[] }] }] }` or `{ ok: false, code, error }` — no teacher/class/room names, no `notesAll`, no ids. Normalised by `schoolDaysFromWebuntis()` in `src/lib/webuntis.js`. Renderer calls it only while `settings.webuntis.enabled`; main enforces the switch anyway (`code: 'disabled'`) |
 
 ## Networking
@@ -74,8 +79,8 @@ in this allowlist, each with a reason; every network feature can be switched off
 | Host | Purpose | Since |
 |---|---|---|
 | `bbz-dithmarschen.webuntis.com` | WebUntis: timetable + lesson topics (E-013). Session handling (`electron/webuntis-session.js`: token from `/api/token/new`), week fetch (`electron/webuntis.js`: `timetable/entries`, `calendar-entry/detail`) + the probe (`--webuntis-probe`); UI: Settings → "Verbindungen" (step 4.4) | 2026-10 (step 4.1) |
-| `github.com` | Auto-update (E-017): electron-updater reads `/Rexi255/berichtspilot/releases.atom`, `/releases/latest` and `/releases/download/<tag>/latest*.yml` + the installer/AppImage. Public repo, no token | planned (step 5.2) |
-| `release-assets.githubusercontent.com` | Auto-update (E-017): GitHub redirects every release download there (checked 2026-10-10). Only reached via that redirect | planned (step 5.2) |
+| `github.com` | Auto-update (E-017): electron-updater reads `/Rexi255/berichtspilot/releases.atom`, `/releases/latest` and `/releases/download/<tag>/latest*.yml` + the installer/AppImage. Public repo, no token. `UPDATE_HOSTS` in `electron/net.js`, enforced on the `electron-updater` partition | 2026-10 (step 5.2) |
+| `release-assets.githubusercontent.com` | Auto-update (E-017): GitHub redirects every release download there (checked 2026-10-10). Only reached via that redirect | 2026-10 (step 5.2) |
 
 `login.bbz-dithmarschen.de` (school SSO) is only *navigated to* inside the
 isolated login window; the main process never sends requests there.
@@ -107,6 +112,19 @@ every call (headers `Authorization: Bearer` + `Tenant-Id`), loads
 non-cancelled lesson block (exact block times, at most 3 in flight). It returns
 only subject short/long name, times, status and `teachingContent` topics — the
 raw answers (teachers, rooms, classes, `notesAll`) never cross IPC.
+
+**Auto-update (step 5.2, E-017):** `createUpdater()` in `electron/updater.js`
+wraps electron-updater's `autoUpdater` (`autoDownload` and
+`autoInstallOnAppQuit` off, logger off). electron-updater sends its requests
+through its own session partition `electron-updater`, not through `net.js`; before
+the first request, `webRequest.onBeforeRequest` on that partition cancels every
+URL that isn't https to `UPDATE_HOSTS` (redirects included — a cancelled request
+surfaces as `code: 'blocked'`). Only the packaged NSIS install and the AppImage
+can update (`updateSupport()`); everything else is `unsupported` and never loads
+electron-updater. A newest release without `latest*.yml`
+(`ERR_UPDATER_CHANNEL_FILE_NOT_FOUND`, e.g. v1.2.0) counts as "no update", not as
+an error. Errors get German texts via `describeUpdateError()` (network cases
+reuse `describeFailure()`).
 
 ### Network layer `electron/net.js` (step 4.2)
 

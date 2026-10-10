@@ -22,6 +22,7 @@ import { showToast } from './ui/toast.jsx'
 const StoreContext = createContext(null)
 
 const DESKTOP_ONLY = 'Nur in der Desktop-App verfügbar'
+const NO_UPDATES = { ok: true, state: 'unsupported', current: '', error: DESKTOP_ONLY }
 
 // Fallback for plain browser mode (vite without Electron, smoke tests)
 const browserApi = {
@@ -45,6 +46,11 @@ const browserApi = {
   webuntisLogout: async () => ({ ok: false, error: DESKTOP_ONLY }),
   webuntisSetEnabled: async () => ({ ok: true }),
   webuntisWeek: async () => ({ ok: false, error: DESKTOP_ONLY }),
+  updateStatus: async () => NO_UPDATES,
+  updateCheck: async () => NO_UPDATES,
+  updateDownload: async () => NO_UPDATES,
+  updateInstall: async () => ({ ok: false, error: DESKTOP_ONLY }),
+  onUpdateChanged: () => () => {},
   minimize() {}, maximize() {}, close() {}, onMaximized: () => () => {},
 }
 
@@ -57,6 +63,8 @@ export function StoreProvider({ children }) {
   const [loadError, setLoadError] = useState(null)
   const [dataPath, setDataPath] = useState('')
   const [saveStatus, setSaveStatus] = useState('idle') // idle | saving | saved | error
+  // Auto-update status from the main process (electron/updater.js)
+  const [update, setUpdate] = useState(null)
   const timerRef = useRef(null)
   const loadedRef = useRef(false)
   // Current state for mutations that must read it BEFORE setData (undo)
@@ -96,13 +104,23 @@ export function StoreProvider({ children }) {
       } else if (autoCreated) {
         showToast(`KW ${isoWeek(autoCreated.id).week} angelegt`)
       }
+      // Look for a new version once per start, only if the user leaves it on
+      // (E-017). Main answers 'unsupported' without a request in dev/portable.
+      if (d.settings.updateCheck) api.updateCheck().then(setUpdate, () => {})
     })
+  }, [])
+
+  // Every status change (progress included) arrives as an event from main
+  useEffect(() => {
+    api.updateStatus().then(setUpdate, () => {})
+    return api.onUpdateChanged(setUpdate)
   }, [])
 
   const saveNow = useCallback(async (d) => {
     setSaveStatus('saving')
     const res = await api.saveData(d)
     setSaveStatus(res.ok ? 'saved' : 'error')
+    return res
   }, [])
 
   // Write every change to disk, debounced (400 ms)
@@ -257,6 +275,22 @@ export function StoreProvider({ children }) {
     setData((d) => ({ ...d, settings: { ...d.settings, webuntis: { ...d.settings.webuntis, enabled } } }))
   }, [])
 
+  const keepUpdate = (status) => {
+    setUpdate(status)
+    return status
+  }
+
+  // Installing quits the app: write pending changes first (the 400 ms autosave
+  // would be lost) and don't install if that fails
+  const installUpdate = useCallback(async () => {
+    clearTimeout(timerRef.current)
+    if (dataRef.current) {
+      const saved = await saveNow(dataRef.current)
+      if (!saved.ok) return { ok: false, error: 'Daten konnten nicht gespeichert werden — Update abgebrochen.' }
+    }
+    return api.updateInstall()
+  }, [saveNow])
+
   const exportData = useCallback(() => api.exportData(data), [data])
 
   // Import: migrate + validate the file, then ask natively whether to merge
@@ -307,6 +341,10 @@ export function StoreProvider({ children }) {
     exportData,
     importData,
     saveNow: () => data && saveNow(data),
+    update,
+    checkForUpdate: () => api.updateCheck().then(keepUpdate),
+    downloadUpdate: () => api.updateDownload().then(keepUpdate),
+    installUpdate,
   }
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>

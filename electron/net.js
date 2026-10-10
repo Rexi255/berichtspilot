@@ -5,6 +5,11 @@
 
 // Keep in sync with the allowlist table in docs/ARCHITECTURE.md
 const ALLOWED_HOSTS = ['bbz-dithmarschen.webuntis.com']
+// Auto-update (E-017): electron-updater makes its own requests in its own
+// session; electron/updater.js filters that session against this list.
+// github.com serves the feed + metadata, every release download redirects to
+// release-assets.githubusercontent.com.
+const UPDATE_HOSTS = ['github.com', 'release-assets.githubusercontent.com']
 const DEFAULT_TIMEOUT_MS = 15000
 
 /** true if `url` is an https URL to an allowlisted host (no credentials, default port). */
@@ -121,4 +126,4 @@ async function request(
   }
 }
 
-module.exports = { ALLOWED_HOSTS, DEFAULT_TIMEOUT_MS, isAllowedUrl, describeFailure, request }
+module.exports = { ALLOWED_HOSTS, UPDATE_HOSTS, DEFAULT_TIMEOUT_MS, isAllowedUrl, describeFailure, request }

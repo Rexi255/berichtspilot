@@ -334,3 +334,18 @@ the portable build**. Releases now ship the NSIS installer and the AppImage only
 - **Former portable users:** E-004 is unchanged (a self-built portable copy still
   keeps `daten.json` next to the exe). Moving to the installer = export/import,
   or copy `daten.json` into `%APPDATA%\Berichtspilot`.
+- **Implementation (step 5.2, 2026-10-10):** `electron-updater` pinned to
+  6.8.9 (the source checked above). Details chosen while building:
+  - A newest release **without** `latest*.yml` (v1.2.0, or assets still
+    uploading) raises `ERR_UPDATER_CHANNEL_FILE_NOT_FOUND`; it counts as "no
+    update", not as an error (checked against the real repo: v1.2.0 → `none`).
+  - Install = `quitAndInstall(true, true)`: the NSIS installer runs **silently**
+    into the existing folder and restarts the app — the assisted installer's
+    wizard would otherwise reappear on every update. The click on "Neu starten
+    und installieren" is the consent. The store saves `daten.json` before the
+    call (the 400 ms autosave would be lost on quit).
+  - The switch `settings.updateCheck` is a per-device opt-in like the WebUntis
+    switch: import "Ersetzen" keeps the device's value.
+  - The allowlist sits on the `electron-updater` partition (opened with the
+    same `{ cache: false }` electron-updater uses); checked in real Electron
+    that a non-allowlisted host ends as `code: 'blocked'`.

@@ -97,7 +97,7 @@ describe('migrateData', () => {
   it('migrates a full v2 file to the current version with English names and values', () => {
     const d = migrateData(v2File())
     expect(d.version).toBe(DATA_VERSION)
-    expect(DATA_VERSION).toBe(7)
+    expect(DATA_VERSION).toBe(8)
 
     expect(d.settings).toEqual({
       trainingStart: '2025-08-01',
@@ -108,6 +108,7 @@ describe('migrateData', () => {
       eigenesFeld: 42,
       webuntis: { enabled: false },
       autoCreateWeek: true,
+      updateCheck: true,
     })
     expect(d.periods).toEqual([
       { id: 'zeitraum-1', type: 'vacation', label: 'Sommer', from: '2026-08-03', to: '2026-08-14' },
@@ -235,6 +236,7 @@ describe('migrateData', () => {
     expect(d.version).toBe(DATA_VERSION)
     expect(d.settings).toEqual({
       theme: 'forest', startView: 'editor', snippets: ['a'], webuntis: { enabled: false }, autoCreateWeek: true,
+      updateCheck: true,
     })
     expect(() => validateData(d)).not.toThrow()
   })
@@ -255,7 +257,9 @@ describe('migrateData', () => {
     expect(webuntisOf({ enabled: 'ja' })).toEqual({ enabled: false })
     expect(webuntisOf({ enabled: true })).toEqual({ enabled: true })
     const d = migrateData({ version: 5, settings: 'kaputt', profiles: [], weeks: [] })
-    expect(d.settings).toEqual({ startView: 'overview', snippets: [], webuntis: { enabled: false }, autoCreateWeek: true })
+    expect(d.settings).toEqual({
+      startView: 'overview', snippets: [], webuntis: { enabled: false }, autoCreateWeek: true, updateCheck: true,
+    })
     expect(() => validateData(d)).not.toThrow()
   })
 
@@ -284,9 +288,10 @@ describe('migrateData', () => {
 
   it('v6 -> v7 turns "create the current week on start" on and keeps an existing value', () => {
     const d = migrateData({ version: 6, settings: { theme: 'forest', webuntis: { enabled: true } }, profiles: [], weeks: [] })
-    expect(d.version).toBe(7)
+    expect(d.version).toBe(DATA_VERSION)
     expect(d.settings).toEqual({
       theme: 'forest', startView: 'overview', snippets: [], webuntis: { enabled: true }, autoCreateWeek: true,
+      updateCheck: true,
     })
     expect(() => validateData(d)).not.toThrow()
     expect(migrateData({ version: 7, settings: { autoCreateWeek: false }, profiles: [], weeks: [] })
@@ -300,6 +305,26 @@ describe('migrateData', () => {
     expect(autoOf(null)).toBe(true)
     expect(autoOf(0)).toBe(true)
     expect(autoOf(true)).toBe(true)
+  })
+
+  it('v7 -> v8 turns the update check on start on and keeps an existing value', () => {
+    const d = migrateData({ version: 7, settings: { theme: 'forest', autoCreateWeek: false }, profiles: [], weeks: [] })
+    expect(d.version).toBe(8)
+    expect(d.settings).toEqual({
+      theme: 'forest', startView: 'overview', snippets: [], webuntis: { enabled: false }, autoCreateWeek: false,
+      updateCheck: true,
+    })
+    expect(() => validateData(d)).not.toThrow()
+    expect(migrateData({ version: 8, settings: { updateCheck: false }, profiles: [], weeks: [] })
+      .settings.updateCheck).toBe(false)
+  })
+
+  it('treats a malformed updateCheck value as the default (on)', () => {
+    const checkOf = (value) =>
+      migrateData({ version: 8, settings: { updateCheck: value }, profiles: [], weeks: [] }).settings.updateCheck
+    expect(checkOf('nein')).toBe(true)
+    expect(checkOf(null)).toBe(true)
+    expect(checkOf(0)).toBe(true)
   })
 
   it('keeps unknown enum values instead of dropping them', () => {
@@ -356,6 +381,9 @@ describe('validateData', () => {
       validateData({ settings: { autoCreateWeek: 'ja' }, profiles: [], weeks: [] })
     ).toThrow(/Aktuelle Woche/)
     expect(() =>
+      validateData({ settings: { updateCheck: 'ja' }, profiles: [], weeks: [] })
+    ).toThrow(/Updates/)
+    expect(() =>
       validateData({ profiles: [{ id: 'p', name: 'HJ', weekdays: {}, webuntisSubjects: { kom: 1 } }], weeks: [] })
     ).toThrow(/Fächerzuordnung/)
   })
@@ -374,6 +402,13 @@ describe('replaceData', () => {
     expect(result.settings.theme).toBe('rose')
     expect(result.settings.webuntis).toEqual({ enabled: false })
     expect(replaceData(imported, current).settings.webuntis).toEqual({ enabled: true })
+  })
+
+  it("keeps this device's update-check switch", () => {
+    const current = { ...seedData(), settings: { ...seedData().settings, updateCheck: false } }
+    const imported = { ...seedData(), settings: { ...seedData().settings, updateCheck: true } }
+    expect(replaceData(current, imported).settings.updateCheck).toBe(false)
+    expect(replaceData(imported, current).settings.updateCheck).toBe(true)
   })
 })
 

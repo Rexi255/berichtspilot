@@ -7,7 +7,7 @@ export const DAY_STATUSES = ['normal', 'holiday', 'sick', 'vacation']
 
 // Current schema version of daten.json. Older files are upgraded on load/import
 // via migrateData(); newer ones are rejected (downgrade protection).
-export const DATA_VERSION = 7
+export const DATA_VERSION = 8
 
 let idCounter = 0
 export const newId = (prefix) =>
@@ -199,6 +199,15 @@ function migrateV6toV7(d) {
   return { ...d, version: 7, settings: { autoCreateWeek: true, ...settings } }
 }
 
+/**
+ * Schema v7 -> v8: `settings.updateCheck` — look for a new app version on start
+ * (E-017, on by default; checking by hand always works).
+ */
+function migrateV7toV8(d) {
+  const settings = isObject(d.settings) ? d.settings : {}
+  return { ...d, version: 8, settings: { updateCheck: true, ...settings } }
+}
+
 /** Only string → string entries survive (hand-edited or broken files). */
 function cleanSubjectMap(map) {
   if (!isObject(map)) return {}
@@ -227,6 +236,7 @@ export function migrateData(raw) {
   if (d.version < 5) d = migrateV4toV5(d)
   if (d.version < 6) d = migrateV5toV6(d)
   if (d.version < 7) d = migrateV6toV7(d)
+  if (d.version < 8) d = migrateV7toV8(d)
 
   // Defensive defaults in case single fields are missing (e.g. hand-edited file)
   d.periods ??= []
@@ -235,6 +245,7 @@ export function migrateData(raw) {
   d.settings.snippets ??= []
   // Only a real `false` turns it off — a missing or malformed value means the default
   d.settings.autoCreateWeek = d.settings.autoCreateWeek !== false
+  d.settings.updateCheck = d.settings.updateCheck !== false
   // Anything but a real `true` means off — a malformed value must not survive
   const webuntis = d.settings.webuntis
   d.settings.webuntis = isObject(webuntis) ? { ...webuntis, enabled: webuntis.enabled === true } : { enabled: false }
@@ -291,15 +302,21 @@ export function validateData(d) {
   if (autoCreate !== undefined && typeof autoCreate !== 'boolean') {
     fail('Die Einstellung „Aktuelle Woche beim Start anlegen" in der Datei ist ungültig.')
   }
+  const updateCheck = d.settings?.updateCheck
+  if (updateCheck !== undefined && typeof updateCheck !== 'boolean') {
+    fail('Die Einstellung „Beim Start nach Updates suchen" in der Datei ist ungültig.')
+  }
   return d
 }
 
 /**
- * Import "Ersetzen": take everything from the file except the WebUntis switch —
- * that's this device's opt-in to network access, not part of the shared record.
+ * Import "Ersetzen": take everything from the file except the WebUntis and the
+ * update-check switches — they are this device's opt-ins to network access
+ * (E-007), not part of the shared record.
  */
 export function replaceData(current, imported) {
-  return { ...imported, settings: { ...imported.settings, webuntis: current.settings.webuntis } }
+  const { webuntis, updateCheck } = current.settings
+  return { ...imported, settings: { ...imported.settings, webuntis, updateCheck } }
 }
 
 /**
@@ -425,6 +442,7 @@ export function seedData() {
       snippets: [],
       webuntis: { enabled: false },
       autoCreateWeek: true,
+      updateCheck: true,
     },
     periods: [],
     profiles: [

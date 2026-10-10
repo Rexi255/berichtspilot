@@ -1,6 +1,6 @@
 // Network layer: allowlist must hold, failures must become readable results.
 import { describe, it, expect, vi } from 'vitest'
-import { isAllowedUrl, describeFailure, request, ALLOWED_HOSTS } from './net.js'
+import { isAllowedUrl, describeFailure, request, ALLOWED_HOSTS, UPDATE_HOSTS } from './net.js'
 
 const BASE = 'https://bbz-dithmarschen.webuntis.com/WebUntis'
 
@@ -37,6 +37,17 @@ describe('isAllowedUrl', () => {
   it('honours a custom host list', () => {
     expect(isAllowedUrl('https://example.com/', ['example.com'])).toBe(true)
     expect(ALLOWED_HOSTS).toContain('bbz-dithmarschen.webuntis.com')
+  })
+
+  it('keeps the update hosts separate from the app hosts', () => {
+    const feed = 'https://github.com/Rexi255/berichtspilot/releases.atom'
+    const asset = 'https://release-assets.githubusercontent.com/github-production-release-asset/1/2?sp=r'
+    expect(isAllowedUrl(feed, UPDATE_HOSTS)).toBe(true)
+    expect(isAllowedUrl(asset, UPDATE_HOSTS)).toBe(true)
+    expect(isAllowedUrl(feed)).toBe(false)
+    expect(isAllowedUrl('https://api.github.com/repos/x', UPDATE_HOSTS)).toBe(false)
+    expect(isAllowedUrl('https://objects.githubusercontent.com/x', UPDATE_HOSTS)).toBe(false)
+    expect(isAllowedUrl('http://github.com/Rexi255/berichtspilot/releases.atom', UPDATE_HOSTS)).toBe(false)
   })
 })
 

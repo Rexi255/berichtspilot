@@ -6,6 +6,7 @@ const fs = require('fs')
 const fsp = fs.promises
 const { createWebUntisSession, PARTITION: WEBUNTIS_PARTITION } = require('./webuntis-session')
 const { fetchWeek } = require('./webuntis')
+const { createUpdater } = require('./updater')
 
 // ---------------------------------------------------------------------------
 // Location of daten.json. Goal: keep the file "portable" next to the
@@ -327,6 +328,20 @@ ipcMain.handle('webuntis:setEnabled', (_e, on) => webuntis.setEnabled(on === tru
 ipcMain.handle('webuntis:week', (_e, mondayISO) =>
   fetchWeek(webuntis, mondayISO, { ses: session.fromPartition(WEBUNTIS_PARTITION) })
 )
+
+// Auto-update (E-017): check only when asked (renderer on start if
+// settings.updateCheck is on, or by hand), download + install only on click.
+// No renderer input besides the call itself.
+const updater = createUpdater({
+  app,
+  onChange: (status) => {
+    if (win && !win.isDestroyed()) win.webContents.send('update:changed', status)
+  },
+})
+ipcMain.handle('update:status', () => updater.status())
+ipcMain.handle('update:check', () => updater.check())
+ipcMain.handle('update:download', () => updater.download())
+ipcMain.handle('update:install', () => updater.install())
 
 // Window controls for the custom title bar
 ipcMain.handle('window:minimize', () => win?.minimize())

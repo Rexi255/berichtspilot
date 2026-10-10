@@ -91,6 +91,7 @@ AppImage + auto-update metadata (`latest*.yml`); the tag must match `package.jso
 electron/main.js     window, daten.json location, atomic save + backups, all IPC handlers
 electron/preload.js  contextBridge → window.api (the only bridge to the renderer)
 electron/net.js      network layer: host allowlist, timeout, German error texts (E-007)
+electron/updater.js  auto-update via electron-updater (E-017): check / download / install, allowlist on its session
 electron/webuntis-probe.js  dev spike `--webuntis-probe` (E-013); shape.js = JSON/URL anonymiser
 src/store.jsx        central state (React context), 400 ms autosave, all mutations
 src/lib/             PURE logic, fully tested: dates · holidays · format · model · notes · phrasing
