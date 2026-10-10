@@ -30,51 +30,42 @@ WebUntis lesson notes ────────────┘    (daten.json)   
 
 ## Next step
 
-**Waiting for the user:** run the WebUntis probe (step 4.1) and send
-`webuntis-probe.json`. Steps for the user (German in chat):
+**Step 4.2 — network layer `electron/net.js`** (unblocked; E-013 is accepted).
 
-```bash
-git fetch && git checkout claude/intelligent-curie-yxizss   # or main once merged
-npm ci
-npm run probe:webuntis      # close Berichtspilot first
-```
+- `electron/net.js` (CommonJS): `request(ses, url, { method, headers, body, timeoutMs })`
+  around `session.fetch` with `credentials: 'include'`:
+  - **host allowlist**: only `bbz-dithmarschen.webuntis.com` (keep in sync with
+    the table in `docs/ARCHITECTURE.md`); anything else → `{ ok: false }` without
+    a request; only `https:`;
+  - timeout via `AbortController` (default 15 s);
+  - result `{ ok: true, status, json }` or `{ ok: false, code, error }` with German
+    texts: offline/DNS → "Keine Verbindung zu WebUntis", timeout → "WebUntis
+    antwortet nicht", 401/403 or HTML instead of JSON → "Bitte erneut bei
+    WebUntis anmelden" (`code: 'login'`), 5xx → "WebUntis hat einen Fehler
+    gemeldet (5xx)".
+- Pure parts (`isAllowedUrl(url)`, `describeFailure({ status, contentType, error })`)
+  exported and tested in `electron/net.test.mjs`.
+- Switch `electron/webuntis-probe.js` to use it only if trivial; otherwise leave the probe.
+- Not wired into any UI yet; no new IPC channel.
 
-Log in via the school portal → open the timetable (a week **with** lessons, e.g.
-before the autumn break) → click one or two lessons that have notes → close the
-window → check the file (only keys/types/lengths) → send it.
-
-**When `webuntis-probe.json` arrives → step 4.1b (evaluate):**
-- `captured[]`: find the call whose response shape contains the lesson notes
-  (look for text fields that only appear after clicking a lesson, e.g. in a
-  `calendar-entry/detail`-like call); note its URL pattern and required params.
-- `candidates[]`: which of REST entries / public weekly / JSON-RPC
-  `getTimetable` / homeworks work with the web session (status 200 + JSON).
-- `session`: cookie lifetimes + `token.lifetimeSeconds` → how often the user
-  must log in again.
-- Record all of it in E-013 (set it to "accepted" with the chosen endpoint),
-  add the SSO host from `navigatedHosts` to the ARCHITECTURE notes, and refine
-  steps 4.3–4.6.
-
-**Meanwhile (unblocked): step 4.2 — network layer `electron/net.js`.**
-CommonJS module: `fetch` wrapper around `session.fetch` with a host allowlist
-(only hosts listed in `docs/ARCHITECTURE.md`; start with
-`bbz-dithmarschen.webuntis.com`), timeout (AbortController, ~15 s), readable
-German error texts (offline, timeout, 401/403 → "Bitte erneut anmelden", 5xx);
-pure parts (allowlist check, error mapping) tested with Vitest like
-`electron/shape.test.mjs`. Not wired into any UI yet. The probe may then switch
-to it.
-
-When the speech recordings arrive: step 2.2 (speech spike) takes priority.
+**Then 4.3–4.6** (concrete thanks to the probe, see E-013): login window +
+"angemeldet?" check via `token/new` → week from `timetable/entries` → topics per
+lesson from `calendar-entry/detail` (`teachingContent`, fallback `notesAll`) →
+mapping WebUntis subject (`shortName`/`lessonInfo`) → learning-field label per
+profile → "Woche aus WebUntis füllen" (skip cancelled lessons, `HOLIDAY` back
+entries = school break).
 
 ## Open questions (for the user)
 
-1. **Sample recordings** for the speech spike (step 2.2): 2–3 short recordings
-   (~20 s) describing a work day with IT terms — user will provide them later.
-2. **Installer size:** the speech model adds roughly 150–500 MB (depending on the
-   model) to installer and portable .exe — acceptable?
-3. **WebUntis (E-013):** does the WebUntis profile offer data access for
-   "Untis Mobile" (QR code / key under "Freigaben" or "Profil")? Does the Untis
-   Mobile app work for you? Determines whether path W2 is possible.
+1. **Dictation (E-010 reopened):** please try Windows dictation (**Win+H**) in
+   the "Notizen" field of a day, speaking a typical work day with IT terms. Good
+   enough? → then Phase 2 (own speech model) is dropped/deferred and installers
+   stay small. Not good enough (or needed on Arch) → step 2.2 with the user's
+   sample recordings as test material.
+2. **Lehrstoff vs. Notizen:** in WebUntis, the lesson detail shows "Lehrstoff"
+   (`teachingContent`, up to ~60 chars) and "Notizen" (`notesAll`, short). Which
+   of the two holds the topics for the Berichtsheft? (Plan: import Lehrstoff,
+   fall back to Notizen.)
 
 ## Roadmap
 
@@ -87,7 +78,7 @@ When the speech recordings arrive: step 2.2 (speech spike) takes priority.
 - [x] 1.1 English identifiers + `daten.json` fields, schema v3 with migration + tests (2026-10-10)
 - [x] 1.2 Schema v4: `notes` (raw text) per day + collapsible "Notizen" field, searchable (2026-10-10)
 
-### Phase 2 — Dictation (offline, model bundled — E-010)
+### Phase 2 — Dictation (offline, model bundled — E-010; on hold: Win+H test, open question 1)
 - [x] 2.1 Notes → bullets without AI (pure `splitNotes()` + button) (2026-10-10)
 - [ ] 2.2 Spike: choose the Whisper variant (German accuracy, size, speed,
       packaging for NSIS/portable/AppImage, CSP) → finalize E-010
@@ -106,12 +97,9 @@ When the speech recordings arrive: step 2.2 (speech spike) takes priority.
 - [ ] 3.5 School days: polish topic keywords per subject (after WebUntis delivers them)
 
 ### Phase 4 — WebUntis import (E-013)
-- [ ] 4.1 Spike with the real account: SSO login in an embedded window (path W1),
-      find the endpoint that returns lesson notes; check whether path W2 is available
-      → finalize E-013
-  - [x] 4.1a Probe built: `npm run probe:webuntis`, anonymiser `electron/shape.js`
-        + tests (2026-10-10)
-  - [ ] 4.1b User runs the probe → evaluate `webuntis-probe.json` → E-013
+- [x] 4.1 Spike with the real account: probe `npm run probe:webuntis` +
+      anonymiser `electron/shape.js`; W1 works, endpoints for week + lesson
+      topics found, W2 (QR code) available → E-013 accepted (2026-10-10)
 - [ ] 4.2 Network layer in main: `electron/net.js` — `fetch` wrapper with host
       allowlist, timeout, readable errors; Vitest for the allowlist
 - [ ] 4.3 Session handling: login window (partition `persist:webuntis`), "logged
@@ -143,4 +131,5 @@ When the speech recordings arrive: step 2.2 (speech spike) takes priority.
 | 2026-10-10 | Step 1.2: notes per day, schema v4 | 446a8f3 |
 | 2026-10-10 | Step 2.1: notes → bullets without AI | 62a3932 |
 | 2026-10-10 | Steps 3.1–3.4: clipboard bridge | d83e940 |
-| 2026-10-10 | Step 4.1a: WebUntis probe | branch `claude/intelligent-curie-yxizss` |
+| 2026-10-10 | Step 4.1a: WebUntis probe | 49967e2, 6200d15 |
+| 2026-10-10 | Step 4.1b: probe evaluated, E-013 accepted | branch `claude/intelligent-curie-yxizss` |

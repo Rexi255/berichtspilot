@@ -63,6 +63,12 @@ describe('shapeOf', () => {
     })
   })
 
+  it('hides ids used as object keys', () => {
+    expect(shapeOf({ elementPeriods: { 36931: [{ a: 1 }], 4711: [{ a: 2 }] } })).toEqual({
+      elementPeriods: { '<n>': { $array: 1, $of: { a: 'integer' } } },
+    })
+  })
+
   it('accumulates several responses into one shape', () => {
     const node = createShape()
     addSample(node, { a: 1 })

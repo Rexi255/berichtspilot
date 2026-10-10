@@ -79,7 +79,9 @@ function addSample(node, value, key, depth = 0) {
   } else if (typeof value === 'object') {
     node.objCount++
     node.fields = node.fields || new Map()
-    for (const [k, v] of Object.entries(value)) {
+    for (const [rawKey, v] of Object.entries(value)) {
+      // Ids used as object keys (e.g. { "36931": [...] }) are values in disguise
+      const k = /^\d+$/.test(rawKey) ? '<n>' : rawKey
       if (!node.fields.has(k)) node.fields.set(k, createShape())
       addSample(node.fields.get(k), v, k, depth + 1)
     }

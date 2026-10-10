@@ -38,6 +38,10 @@ names consistently. Add new terms here before using them.
 | Wochen-Editor | week editor (`WeekEditor`) | |
 | Einstellungen | `settings` | |
 | Start-Ansicht | `startView` | |
+| Stunde (WebUntis) | lesson / `gridEntry` | one timetable block from WebUntis |
+| Lehrstoff | `teachingContent` | topic the teacher entered for a lesson (WebUntis field name) |
+| Notizen (WebUntis, „für alle“) | `notesAll` | short lesson note (WebUntis field name); not the day `notes` of daten.json |
+| Entfall | cancelled (`status: CANCELLED`) | lesson that did not take place |
 | Lücke (fehlende Woche) | gap / `missingWeeks` | |
 | Notizen (Rohtext) | `notes` | raw text per day (dictation/AI input), schema v4; never in the output |
 | Diktat / Spracheingabe | dictation / speech input | |

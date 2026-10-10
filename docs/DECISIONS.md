@@ -62,6 +62,10 @@ Windows notebook, packaging for NSIS/portable/AppImage, CSP compatibility (WASM)
 Candidates: whisper.cpp (binary/addon in a utility process), transformers.js
 (ONNX Whisper in a worker), Vosk (small but weaker). Rejected: the Web Speech API
 (no service in Electron without a Google key; audio would go to Google).
+User (2026-10): installer growth of 150–500 MB is acceptable. **Reopened:** the
+user asked whether the OS dictation (Windows: Win+H voice typing, works in any
+text field incl. the "Notizen" field) is enough — that would make step 2.2–2.5
+unnecessary. Waiting for the user to try it (see PLAN open questions).
 
 ### E-011 · AI phrasing without an own API key · accepted (option A)
 User (2026-10): preferably cloud quality, but **not via an API** (no key/billing).
@@ -88,7 +92,7 @@ User (2026-10): leave it out for now, keep it on the to-do list. Previous idea
 kept for later: an embedded `BrowserWindow` (separate partition, minimal preload),
 user logs in, app fills the three fields, user clicks submit.
 
-### E-013 · WebUntis import via the main process · proposed
+### E-013 · WebUntis import via the main process · accepted (path W1)
 User (2026-10): the lesson topics are written in the **notes of each lesson** in
 WebUntis. Plan: fetch the timetable incl. lesson notes from the main process,
 map WebUntis subjects → learning-field labels per profile.
@@ -116,7 +120,36 @@ the plan: instead of `webRequest.onCompleted` (URLs only) the probe attaches the
 DevTools protocol (`webContents.debugger`) to the probe window, because only
 that sees response **bodies** — so we learn which call carries the lesson notes
 without guessing endpoints. Bodies stay in memory; only their shape is written.
-Waiting for the user's `webuntis-probe.json`.
+
+**Probe result (2026-10-10, user's account, Windows):**
+- **W1 works.** SSO login runs via `login.bbz-dithmarschen.de` (only navigated in
+  the login window, never fetched by the main process). Afterwards the session
+  gets a bearer token from `GET /WebUntis/api/token/new` (JWT, **15 min**
+  lifetime, renewable via the same call while the web session lives; payload has
+  `person_id`, `tenant_id`, `roles: ["STUDENT"]`). The web session cookie's
+  lifetime is unknown (the probe queried cookies for path `/`, the session cookie
+  lives under `/WebUntis`) → the app must simply detect an expired session
+  (token/new no longer returns a JWT) and offer a new login.
+- **Week overview:** `GET /WebUntis/api/rest/view/v1/timetable/entries?start=&end=
+  &format=4&resourceType=STUDENT&resources=<person_id>&periodTypes=&timetableType=MY_TIMETABLE`
+  with `Authorization: Bearer` → `days[]` with `date`, `status`
+  (`REGULAR`/`NO_DATA`), `gridEntries[]` (`duration.start/end`, `type`
+  `NORMAL_TEACHING_PERIOD`/`EXAM`, `status` `REGULAR`/`CANCELLED`/`CHANGED`,
+  `position2[].current` = subject with `shortName`/`longName`, `lessonInfo`,
+  `notesAll`, `texts[]` typed `LESSON_INFO`/`NOTES_FOR_ALL`) and `backEntries[]`
+  (`type: HOLIDAY` → school break).
+- **Lesson topics:** `GET /WebUntis/api/rest/view/v2/calendar-entry/detail?elementId=<person_id>
+  &elementType=5&startDateTime=<lesson start>&endDateTime=<lesson end>&homeworkOption=DUE`
+  — called per lesson block with the exact times from `gridEntries[].duration`
+  (a whole-week range returns nothing) → `calendarEntries[].teachingContent`
+  ("Lehrstoff", up to ~60 chars, also per period in `singleEntries[]`) and
+  `notesAll` ("Notizen", short). This is the source for the school block.
+- Also working but not needed: JSON-RPC `getTimetable` with the web session (no
+  topic texts), `/api/public/timetable/weekly/data` (`periodText`),
+  `/api/homeworks/lessons`.
+- **W2** (Untis Mobile QR code) is available for the user's account (2026-10) —
+  kept as an optional comfort upgrade if logging in again turns out to be
+  annoying; not planned now.
 
 ### E-014 · Keep the file name `daten.json` · accepted
 Field names became English in schema v3, but the file name stays: existing

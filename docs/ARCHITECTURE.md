@@ -70,7 +70,10 @@ main process, only to hosts in this allowlist, each with a reason.
 
 | Host | Purpose | Since |
 |---|---|---|
-| `bbz-dithmarschen.webuntis.com` | WebUntis: timetable + lesson notes (E-013). **Probe only so far** (`--webuntis-probe`), not used by the app | 2026-10 (step 4.1) |
+| `bbz-dithmarschen.webuntis.com` | WebUntis: timetable + lesson topics (E-013). **Probe only so far** (`--webuntis-probe`), not used by the app | 2026-10 (step 4.1) |
+
+`login.bbz-dithmarschen.de` (school SSO) is only *navigated to* inside the
+isolated login window; the main process never sends requests there.
 
 The renderer CSP is unchanged: WebUntis runs in its own window, never in the app
 window.
