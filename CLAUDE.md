@@ -12,7 +12,8 @@ text blocks to copy into the IHK portal.
 | What | Language |
 |---|---|
 | Code, identifiers, comments, `daten.json` field names, IPC channels, CSS tokens | **English** |
-| Docs (`CLAUDE.md`, `docs/`, README, CONTRIBUTING), skills, CHANGELOG | **English** |
+| Docs (`CLAUDE.md`, `docs/`, CONTRIBUTING), skills, CHANGELOG | **English** |
+| `README.md` (for end users: short, plain, few emojis) | **German** |
 | Commit messages, branch names, PR titles/bodies, issue templates | **English** |
 | **UI text** (labels, buttons, toasts, dialogs, file names offered to the user) | **German** |
 | **IHK output** (`src/lib/format.js` — weekday names, "den", "Feiertag: …") | **German** |
