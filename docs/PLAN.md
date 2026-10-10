@@ -30,39 +30,41 @@ WebUntis "Lehrstoff" ─────────────┘    (daten.json) 
 
 ## Next step
 
-**Phase 5 — Friday reminder if the current week is still a draft.** Ask the
-open question below first (it decides the size of the step).
+**Phase 5 — auto-update (electron-updater + GitHub Releases).** The Friday
+reminder was dropped by the user (2026-10-10). Ask the open questions below
+first, then split the step:
 
-Recommended minimal version (option a), if the user agrees:
-- Pure helper `reminderDue(data, todayISO)` in `src/lib/model.js` (or a new
-  `src/lib/reminder.js`) + tests: true on Friday (weekday 5) if the current week
-  exists with `status: 'draft'` (or is missing) and `settings.fridayReminder` is
-  on; false on other days, for `done` weeks and outside the training period.
-- `src/store.jsx`: check once after loading (after the auto-create from
-  `shouldAutoCreate()`); if due → one toast with action "Woche öffnen"
-  (needs a way to navigate — see how `App.jsx` switches views) — or a banner on
-  the overview instead of a toast; decide while implementing, keep it quiet.
-- Schema v8: `settings.fridayReminder` (default `true`) → `DATA_VERSION`++,
-  migration v7 → v8 + test, `validateData()`, `docs/DATA_MODEL.md`.
-- Settings → "Verhalten": switch "Freitags an offene Woche erinnern".
-- Verify: lint/test/build; browser smoke test with a fixed clock
-  (`page.clock.setFixedTime`, see the step-5 smoke test approach in the done
-  log): Friday + draft → hint; Thursday or `done` → none; switch off → none.
-
-Option (b) (system notification while the app is closed) needs tray +
-autostart in `electron/main.js` — a bigger step with its own decision entry.
-
-Alternative unblocked step if the user prefers: auto-update via
-`electron-updater` + GitHub Releases (needs new allowlist hosts in
-`docs/ARCHITECTURE.md` and a decision entry).
+- **5.1 Decision + release plumbing:** entry E-017 in `docs/DECISIONS.md`
+  (behaviour, hosts, which builds update). `package.json` → `build.publish`
+  (`provider: github`, owner `Rexi255`, repo `berichtspilot`) so electron-builder
+  writes `latest.yml` / `latest-linux.yml` (+ `.blockmap`);
+  `.github/workflows/release.yml` must attach those files to the release too.
+  New allowlist rows in `docs/ARCHITECTURE.md` (`github.com`,
+  `api.github.com` if used, the release-asset download host — check which host
+  the redirect really goes to before listing it).
+- **5.2 Main process:** `electron/updater.js` — `autoUpdater` with
+  `autoDownload` per the user's answer, only for the NSIS install and the
+  AppImage (`process.env.PORTABLE_EXECUTABLE_DIR` set ⇒ portable ⇒ only "new
+  version available" + link, no self-update); dev mode never checks. IPC
+  `update:status|check|download|install` in `preload.js`; German error texts
+  like `electron/net.js`. Vitest for the pure parts (version compare /
+  portable detection helper if any).
+- **5.3 UI:** quiet hint (toast or sidebar badge) "Update auf vX.Y.Z
+  verfügbar" → button per the chosen behaviour; Settings → "Verhalten" or a new
+  "Über/Updates" row with the current version and "Nach Updates suchen".
+- Verify: lint/test/build; a real update test needs two tagged releases — plan
+  it with the user (e.g. a `v1.2.1-beta` pre-release) instead of guessing.
 
 ## Open questions (for the user)
 
-- Friday reminder — which form? Options: (a) in-app hint when the app is
-  opened on Friday and the current week is still a draft (recommended: no
-  background process, no autostart, fits "easy to use"); (b) real system
-  notification on Friday afternoon, which needs the app to keep running in the
-  tray and start with the system. Ask at the start of the next step.
+- Auto-update behaviour? Options: (a) check on start, show "Update
+  verfügbar" — download + restart only after a click (recommended: nothing
+  happens behind the user's back, fits the "visible and confirmed" rule);
+  (b) download silently in the background, install when the app is closed;
+  (c) only show "new version available" with a link to the release page (no
+  self-update at all). Ask at the start of the next step.
+- Portable .exe can't update itself — is a hint with a download link enough
+  there (recommended), or should the portable build be dropped?
 
 Parked by the user (2026-10-10), not to be asked now: which speech model to
 bundle (E-010 has the measurements; real-voice recordings belong to that
@@ -123,7 +125,8 @@ decision).
 
 ### Phase 5 — Comfort
 - [ ] Auto-update (electron-updater, GitHub Releases)
-- [ ] Friday reminder (tray/notification) if the current week is still a draft
+- [x] ~~Friday reminder if the current week is still a draft~~ — dropped by the
+      user (2026-10-10): neither an in-app hint nor a system notification
 - [x] Create the current week automatically on start — Mon–Fri only (E-016),
       schema v7 `settings.autoCreateWeek`, switch in Settings → Verhalten (2026-10-10)
 - [ ] Ideas from the old README roadmap: light theme, "copy all 3 blocks",
