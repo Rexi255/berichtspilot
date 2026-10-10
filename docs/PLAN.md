@@ -30,42 +30,37 @@ WebUntis "Lehrstoff" ─────────────┘    (daten.json) 
 
 ## Next step
 
-**Step 4.5 — Fetch a week from WebUntis** (unblocked; 4.4 delivered the
-switch `settings.webuntis.enabled` + login UI in Settings → "Verbindungen").
-Split into two parts; do **4.5a** first:
+**Step 4.5a is done in code** (`electron/webuntis.js` `fetchWeek()`, IPC
+`webuntis:week` → `window.api.webuntisWeek(mondayISO)`, pure
+`src/lib/webuntis.js` `schoolDaysFromWebuntis()`; tested against stubs only).
 
-**4.5a — main-process fetch + pure normaliser (no UI yet)**
-- `electron/webuntis.js`: `fetchWeek(session, mondayISO)` using
-  `session.getToken()` from `createWebUntisSession()` (instance `webuntis` in
-  `electron/main.js`). Headers `Authorization: Bearer <token>` + `Tenant-Id:
-  <payload.tenant_id>`; requests only via `request()` from `electron/net.js`.
-  1. `GET /WebUntis/api/rest/view/v1/timetable/entries?start=<mon>&end=<sat>&format=4
-     &resourceType=STUDENT&resources=<person_id>&periodTypes=&timetableType=MY_TIMETABLE`
-  2. per non-cancelled `gridEntries[]` block: `GET /WebUntis/api/rest/view/v2/calendar-entry/detail
-     ?elementId=<person_id>&elementType=5&startDateTime=<duration.start>&endDateTime=<duration.end>
-     &homeworkOption=DUE` → `calendarEntries[].teachingContent` only (user: topic = "Lehrstoff").
-     Sequential or small concurrency (≤ 3); one failed detail call must not
-     fail the whole week (topic just stays empty).
-  - Return a **trimmed** shape (no names of teachers/classes/rooms, no
-    `notesAll`): `{ ok, days: [{ date, holiday: bool, lessons: [{ start, end,
-    status, subjectShort, subjectLong, topic }] }] }` or `{ ok: false, code, error }`.
-- IPC `webuntis:week` → `window.api.webuntisWeek(mondayISO)` (preload +
-  `browserApi` fallback "Nur in der Desktop-App verfügbar"; doc in
-  `docs/ARCHITECTURE.md` IPC table). Main refuses (`code: 'disabled'`) unless
-  the renderer passes it — better: main reads nothing from daten.json, so the
-  renderer only calls it when `settings.webuntis.enabled`.
-- Pure `src/lib/webuntis.js` + `webuntis.test.js`: `schoolDaysFromWebuntis(days)`
-  → per date: subjects in timetable order, cancelled lessons dropped, double
-  periods of the same subject merged, topics de-duplicated, `HOLIDAY` back
-  entries → day marked as school break. Fixtures hand-written from the shape in
-  `docs/DECISIONS.md` E-013 (no real data in the repo).
-- Test the main-process part against a local stub via `fetchImpl` (like
-  `electron/webuntis-session.test.mjs`); verify once with the real account (user, Windows).
+**First: one real-account check (user, Windows)** — not possible from a cloud
+session. `npm run dev` → Einstellungen → Verbindungen → WebUntis on → Anmelden;
+then DevTools (Ctrl+Shift+I) → console:
+`await api.webuntisWeek('<a Monday with school>')`. Expected: `ok: true`, the
+school day(s) with subject short names, times and `topics` filled from
+"Lehrstoff". If `topics` stay empty or the call fails, check: does
+`calendar-entry/detail` accept the `startDateTime` exactly as
+`gridEntries[].duration.start` delivers it (URL-encoded `:`)? Does
+`position2` hold the subject? Fix in `electron/webuntis.js` + its test.
 
-**4.5b** — subject mapping WebUntis `shortName` → profile subject label
-(identical names map automatically; others via a small per-profile map →
-schema v6 `profile.webuntisSubjects`), then **4.6** "Woche aus WebUntis füllen"
-in the week editor (preview, apply undoable, only into empty school days).
+**Then step 4.5b — subject mapping WebUntis → profile subject label**
+- Pure `src/lib/webuntis.js`: `mapSubjects(schoolDays, profile)` — a WebUntis
+  `short` that equals a subject label of the profile's school weekdays
+  (case-insensitive) maps automatically; otherwise via
+  `profile.webuntisSubjects` (`{ "<WebUntis short>": "<label>" }`); an empty
+  string = "ignore this subject" (e.g. Sport); unmapped subjects are reported
+  so the UI can ask once.
+- Schema **v6**: `profile.webuntisSubjects = {}` (migration step 5 → 6,
+  `validateData()` rejects non-string values, test "v5 file → v6",
+  `docs/DATA_MODEL.md`). Not a secret, belongs to the shared record.
+- UI for the map: in the profile editor (`src/views/Profiles.jsx`), a small
+  "WebUntis-Fächer" list, only shown when `settings.webuntis.enabled`.
+
+**Then 4.6** "Woche aus WebUntis füllen" in the week editor: fetch → map →
+preview per day (subjects + topics as bullets, cancelled/break days marked) →
+apply undoable, only into empty school days; topics become the subject's
+bullets.
 
 ## Open questions (for the user)
 
@@ -115,7 +110,9 @@ decision).
       `electron/jwt.js`; IPC `webuntis:status|login|logout` (2026-10-10)
 - [x] 4.4 Settings → new section "Verbindungen": WebUntis on/off (schema v5
       `settings.webuntis.enabled`), school read-only, status, login/logout (2026-10-10)
-- [ ] 4.5 `electron/webuntis.js` + mapping WebUntis subject → learning-field label (per profile)
+- [x] 4.5a `electron/webuntis.js` week fetch (timetable + "Lehrstoff" per block) + pure
+      normaliser `schoolDaysFromWebuntis()`; IPC `webuntis:week` (2026-10-10, stub-tested)
+- [ ] 4.5b Mapping WebUntis subject → learning-field label (per profile, schema v6)
 - [ ] 4.6 "Woche aus WebUntis füllen": school days + subjects + topics from lesson
       topics ("Lehrstoff" = `teachingContent`); detect breaks/cancelled lessons
 
@@ -146,3 +143,5 @@ decision).
 | 2026-10-10 | Step 4.2: network layer `electron/net.js` | branch `claude/intelligent-curie-yxizss` |
 | 2026-10-10 | Step 4.3: WebUntis session handling (real login tested by the user 2026-10-10: window closes itself, `loggedIn: true` + person id; login does not survive an app restart — accepted) | branch `claude/intelligent-curie-yxizss` |
 | 2026-10-10 | Step 4.4: Settings → "Verbindungen" (WebUntis), schema v5 | branch `claude/intelligent-curie-yxizss` |
+| 2026-10-10 | Step 4.4 review fixes: switch enforced in main, import keeps it | 3fb95f7 |
+| 2026-10-10 | Step 4.5a: WebUntis week fetch + normaliser (real-account check pending) | branch `claude/intelligent-curie-yxizss` |

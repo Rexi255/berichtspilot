@@ -28,6 +28,8 @@ contextBridge.exposeInMainWorld('api', {
   webuntisLogin: () => ipcRenderer.invoke('webuntis:login'),
   webuntisLogout: () => ipcRenderer.invoke('webuntis:logout'),
   webuntisSetEnabled: (on) => ipcRenderer.invoke('webuntis:setEnabled', on === true),
+  // One timetable week (Mon–Sat) incl. lesson topics → { ok, days } (see electron/webuntis.js)
+  webuntisWeek: (mondayISO) => ipcRenderer.invoke('webuntis:week', String(mondayISO)),
 
   // Window controls (custom title bar)
   minimize: () => ipcRenderer.invoke('window:minimize'),

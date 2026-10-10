@@ -42,6 +42,7 @@ const browserApi = {
   webuntisLogin: async () => ({ ok: false, loggedIn: false, error: DESKTOP_ONLY }),
   webuntisLogout: async () => ({ ok: false, error: DESKTOP_ONLY }),
   webuntisSetEnabled: async () => ({ ok: true }),
+  webuntisWeek: async () => ({ ok: false, error: DESKTOP_ONLY }),
   minimize() {}, maximize() {}, close() {}, onMaximized: () => () => {},
 }
 

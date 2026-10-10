@@ -1,10 +1,11 @@
 // Electron main process: window, data location + safe saving, file I/O via IPC.
 // User-facing strings (dialogs, menus) are German.
-const { app, BrowserWindow, ipcMain, dialog, shell, clipboard, Menu, MenuItem } = require('electron')
+const { app, BrowserWindow, ipcMain, dialog, shell, clipboard, Menu, MenuItem, session } = require('electron')
 const path = require('path')
 const fs = require('fs')
 const fsp = fs.promises
-const { createWebUntisSession } = require('./webuntis-session')
+const { createWebUntisSession, PARTITION: WEBUNTIS_PARTITION } = require('./webuntis-session')
+const { fetchWeek } = require('./webuntis')
 
 // ---------------------------------------------------------------------------
 // Location of daten.json. Goal: keep the file "portable" next to the
@@ -315,13 +316,17 @@ ipcMain.handle('dialog:ask', async (_ev, { title, message, detail, buttons, canc
   return response
 })
 
-// WebUntis session (E-013, path W1). The bearer token stays in main; the
-// renderer only gets { ok, loggedIn, personId?, error? }. No renderer input.
+// WebUntis (E-013, path W1). The bearer token stays in main; the renderer only
+// gets status objects and the trimmed week. Renderer input: the on/off flag
+// (coerced to a boolean) and a Monday date (validated in fetchWeek).
 const webuntis = createWebUntisSession()
 ipcMain.handle('webuntis:status', () => webuntis.status())
 ipcMain.handle('webuntis:login', () => webuntis.openLogin({ parent: win }))
 ipcMain.handle('webuntis:logout', () => webuntis.logout())
 ipcMain.handle('webuntis:setEnabled', (_e, on) => webuntis.setEnabled(on === true))
+ipcMain.handle('webuntis:week', (_e, mondayISO) =>
+  fetchWeek(webuntis, mondayISO, { ses: session.fromPartition(WEBUNTIS_PARTITION) })
+)
 
 // Window controls for the custom title bar
 ipcMain.handle('window:minimize', () => win?.minimize())

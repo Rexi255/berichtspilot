@@ -222,6 +222,20 @@ never survives a restart, the session starts as "known logged out" and
 `status()` answers from memory until a login or token succeeds — opening the
 settings sends no request; only "Anmelden" asks the server.
 
+**Week fetch (step 4.5a, 2026-10-10):** `electron/webuntis.js` `fetchWeek()`.
+The trimming happens in main: only subject short/long name, lesson times,
+status and `teachingContent` cross IPC — teacher, class and room names,
+`notesAll` and ids stay in the main process (customer/third-party data
+minimisation, rule 6). A lesson carries `topics: []` (not one string): one block
+can have several `teachingContent` values (`calendarEntries[]` and their
+`singleEntries[]`). Detail calls run at most 3 at once; a failed one only leaves
+that lesson's topics empty. The pure normaliser `schoolDaysFromWebuntis()`
+merges **all** lessons of one subject on a day (not only adjacent double
+periods), because the record lists each subject once per day; subjects whose
+lessons were all cancelled are returned as `cancelledSubjects` for the import
+preview. Verified only against hand-written stubs so far — the real-account check
+is the first item of the next step.
+
 ### E-014 · Keep the file name `daten.json` · accepted
 Field names became English in schema v3, but the file name stays: existing
 installations, portable copies, backups (`.bak1–3`) and the README all rely on it.

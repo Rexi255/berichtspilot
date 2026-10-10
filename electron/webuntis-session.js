@@ -195,4 +195,4 @@ function createWebUntisSession({ fetchImpl, now = Date.now, electron = () => req
   return { getToken, status, openLogin, logout, setEnabled }
 }
 
-module.exports = { createWebUntisSession, PARTITION, TOKEN_URL, LOGIN_URL, SCHOOL_INFO }
+module.exports = { createWebUntisSession, PARTITION, BASE, TOKEN_URL, LOGIN_URL, SCHOOL_INFO }

@@ -63,6 +63,7 @@ the bridge with `localStorage` stubs — handy for smoke tests.
 | `webuntis:status` | `webuntisStatus()` | WebUntis session → `{ ok, loggedIn, personId?, code?, error?, school }` (never the token; `school` = `{ name, host }` for display) |
 | `webuntis:login` | `webuntisLogin()` | open the isolated login window; resolves on detected login or window close → same shape as status |
 | `webuntis:logout` | `webuntisLogout()` | wipe the `persist:webuntis` partition + token → `{ ok, error? }` |
+| `webuntis:week` | `webuntisWeek(mondayISO)` | timetable Mon–Sat + "Lehrstoff" per lesson block (`electron/webuntis.js`; ≤ 3 detail calls at once, a failed one leaves `topics` empty) → `{ ok, days: [{ date, holiday, lessons: [{ start, end, status, subjectShort, subjectLong, topics[] }] }] }` or `{ ok: false, code, error }` — no teacher/class/room names, no `notesAll`, no ids. Normalised by `schoolDaysFromWebuntis()` in `src/lib/webuntis.js`. Renderer calls it only while `settings.webuntis.enabled`; main enforces the switch anyway (`code: 'disabled'`) |
 
 ## Networking
 
@@ -74,7 +75,7 @@ main process, only to hosts in this allowlist, each with a reason.
 
 | Host | Purpose | Since |
 |---|---|---|
-| `bbz-dithmarschen.webuntis.com` | WebUntis: timetable + lesson topics (E-013). Session handling (`electron/webuntis-session.js`: token from `/api/token/new`) + the probe (`--webuntis-probe`); UI: Settings → "Verbindungen" (step 4.4) | 2026-10 (step 4.1) |
+| `bbz-dithmarschen.webuntis.com` | WebUntis: timetable + lesson topics (E-013). Session handling (`electron/webuntis-session.js`: token from `/api/token/new`), week fetch (`electron/webuntis.js`: `timetable/entries`, `calendar-entry/detail`) + the probe (`--webuntis-probe`); UI: Settings → "Verbindungen" (step 4.4) | 2026-10 (step 4.1) |
 
 `login.bbz-dithmarschen.de` (school SSO) is only *navigated to* inside the
 isolated login window; the main process never sends requests there.
@@ -91,11 +92,21 @@ request). Only main-process code may call `getToken()`; the renderer sees just
 `loggedIn` and `personId`. `logout()` clears the partition's storage.
 
 **Settings → "Verbindungen" (step 4.4):** the renderer calls
-`webuntisStatus()` only while `settings.webuntis.enabled` is true (switched
-off, nothing is ever requested). Switching off also calls `webuntisLogout()` —
-it only wipes the local partition, so it is safe without a session. The login
-does not survive an app restart (session cookie), so "Nicht angemeldet" is the
-normal state after start.
+`webuntisStatus()` only while `settings.webuntis.enabled` is true. The switch
+itself is enforced in main: `src/store.jsx` mirrors it via `webuntisSetEnabled()`,
+and while off every token/status/login call answers `code: 'disabled'` without
+a request; switching off logs out (wipes the local partition). The login does
+not survive an app restart (session cookie), so "Nicht angemeldet" is the
+normal state after start — and `status()` answers it from memory, without a
+request, until a login succeeds.
+
+**Week fetch (step 4.5a):** `fetchWeek(session, mondayISO, { ses })` in
+`electron/webuntis.js` validates the Monday, asks `session.getToken()` before
+every call (headers `Authorization: Bearer` + `Tenant-Id`), loads
+`timetable/entries` for Mon–Sat, then `calendar-entry/detail` for every
+non-cancelled lesson block (exact block times, at most 3 in flight). It returns
+only subject short/long name, times, status and `teachingContent` topics — the
+raw answers (teachers, rooms, classes, `notesAll`) never cross IPC.
 
 ### Network layer `electron/net.js` (step 4.2)
 
@@ -114,7 +125,7 @@ All app requests go through `request(url, { ses, method, headers, body, expect, 
   tls · network · auth · not-found · rate-limit · server · http · parse` and a
   German `error` text ready for the UI.
 
-Not wired to IPC or UI yet; the probe still uses `ses.fetch` directly.
+Used by the WebUntis session and week fetch; the probe still uses `ses.fetch` directly.
 
 ### WebUntis probe (dev spike, step 4.1)
 
