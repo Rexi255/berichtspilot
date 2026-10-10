@@ -30,18 +30,7 @@ WebUntis "Lehrstoff" ─────────────┘    (daten.json) 
 
 ## Next step
 
-**A) Re-run "Aus WebUntis füllen" with the real account (user, ~2 min).**
-First run (2026-10-10, week 22.–23.09.2026) worked as intended except one
-thing: `LF08` on Wednesday also showed "Aktuelles zur Politik" — the topic of
-`LF10` from a stray parallel `LF08` entry in the school's timetable. Fixed by
-matching topics to the lesson's subject (DECISIONS E-013, "Topics per subject").
-The fix assumes the detail answer carries `calendarEntries[].subject`; if `LF08`
-**still** shows the LF10 topic, the field is named differently → run
-`npm run probe:webuntis` for that week and adapt `entrySubjects()` in
-`electron/webuntis.js`. Record the outcome in the Done log. Still open from the
-first run: unticking, "zuordnen" and "Rückgängig" weren't reported on — ask.
-
-**B) Then: step 3.5 or Phase 5** — depends on the open question below. If the
+**Step 3.5 or Phase 5** — depends on the open question below. If the
 raw topics are good enough, skip 3.5 and take Phase 5 "Create the current week
 automatically on start": in `src/store.jsx` after loading, if
 `settings.autoCreateWeek` (schema v7, default `true`, toggle in Settings →
@@ -111,7 +100,7 @@ decision).
   - [x] 4.6a pure merge logic `fillWeekFromWebuntis()` (only fills empty subjects of
         normal school days, appends missing ones, reports the rest) (2026-10-10)
   - [x] 4.6b UI: `src/views/WebuntisPanel.jsx` — preview per day with untick/assign,
-        login retry, apply + undo (2026-10-10; real-account check pending)
+        login retry, apply + undo (2026-10-10; real account checked by the user)
 
 ### Phase 5 — Comfort
 - [ ] Auto-update (electron-updater, GitHub Releases)
@@ -145,4 +134,4 @@ decision).
 | 2026-10-10 | Step 4.5b: WebUntis subject mapping, schema v6 | branch `claude/intelligent-curie-yxizss` |
 | 2026-10-10 | Step 4.6a: `fillWeekFromWebuntis()` merge logic | branch `claude/intelligent-curie-yxizss` |
 | 2026-10-10 | Step 4.6b: "Aus WebUntis füllen" panel (browser smoke test with mocked API; real account checked by the user: works, one wrong topic from a parallel lesson) | branch `claude/intelligent-curie-yxizss` |
-| 2026-10-10 | Fix: WebUntis topics matched per subject (stray parallel lesson), one detail call per time range | branch `claude/intelligent-curie-yxizss` |
+| 2026-10-10 | Fix: WebUntis topics matched per subject (stray parallel lesson), one detail call per time range — re-run by the user: LF08 correct | abbe2bb |

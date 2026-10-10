@@ -276,8 +276,8 @@ double period, a teacher who doesn't exist yet), so `LF08` got LF10's topic
 `teachingContent` of entries whose `subject` (`shortName`/`longName`/
 `displayName`, or a `subjects[]` list) matches its own subject; if the answer
 names no subjects at all, every entry is used as before. The field name is
-assumed from the WebUntis v2 API, not yet seen in our probe output — confirmed
-by the user's re-run if `LF08` then shows only its own topic. Parallel lessons
+assumed from the WebUntis v2 API and confirmed by the user's re-run
+(2026-10-10): `LF08` now shows only its own topic. Parallel lessons
 with the same times now share one detail request.
 
 ### E-014 · Keep the file name `daten.json` · accepted
