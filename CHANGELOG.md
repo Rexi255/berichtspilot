@@ -6,6 +6,12 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **Setup wizard scrolls again:** when a step grew taller than the window
+  (e.g. many subjects in "Aktuelles Schulhalbjahr"), the page could not be
+  scrolled and the "Weiter" button was out of reach.
+
 ## [2.0.0] - 2026-10-10
 
 The automation release: setup wizard, notes per day, AI phrasing via the

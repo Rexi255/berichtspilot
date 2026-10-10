@@ -212,3 +212,4 @@ decision).
 | 2026-10-10 | E-019: own WebUntis address (schema v9, `webuntis:configure`, only `*.webuntis.com`) | PR #1 |
 | 2026-10-10 | E-020: setup wizard on a fresh install (schema v10 `setupDone`) | PR #1 |
 | 2026-10-10 | v2.0.0 released: PR #1 merged, tag pushed, release workflow green, release notes from CHANGELOG | 674cea3, tag `v2.0.0` |
+| 2026-10-10 | Fix: setup wizard scrolls again (`.aurora` overflow beat Tailwind's `overflow-y-auto`; scrolling moved to an inner element) | see git log |
