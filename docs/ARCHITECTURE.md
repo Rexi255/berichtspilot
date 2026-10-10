@@ -11,6 +11,9 @@ Keep this file in sync when changing process boundaries, IPC or networking.
 │  · resolve daten.json location, atomic save, rolling backups .bak1–3         │
 │  · native dialogs (export/import/ask), clipboard, reveal in file manager     │
 │  · single-instance lock                                                      │
+│ electron/net.js         network layer: allowlist, timeout, German errors     │
+│ electron/webuntis-*.js  WebUntis login window, token, week fetch (E-013)     │
+│ electron/updater.js     auto-update via electron-updater (E-017)             │
 └──────────────▲───────────────────────────────────────────────────────────────┘
                │ IPC (ipcMain.handle ↔ ipcRenderer.invoke)
 ┌──────────────┴──── electron/preload.js (contextBridge) ──────────────────────┐
@@ -20,8 +23,11 @@ Keep this file in sync when changing process boundaries, IPC or networking.
 ┌──────────────┴──── Renderer (Chromium, sandboxed, strict CSP) ───────────────┐
 │ src/main.jsx → App.jsx (shell: Titlebar, Sidebar, GSAP view transitions)     │
 │ src/store.jsx  StoreProvider: loads on start, holds `data`, 400 ms autosave  │
-│ src/views/*    Overview · WeekEditor · Profiles · Settings                   │
-│ src/lib/*      pure logic: dates · holidays · format · model                 │
+│ src/views/*    Overview · WeekEditor (+ PhrasingPanel, WebuntisPanel) ·      │
+│                Profiles · Settings                                           │
+│ src/ui/*       Titlebar · Sidebar · UpdateHint · basics · toast              │
+│ src/lib/*      pure logic: dates · holidays · format · model · notes ·       │
+│                phrasing · webuntis · update                                  │
 └──────────────────────────────────────────────────────────────────────────────┘
 ```
 
