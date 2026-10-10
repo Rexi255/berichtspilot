@@ -9,6 +9,8 @@ const { isJwt, decodeJwtPayload, expiresSoon } = require('./jwt')
 
 const HOST = 'bbz-dithmarschen.webuntis.com'
 const SCHOOL = 'bbz-dithmarschen'
+// Shown read-only in Settings (sent along with every status, not stored)
+const SCHOOL_INFO = { name: 'BBZ Dithmarschen', host: HOST }
 const BASE = `https://${HOST}/WebUntis`
 const LOGIN_URL = `${BASE}/?school=${SCHOOL}`
 const TOKEN_URL = `${BASE}/api/token/new`
@@ -16,6 +18,7 @@ const PARTITION = 'persist:webuntis'
 const LOGIN_POLL_MS = 2000
 
 const NOT_LOGGED_IN = { ok: false, code: 'auth', error: 'Bitte erneut anmelden.' }
+const DISABLED = { ok: false, code: 'disabled', error: 'WebUntis ist ausgeschaltet.' }
 
 /**
  * Session handle for the WebUntis account. Dependencies are injectable so the
@@ -29,6 +32,13 @@ function createWebUntisSession({ fetchImpl, now = Date.now, electron = () => req
   let login = null // { win, promise } while the login window is open
   let generation = 0 // bumped by logout(): late answers from before it are discarded
   let permissionsLocked = false
+  // Mirrors settings.webuntis.enabled (set by the renderer on load and on every
+  // change). Off = no WebUntis request at all, whatever path asks for one.
+  let enabled = false
+  // The web session is a session cookie, so after an app start (and after an
+  // auth failure or logout) we know we're logged out — status() then answers
+  // without a request; only an explicit login asks the server again.
+  let loggedOut = true
 
   function partition() {
     const ses = electron().session.fromPartition(PARTITION)
@@ -46,7 +56,10 @@ function createWebUntisSession({ fetchImpl, now = Date.now, electron = () => req
     const res = await request(TOKEN_URL, { expect: 'text', ...(fetchImpl ? { fetchImpl } : { ses: partition() }) })
     if (gen !== generation) return NOT_LOGGED_IN
     if (!res.ok) {
-      if (res.code === 'auth') cached = null
+      if (res.code === 'auth') {
+        cached = null
+        loggedOut = true
+      }
       return res
     }
     const text = typeof res.data === 'string' ? res.data.trim() : ''
@@ -54,9 +67,11 @@ function createWebUntisSession({ fetchImpl, now = Date.now, electron = () => req
     // 200 without a JWT = the session is gone (WebUntis then serves a web page)
     if (!isJwt(text) || !payload) {
       cached = null
+      loggedOut = true
       return NOT_LOGGED_IN
     }
     cached = { token: text, payload }
+    loggedOut = false
     return { ok: true, ...cached }
   }
 
@@ -67,6 +82,7 @@ function createWebUntisSession({ fetchImpl, now = Date.now, electron = () => req
    * → `{ ok: true, token, payload }` or `{ ok: false, code, error }`
    */
   async function getToken({ force = false } = {}) {
+    if (!enabled) return DISABLED
     if (!force && cached && !expiresSoon(cached.payload, now())) return { ok: true, ...cached }
     if (!pending) {
       const p = fetchToken().finally(() => {
@@ -86,9 +102,10 @@ function createWebUntisSession({ fetchImpl, now = Date.now, electron = () => req
     return { ok: false, loggedIn: false, code: res.code, error: res.error }
   }
 
-  /** `{ ok, loggedIn, personId?, code?, error? }` — safe to pass to the renderer. */
+  /** `{ ok, loggedIn, personId?, code?, error?, school }` — safe to pass to the renderer. */
   async function status() {
-    return toStatus(await getToken())
+    const res = !enabled ? DISABLED : loggedOut && !cached ? NOT_LOGGED_IN : await getToken()
+    return { ...toStatus(res), school: SCHOOL_INFO }
   }
 
   /**
@@ -101,8 +118,10 @@ function createWebUntisSession({ fetchImpl, now = Date.now, electron = () => req
       if (!login.win.isDestroyed()) login.win.focus()
       return login.promise
     }
-    const current = await status()
-    if (current.loggedIn) return current
+    if (!enabled) return status()
+    // User-initiated → ask the server even if we believe we're logged out
+    const current = toStatus(await getToken({ force: loggedOut }))
+    if (current.loggedIn) return { ...current, school: SCHOOL_INFO }
 
     const { BrowserWindow } = electron()
     const prefs = { partition: PARTITION, sandbox: true, contextIsolation: true, nodeIntegration: false }
@@ -128,21 +147,23 @@ function createWebUntisSession({ fetchImpl, now = Date.now, electron = () => req
 
     const promise = new Promise((resolve) => {
       let done = false
-      const finish = (result) => {
+      const finish = (res) => {
         if (done) return
         done = true
         clearInterval(poll)
         login = null
         if (!win.isDestroyed()) win.close()
-        resolve(result)
+        resolve({ ...toStatus(res), school: SCHOOL_INFO })
       }
       const poll = setInterval(async () => {
         const res = await getToken({ force: true })
-        if (res.ok) finish(toStatus(res))
+        if (res.ok || res.code === 'disabled') finish(res)
       }, LOGIN_POLL_MS)
-      // Closed by the user: one last check (the login may have just finished)
+      // Closed by the user: one last check (the login may have just finished).
+      // Closed by logout()/switching off: no request — the session is gone anyway
+      const gen = generation
       win.on('closed', async () => {
-        if (!done) finish(toStatus(await getToken({ force: true })))
+        if (!done) finish(gen === generation ? await getToken({ force: true }) : NOT_LOGGED_IN)
       })
     })
     login = { win, promise }
@@ -155,6 +176,7 @@ function createWebUntisSession({ fetchImpl, now = Date.now, electron = () => req
     generation++
     cached = null
     pending = null
+    loggedOut = true
     try {
       await partition().clearStorageData()
       if (login && !login.win.isDestroyed()) login.win.close()
@@ -164,7 +186,13 @@ function createWebUntisSession({ fetchImpl, now = Date.now, electron = () => req
     }
   }
 
-  return { getToken, status, openLogin, logout }
+  /** Follow the on/off switch from daten.json; switching off also logs out. */
+  async function setEnabled(on) {
+    enabled = on === true
+    return enabled ? { ok: true } : logout()
+  }
+
+  return { getToken, status, openLogin, logout, setEnabled }
 }
 
-module.exports = { createWebUntisSession, PARTITION, TOKEN_URL, LOGIN_URL }
+module.exports = { createWebUntisSession, PARTITION, TOKEN_URL, LOGIN_URL, SCHOOL_INFO }

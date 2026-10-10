@@ -183,7 +183,7 @@ function createWindow() {
   // display). `--scroll` brings an element below the fold into view first.
   const shotArg = process.argv.find((a) => a.startsWith('--screenshot='))
   if (shotArg) {
-    const targetPath = shotArg.split('=')[1]
+    const targetPath = shotArg.slice('--screenshot='.length)
     const viewArg = process.argv.find((a) => a.startsWith('--view='))
     const scrollArg = process.argv.find((a) => a.startsWith('--scroll='))
     win.webContents.once('did-finish-load', () => {
@@ -321,6 +321,7 @@ const webuntis = createWebUntisSession()
 ipcMain.handle('webuntis:status', () => webuntis.status())
 ipcMain.handle('webuntis:login', () => webuntis.openLogin({ parent: win }))
 ipcMain.handle('webuntis:logout', () => webuntis.logout())
+ipcMain.handle('webuntis:setEnabled', (_e, on) => webuntis.setEnabled(on === true))
 
 // Window controls for the custom title bar
 ipcMain.handle('window:minimize', () => win?.minimize())

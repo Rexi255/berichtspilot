@@ -6,6 +6,7 @@ import {
   migrateData,
   validateData,
   mergeData,
+  replaceData,
   seedData,
   newWeek,
   weekFromTemplate,
@@ -239,6 +240,20 @@ describe('migrateData', () => {
     expect(migrateData({ version: 4, profiles: [], weeks: [] }).settings.webuntis).toEqual({ enabled: false })
   })
 
+  it('resets a malformed WebUntis value to "off" instead of keeping it', () => {
+    const webuntisOf = (value) =>
+      migrateData({ version: 5, settings: { webuntis: value }, profiles: [], weeks: [] }).settings.webuntis
+    expect(webuntisOf('on')).toEqual({ enabled: false })
+    expect(webuntisOf(['x'])).toEqual({ enabled: false })
+    expect(webuntisOf(null)).toEqual({ enabled: false })
+    expect(webuntisOf({})).toEqual({ enabled: false })
+    expect(webuntisOf({ enabled: 'ja' })).toEqual({ enabled: false })
+    expect(webuntisOf({ enabled: true })).toEqual({ enabled: true })
+    const d = migrateData({ version: 5, settings: 'kaputt', profiles: [], weeks: [] })
+    expect(d.settings).toEqual({ startView: 'overview', snippets: [], webuntis: { enabled: false } })
+    expect(() => validateData(d)).not.toThrow()
+  })
+
   it('keeps unknown enum values instead of dropping them', () => {
     const d = migrateData({
       version: 2,
@@ -289,6 +304,22 @@ describe('validateData', () => {
     expect(() =>
       validateData({ settings: { webuntis: { enabled: 'ja' } }, profiles: [], weeks: [] })
     ).toThrow(/WebUntis/)
+  })
+})
+
+describe('replaceData', () => {
+  it('takes everything from the file except the WebUntis switch', () => {
+    const current = { ...seedData(), settings: { ...seedData().settings, webuntis: { enabled: false } } }
+    const imported = {
+      ...seedData(),
+      weeks: [{ id: '2026-07-06', status: 'done', instructions: '', days: [] }],
+      settings: { ...seedData().settings, theme: 'rose', webuntis: { enabled: true } },
+    }
+    const result = replaceData(current, imported)
+    expect(result.weeks).toEqual(imported.weeks)
+    expect(result.settings.theme).toBe('rose')
+    expect(result.settings.webuntis).toEqual({ enabled: false })
+    expect(replaceData(imported, current).settings.webuntis).toEqual({ enabled: true })
   })
 })
 

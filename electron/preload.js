@@ -23,10 +23,11 @@ contextBridge.exposeInMainWorld('api', {
   // Native question dialog; returns the index of the clicked button
   askDialog: (options) => ipcRenderer.invoke('dialog:ask', options),
 
-  // WebUntis session (login window, status, logout) → { ok, loggedIn, personId?, error? }
+  // WebUntis session (on/off, login window, status, logout) → { ok, loggedIn, personId?, error?, school? }
   webuntisStatus: () => ipcRenderer.invoke('webuntis:status'),
   webuntisLogin: () => ipcRenderer.invoke('webuntis:login'),
   webuntisLogout: () => ipcRenderer.invoke('webuntis:logout'),
+  webuntisSetEnabled: (on) => ipcRenderer.invoke('webuntis:setEnabled', on === true),
 
   // Window controls (custom title bar)
   minimize: () => ipcRenderer.invoke('window:minimize'),

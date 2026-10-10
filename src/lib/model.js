@@ -205,10 +205,12 @@ export function migrateData(raw) {
 
   // Defensive defaults in case single fields are missing (e.g. hand-edited file)
   d.periods ??= []
-  d.settings ??= {}
+  if (!isObject(d.settings)) d.settings = {}
   d.settings.startView ??= 'overview'
   d.settings.snippets ??= []
-  d.settings.webuntis ??= { enabled: false }
+  // Anything but a real `true` means off — a malformed value must not survive
+  const webuntis = d.settings.webuntis
+  d.settings.webuntis = isObject(webuntis) ? { ...webuntis, enabled: webuntis.enabled === true } : { enabled: false }
   return d
 }
 
@@ -254,6 +256,14 @@ export function validateData(d) {
     fail('Die WebUntis-Einstellung in der Datei ist ungültig.')
   }
   return d
+}
+
+/**
+ * Import "Ersetzen": take everything from the file except the WebUntis switch —
+ * that's this device's opt-in to network access, not part of the shared record.
+ */
+export function replaceData(current, imported) {
+  return { ...imported, settings: { ...imported.settings, webuntis: current.settings.webuntis } }
 }
 
 /**

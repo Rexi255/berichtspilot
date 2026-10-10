@@ -59,7 +59,8 @@ the bridge with `localStorage` stubs — handy for smoke tests.
 | `dialog:ask` | `askDialog(opts)` | native question dialog → button index |
 | `window:minimize` / `window:maximize` / `window:close` | `minimize()` / `maximize()` / `close()` | custom title bar |
 | `window:maximized` (event main → renderer) | `onMaximized(cb)` | maximized state |
-| `webuntis:status` | `webuntisStatus()` | WebUntis session → `{ ok, loggedIn, personId?, code?, error? }` (never the token) |
+| `webuntis:setEnabled` | `webuntisSetEnabled(on)` | mirror `settings.webuntis.enabled` into main (synced by `src/store.jsx` on load and every change); off = every WebUntis call answers `code: 'disabled'` without a request, and logs out → `{ ok, error? }` |
+| `webuntis:status` | `webuntisStatus()` | WebUntis session → `{ ok, loggedIn, personId?, code?, error?, school }` (never the token; `school` = `{ name, host }` for display) |
 | `webuntis:login` | `webuntisLogin()` | open the isolated login window; resolves on detected login or window close → same shape as status |
 | `webuntis:logout` | `webuntisLogout()` | wipe the `persist:webuntis` partition + token → `{ ok, error? }` |
 

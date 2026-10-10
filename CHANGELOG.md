@@ -31,6 +31,8 @@ versioning follows [Semantic Versioning](https://semver.org/).
   Dithmarschen), the login status and "Anmelden"/"Abmelden". The login happens
   in a separate window on the school's page; the app never sees the password.
   Switching off also logs out. Schema v5 adds the switch to existing data.
+  The switch is a per-device opt-in: an import with "Ersetzen" keeps it as it
+  is, and opening the settings while logged out sends no request.
 
 ### Changed
 

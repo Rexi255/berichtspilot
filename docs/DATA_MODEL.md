@@ -82,6 +82,12 @@ with existing installations (DECISIONS E-014); all field names are English.
 | 3 → 4 | `notes: ''` added to every day (existing values kept) |
 | 4 → 5 | `settings.webuntis = { enabled: false }` (existing value kept); `validateData()` rejects a non-boolean `enabled` |
 
+Defensive defaults after migration: `settings` that is not an object becomes `{}`;
+`settings.webuntis` that is not an object, or whose `enabled` isn't `true`, becomes
+"off" (`enabled: false`). Import "Ersetzen" (`replaceData()`) keeps the device's
+current `settings.webuntis` — the opt-in to network access is not taken from a
+shared file.
+
 Versions newer than `DATA_VERSION` are **rejected** (downgrade protection: otherwise
 autosave would overwrite the file with an older structure).
 

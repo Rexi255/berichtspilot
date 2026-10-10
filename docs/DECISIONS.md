@@ -210,6 +210,18 @@ allowlist, shown read-only), no user name, person id or token (rule 5). Off is
 the default and means no WebUntis request at all; switching off also logs out
 (wipes the partition locally).
 
+**Enforcing the switch (review fixes, 2026-10-10):** the switch is enforced in
+the main process, not in the Settings component — `src/store.jsx` mirrors the
+flag via `webuntis:setEnabled` on load and on every change (toggle, import,
+hand-edited file), and `webuntis-session.js` answers every token/status/login
+call with `code: 'disabled'` while off. Switching off logs out there, and a
+login window closed by that logout sends no final token check. Import
+"Ersetzen" keeps the device's switch (`replaceData()`): the opt-in to network
+access must not come from someone else's shared file. Since the web session
+never survives a restart, the session starts as "known logged out" and
+`status()` answers from memory until a login or token succeeds — opening the
+settings sends no request; only "Anmelden" asks the server.
+
 ### E-014 · Keep the file name `daten.json` · accepted
 Field names became English in schema v3, but the file name stays: existing
 installations, portable copies, backups (`.bak1–3`) and the README all rely on it.

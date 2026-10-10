@@ -151,8 +151,7 @@ function SnippetEditor() {
 
 /* ------------------------- Connections (WebUntis) ------------------------- */
 
-// Fixed by the allowlist in electron/net.js — shown read-only, not stored
-const WEBUNTIS_SCHOOL = { name: 'BBZ Dithmarschen', host: 'bbz-dithmarschen.webuntis.com' }
+const UNREACHABLE = { ok: false, loggedIn: false, error: 'WebUntis nicht erreichbar' }
 
 // Status pill for `{ ok, loggedIn, error }` from webuntis:status|login; null = checking
 function WebuntisStatus({ status }) {
@@ -166,14 +165,22 @@ function WebuntisConnection() {
   const { data, setWebuntisEnabled } = useStore()
   const enabled = data.settings.webuntis?.enabled === true
   const [status, setStatus] = useState(null)
-  const [busy, setBusy] = useState(null) // 'login' | 'logout' | null
+  // Login window open or logout running. Which one is clear from the status:
+  // the login button only shows while logged out, the logout button while logged in
+  const [busy, setBusy] = useState(false)
   const [checks, setChecks] = useState(0) // bump → ask the main process again
+  // School + host come from the main process (fixed there by the allowlist)
+  const school = status?.school
 
-  // Only ask while enabled: switched off, nothing is ever requested
+  // Only ask while enabled. The main process enforces the switch itself (off =
+  // no request), and answers "logged out" from memory until a login happened.
   useEffect(() => {
     if (!enabled) return
     let alive = true
-    api.webuntisStatus().then((res) => alive && setStatus(res))
+    api.webuntisStatus().then(
+      (res) => alive && setStatus(res),
+      () => alive && setStatus(UNREACHABLE)
+    )
     return () => {
       alive = false
     }
@@ -184,35 +191,44 @@ function WebuntisConnection() {
     setChecks((n) => n + 1)
   }
 
-  const toggle = async (on) => {
+  // Switching off also ends the session — done by the store, which syncs the
+  // flag to the main process (and reports a failed logout there)
+  const toggle = (on) => {
     setStatus(null)
     setWebuntisEnabled(on)
-    // Switching off also ends the session: logout only wipes the login
-    // partition locally (no request), so it's safe to call unconditionally
-    if (!on) await api.webuntisLogout()
   }
 
   const login = async () => {
-    setBusy('login')
-    const res = await api.webuntisLogin()
-    setBusy(null)
-    setStatus(res)
-    if (res.loggedIn) showToast('Bei WebUntis angemeldet')
+    setBusy(true)
+    try {
+      const res = await api.webuntisLogin()
+      setStatus(res)
+      if (res.loggedIn) showToast('Bei WebUntis angemeldet')
+    } catch {
+      setStatus({ ...UNREACHABLE, school, error: 'Anmeldefenster konnte nicht geöffnet werden' })
+    } finally {
+      setBusy(false)
+    }
   }
 
   const logout = async () => {
-    setBusy('logout')
-    const res = await api.webuntisLogout()
-    setBusy(null)
-    if (res.ok) setStatus({ ok: true, loggedIn: false })
-    else showToast(res.error || 'Abmelden fehlgeschlagen', { kind: 'error', duration: 5000 })
+    setBusy(true)
+    try {
+      const res = await api.webuntisLogout()
+      if (res.ok) setStatus({ ok: true, loggedIn: false, school })
+      else showToast(res.error || 'Abmelden fehlgeschlagen', { kind: 'error', duration: 5000 })
+    } catch {
+      showToast('Abmelden fehlgeschlagen', { kind: 'error', duration: 5000 })
+    } finally {
+      setBusy(false)
+    }
   }
 
   return (
     <Panel className="max-w-2xl">
       <div className="flex items-center gap-4 px-4 py-3">
         <div className="min-w-0 flex-1">
-          <Switch checked={enabled} onChange={toggle} label="WebUntis-Import" disabled={!!busy} />
+          <Switch checked={enabled} onChange={toggle} label="WebUntis-Import" disabled={busy} />
           <p className="mt-1 text-[12px] text-ink-3">
             Schultage, Fächer und Lehrstoff aus dem Stundenplan der Berufsschule übernehmen.
           </p>
@@ -224,8 +240,13 @@ function WebuntisConnection() {
           <div className="flex items-center gap-3">
             <div className="w-16 shrink-0 text-[12px] font-medium text-ink-2">Schule</div>
             <div className="min-w-0 truncate text-[12.5px] text-ink">
-              {WEBUNTIS_SCHOOL.name}{' '}
-              <span className="text-ink-3">({WEBUNTIS_SCHOOL.host})</span>
+              {school ? (
+                <>
+                  {school.name} <span className="text-ink-3">({school.host})</span>
+                </>
+              ) : (
+                <span className="text-ink-3">—</span>
+              )}
             </div>
           </div>
 
@@ -234,18 +255,18 @@ function WebuntisConnection() {
             <div className="flex min-w-0 flex-1 items-center gap-1">
               <WebuntisStatus status={status} />
               {status && !status.ok && (
-                <IconButton label="Erneut prüfen" onClick={recheck} disabled={!!busy}>
+                <IconButton label="Erneut prüfen" onClick={recheck} disabled={busy}>
                   <ArrowClockwiseIcon size={13} />
                 </IconButton>
               )}
             </div>
             {status?.loggedIn ? (
-              <Button size="sm" onClick={logout} disabled={!!busy}>
+              <Button size="sm" onClick={logout} disabled={busy}>
                 <SignOutIcon size={14} /> Abmelden
               </Button>
             ) : (
-              <Button size="sm" variant="primary" onClick={login} disabled={!status || !!busy}>
-                {busy === 'login' ? (
+              <Button size="sm" variant="primary" onClick={login} disabled={!status || busy}>
+                {busy ? (
                   <>
                     <CircleNotchIcon size={14} className="animate-spin" /> Anmeldefenster offen …
                   </>

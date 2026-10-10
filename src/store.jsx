@@ -1,6 +1,6 @@
 // Central state: loads daten.json on start and saves changes automatically
 // (debounced) through the preload bridge to the main process.
-import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import {
   seedData,
   newWeek,
@@ -12,6 +12,7 @@ import {
   migrateData,
   validateData,
   mergeData,
+  replaceData,
 } from './lib/model.js'
 import { isoWeek } from './lib/dates.js'
 import { showToast } from './ui/toast.jsx'
@@ -40,6 +41,7 @@ const browserApi = {
   webuntisStatus: async () => ({ ok: false, loggedIn: false, error: DESKTOP_ONLY }),
   webuntisLogin: async () => ({ ok: false, loggedIn: false, error: DESKTOP_ONLY }),
   webuntisLogout: async () => ({ ok: false, error: DESKTOP_ONLY }),
+  webuntisSetEnabled: async () => ({ ok: true }),
   minimize() {}, maximize() {}, close() {}, onMaximized: () => () => {},
 }
 
@@ -101,6 +103,20 @@ export function StoreProvider({ children }) {
     timerRef.current = setTimeout(() => saveNow(data), 400)
     return () => clearTimeout(timerRef.current)
   }, [data, saveNow])
+
+  // The main process enforces the WebUntis switch (off = no request at all, and
+  // switching off logs out). Synced here — not in Settings — so every path that
+  // changes the flag counts: the toggle, an import, loading the file.
+  // Layout effect: runs before any child's passive effect, so the main process
+  // already knows "on" when Settings asks for the status right after toggling.
+  const webuntisEnabled = data ? data.settings.webuntis?.enabled === true : null
+  useLayoutEffect(() => {
+    if (webuntisEnabled === null) return
+    api.webuntisSetEnabled(webuntisEnabled).then(
+      (res) => !res.ok && showToast(res.error || 'Abmelden fehlgeschlagen', { kind: 'error', duration: 5000 }),
+      () => showToast('WebUntis konnte nicht umgeschaltet werden', { kind: 'error', duration: 5000 })
+    )
+  }, [webuntisEnabled])
 
   // ---------------- Mutations (always immutable) ----------------
 
@@ -216,7 +232,8 @@ export function StoreProvider({ children }) {
     setData((d) => ({ ...d, settings: { ...d.settings, ...patch } }))
   }, [])
 
-  // Only the on/off switch is stored — login state lives in the main process
+  // Only the on/off switch is stored — login state lives in the main process,
+  // which follows this flag via the layout effect above
   const setWebuntisEnabled = useCallback((enabled) => {
     setData((d) => ({ ...d, settings: { ...d.settings, webuntis: { ...d.settings.webuntis, enabled } } }))
   }, [])
@@ -246,7 +263,7 @@ export function StoreProvider({ children }) {
       cancelId: 2,
     })
     if (choice !== 0 && choice !== 1) return { ok: false, canceled: true }
-    setData((d) => (choice === 0 ? mergeData(d, imported) : imported))
+    setData((d) => (choice === 0 ? mergeData(d, imported) : replaceData(d, imported)))
     return { ok: true, merged: choice === 0 }
   }, [])
 
