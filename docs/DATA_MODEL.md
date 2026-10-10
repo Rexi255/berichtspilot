@@ -1,6 +1,6 @@
 # Data model — `daten.json`
 
-Current schema version: **10** (`DATA_VERSION` in `src/lib/model.js`).
+Current schema version: **11** (`DATA_VERSION` in `src/lib/model.js`).
 One JSON file holds the configuration **and** every training week. It is also the
 export/backup format. The file name stays German (`daten.json`) for compatibility
 with existing installations (DECISIONS E-014); all field names are English.
@@ -9,7 +9,7 @@ with existing installations (DECISIONS E-014); all field names are English.
 
 ```jsonc
 {
-  "version": 10,
+  "version": 11,
   "settings": {
     "trainingStart": "2025-08-01",   // optional; progress line + gap detection
     "trainingEnd": "2028-07-31",
@@ -39,7 +39,7 @@ with existing installations (DECISIONS E-014); all field names are English.
       "state": "SH",                 // federal state code (STATES in holidays.js)
       "validFrom": "2026-02-02",
       "validTo": "2026-07-31",
-      "defaultBulletCount": 2,       // empty bullets per work day on creation
+      "defaultBulletCount": 1,       // empty bullets per work day on creation (default 1 since v11)
       "weekdays": {
         "mon": { "type": "school", "subjects": ["LF02", "LF03", "Englisch", "WiPo"] },
         "tue": { "type": "work", "subjects": [] },
@@ -99,6 +99,7 @@ with existing installations (DECISIONS E-014); all field names are English.
 | 7 → 8 | `settings.updateCheck = true` (existing value kept); `validateData()` rejects a non-boolean value |
 | 8 → 9 | `settings.webuntis.host = ''`, `school = ''` (existing values kept) — the address is entered once in Settings (E-019); `validateData()` rejects non-string values |
 | 9 → 10 | `settings.setupDone = true` (existing files are set up; existing value kept); `validateData()` rejects a non-boolean value |
+| 10 → 11 | `profiles[].defaultBulletCount` 2 (the old default) → 1; any other value kept (E-021) |
 
 Defensive defaults after migration: `settings` that is not an object becomes `{}`;
 `settings.webuntis` that is not an object, or whose `enabled` isn't `true`, becomes

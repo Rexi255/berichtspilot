@@ -426,3 +426,14 @@ week, update check) → summary.
   once it is saved; the login happens the first time "Aus WebUntis füllen" is
   used. Considered for later: filling school days + subjects straight from the
   WebUntis timetable during setup.
+
+### E-021 · One starter bullet per work day · accepted
+User (2026-10-10, right after v2.0.0): two empty bullets per work day get in
+the way — Enter in the first bullet inserts a new one instead of moving to the
+empty second one. The default `defaultBulletCount` drops from 2 to 1 (seed,
+`newProfile()`, setup wizard, fallback in `newWeek()`/`weekFromTemplate()`).
+Schema v11 lowers stored profiles from 2 to 1: 2 was the default nobody had a
+reason to pick, so it is treated as "not chosen"; any other value is kept.
+Weeks that already exist are left alone. Considered: Enter jumping into an
+empty bullet below instead of inserting — possible later, but one bullet
+already removes the problem.
