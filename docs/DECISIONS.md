@@ -195,7 +195,13 @@ W1 (only the partition's cookies persist, managed by Chromium). Login is
 detected by polling `token/new` every 2 s while the login window is open; the
 window closes itself on success. A 200 answer that is not a JWT counts as "not
 logged in". Note: `token/new` sends the bare JWT labelled `application/json`
-(not valid JSON) — it is read with `request(…, { expect: 'text' })`. `logout()` bumps a generation counter so a token request still in
+(not valid JSON) — it is read with `request(…, { expect: 'text' })`.
+Tested with the real account (2026-10-10): login detected, window closes
+itself, status returns the person id. **The login does not survive an app
+restart** — WebUntis' web session is a session cookie, which Chromium drops on
+exit even in a `persist:` partition. Accepted by the user: logging in again is
+two clicks via SSO and only needed when importing; no workaround to keep
+session cookies alive. W2 (QR code) stays the option if it becomes annoying. `logout()` bumps a generation counter so a token request still in
 flight cannot re-populate the cache afterwards.
 
 ### E-014 · Keep the file name `daten.json` · accepted

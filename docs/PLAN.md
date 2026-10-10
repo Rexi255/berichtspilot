@@ -52,9 +52,10 @@ session API from 4.3 exists: `window.api.webuntisStatus()` / `webuntisLogin()` /
     page; the app never sees the password.
 - Browser mode: the fallback returns "Nur in der Desktop-App verfügbar" —
   show it as the status text, don't crash.
-- Verify: lint/test/build + Electron screenshot `--view=settings`; the user
-  checks the real login once (step 4.3 could not be tested with a real account
-  — see the note in the done log).
+- The login does not survive an app restart (WebUntis uses a session
+  cookie) — the UI must handle "nicht angemeldet" as the normal state after
+  start, with "Anmelden" as the obvious action.
+- Verify: lint/test/build + Electron screenshot `--view=settings`.
 
 **Then 4.5–4.6** (see E-013): `electron/webuntis.js` uses `getToken()` from
 `createWebUntisSession()` in `main.js` (headers `Authorization: Bearer …` +
@@ -140,4 +141,4 @@ decision).
 | 2026-10-10 | Step 4.1b: probe evaluated, E-013 accepted | branch `claude/intelligent-curie-yxizss` |
 | 2026-10-10 | Step 2.2: speech spike (model parked) | branch `claude/intelligent-curie-yxizss` |
 | 2026-10-10 | Step 4.2: network layer `electron/net.js` | branch `claude/intelligent-curie-yxizss` |
-| 2026-10-10 | Step 4.3: WebUntis session handling (smoke-tested against the live server: status "not logged in", login window loads, close + logout; a real login is still untested) | branch `claude/intelligent-curie-yxizss` |
+| 2026-10-10 | Step 4.3: WebUntis session handling (real login tested by the user 2026-10-10: window closes itself, `loggedIn: true` + person id; login does not survive an app restart — accepted) | branch `claude/intelligent-curie-yxizss` |
