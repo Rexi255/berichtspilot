@@ -61,15 +61,13 @@ Then: steps 2.3–2.5 (mic permission, transcription IPC, dictate button).
 
 ## Open questions (for the user)
 
-1. **AI phrasing (E-011):** Option A "clipboard bridge" (works with any chat AI you
-   already use, no key, no cost, 2 pastes per week), option B "bundled local model"
-   (fully automatic and offline, but weaker and +2–3 GB installer), or both?
-   Recommendation: start with A, evaluate B in a spike.
-2. **WebUntis:** name of the school / WebUntis server (e.g. `xyz.webuntis.com`) — no
-   password. For the spike I'd write a small probe script you run locally that
-   prints the (anonymised) structure of what WebUntis returns for one lesson.
-3. **Installer size:** the speech model adds roughly 150–500 MB (depending on the
+1. **Sample recordings** for the speech spike (step 2.2): 2–3 short recordings
+   (~20 s) describing a work day with IT terms — user will provide them later.
+2. **Installer size:** the speech model adds roughly 150–500 MB (depending on the
    model) to installer and portable .exe — acceptable?
+3. **WebUntis (E-013):** does the WebUntis profile offer data access for
+   "Untis Mobile" (QR code / key under "Freigaben" or "Profil")? Does the Untis
+   Mobile app work for you? Determines whether path W2 is possible.
 
 ## Roadmap
 
@@ -91,7 +89,7 @@ Then: steps 2.3–2.5 (mic permission, transcription IPC, dictate button).
 - [ ] 2.5 UI: dictate button in the notes area (recording state, level meter, cancel) → `notes`
 
 ### Phase 3 — AI phrasing (E-011)
-- [ ] 3.1 User picks the option(s) (open question 1) → finalize E-011
+- [x] 3.1 User picked option A, the clipboard bridge → E-011 accepted (2026-10-10)
 - [ ] 3.2 Pure lib `src/lib/phrasing.js`: build the prompt (style rules from
       `OUTPUT_FORMAT.md`, few-shot examples from the user's own finished weeks) and
       parse a strictly formatted answer back into bullets per day; tests
@@ -99,17 +97,16 @@ Then: steps 2.3–2.5 (mic permission, transcription IPC, dictate button).
       patterns like IPs, e-mail addresses, phone and ticket numbers
 - [ ] 3.4 Provider "clipboard bridge" (option A): copy prompt → paste answer →
       preview → accept/reject per day
-- [ ] 3.5 Spike provider "local model" (option B): node-llama-cpp + small German-capable
-      model; measure quality/speed on the notebook
-- [ ] 3.6 School days: polish topic keywords per subject
+- [ ] 3.5 School days: polish topic keywords per subject (after WebUntis delivers them)
 
 ### Phase 4 — WebUntis import (E-013)
-- [ ] 4.1 Spike with a real account (probe script run by the user): login, timetable,
-      where the lesson notes live → finalize E-013
+- [ ] 4.1 Spike with the real account: SSO login in an embedded window (path W1),
+      find the endpoint that returns lesson notes; check whether path W2 is available
+      → finalize E-013
 - [ ] 4.2 Network layer in main: `electron/net.js` — `fetch` wrapper with host
       allowlist, timeout, readable errors; Vitest for the allowlist
-- [ ] 4.3 Secret store: `electron/secrets.js` (safeStorage, separate file), IPC
-      `secret:set|has|delete` (values never go back to the renderer)
+- [ ] 4.3 Session handling: login window (partition `persist:webuntis`), "logged
+      in?" check, logout; secret store via safeStorage only if path W2 is used
 - [ ] 4.4 Settings → new section "Verbindungen" (WebUntis on/off, server, school,
       user, status)
 - [ ] 4.5 `electron/webuntis.js` + mapping WebUntis subject → learning-field label (per profile)

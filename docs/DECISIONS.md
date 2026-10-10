@@ -63,7 +63,7 @@ Candidates: whisper.cpp (binary/addon in a utility process), transformers.js
 (ONNX Whisper in a worker), Vosk (small but weaker). Rejected: the Web Speech API
 (no service in Electron without a Google key; audio would go to Google).
 
-### E-011 · AI phrasing without an own API key · proposed
+### E-011 · AI phrasing without an own API key · accepted (option A)
 User (2026-10): preferably cloud quality, but **not via an API** (no key/billing).
 Research result (2026-10):
 
@@ -77,8 +77,11 @@ Research result (2026-10):
 
 Recommendation: build a provider abstraction; ship **A** first (zero setup, cloud
 quality, fits "easy to use"), evaluate **B** as the fully automatic offline option
-in a spike. C/D can be added later as optional providers. **Waiting for the user's
-choice.**
+in a spike. C/D can be added later as optional providers.
+
+**Decision (user, 2026-10): option A, the clipboard bridge.** Only work days for
+now; the prompt and the answer format are built/parsed by the pure module
+`src/lib/phrasing.js`. B stays a possible later upgrade, not planned.
 
 ### E-012 · Automatic entry into the IHK portal · deferred
 User (2026-10): leave it out for now, keep it on the to-do list. Previous idea
@@ -88,10 +91,23 @@ user logs in, app fills the three fields, user clicks submit.
 ### E-013 · WebUntis import via the main process · proposed
 User (2026-10): the lesson topics are written in the **notes of each lesson** in
 WebUntis. Plan: fetch the timetable incl. lesson notes from the main process,
-credentials per E-008, map WebUntis subjects → learning-field labels per profile.
-Spike needed with a real account: which API exposes the lesson notes to student
-accounts (the old JSON-RPC `getTimetable` only has short texts; the web UI's
-internal REST API probably carries the notes) and how login works at the school.
+map WebUntis subjects → learning-field labels per profile.
+
+School: `https://bbz-dithmarschen.webuntis.com/WebUntis/?school=bbz-dithmarschen`.
+**Login runs via the school's SSO portal** ("BBZconnect", authentik) — there is
+probably no WebUntis password, so the classic JSON-RPC `authenticate`
+(username/password) is unlikely to work. Two candidate auth paths:
+
+| Path | How | Pros | Cons |
+|---|---|---|---|
+| W1 · **Embedded SSO login** | app opens WebUntis in its own `BrowserWindow` (partition `persist:webuntis`, no preload, no Node); user logs in via the school portal; main process then calls the WebUntis web API with that session's cookies | works with any SSO; app never sees the password | user must log in again when the session expires |
+| W2 · **"Untis Mobile" access key** | WebUntis profile → data access ("Freigaben") shows a QR code / secret for the mobile app; app stores user + secret via `safeStorage` and logs in with one-time codes | fully automatic, no repeated login | only if the school enables mobile access; reverse-engineered, unofficial protocol |
+
+Recommendation: W1 first (most likely to work with SSO), W2 as an optional
+comfort upgrade if the school allows it. Still to verify in the spike with the
+real account: which endpoint returns the lesson notes for student accounts (the
+web UI's internal REST API is the likely source; JSON-RPC `getTimetable` only has
+short texts).
 
 ### E-014 · Keep the file name `daten.json` · accepted
 Field names became English in schema v3, but the file name stays: existing
