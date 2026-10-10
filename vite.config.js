@@ -7,6 +7,9 @@ export default defineConfig({
   base: './',
   plugins: [react(), tailwindcss()],
   server: {
+    // IPv4 explicitly: on Windows `localhost` may resolve to ::1 only, and the
+    // dev script's `wait-on tcp:127.0.0.1:5173` would then wait forever
+    host: '127.0.0.1',
     port: 5173,
     strictPort: true,
   },
