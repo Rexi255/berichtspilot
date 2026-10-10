@@ -47,6 +47,11 @@ versioning follows [Semantic Versioning](https://semver.org/).
   Applying is undoable. Logged out? The panel offers "Anmelden" and retries.
   Two lessons at the same time (e.g. a stray entry in the school's timetable)
   each get only the topic of their own subject.
+- **Current week created on start:** if the running week doesn't exist yet,
+  the app creates it on start (Monday to Friday, inside the training period) —
+  with profile, holidays and vacation like "Woche anlegen" — and shows a short
+  hint "KW n angelegt". Switch "Aktuelle Woche beim Start anlegen" under
+  Settings → Verhalten (on by default; schema v7 adds it to existing files).
 
 ### Changed
 

@@ -13,8 +13,9 @@ import {
   validateData,
   mergeData,
   replaceData,
+  shouldAutoCreate,
 } from './lib/model.js'
-import { isoWeek } from './lib/dates.js'
+import { isoWeek, mondayOf, toISO } from './lib/dates.js'
 import { setMapping } from './lib/webuntis.js'
 import { showToast } from './ui/toast.jsx'
 
@@ -81,6 +82,10 @@ export function StoreProvider({ children }) {
       } else {
         d = seedData()
       }
+      // Current week missing (Mon–Fri)? Create it once, right with the loaded data
+      const today = new Date()
+      const autoCreated = shouldAutoCreate(d, toISO(today)) ? newWeek(mondayOf(today), d.profiles, d.periods) : null
+      if (autoCreated) d = { ...d, weeks: [...d.weeks, autoCreated].sort(byId) }
       loadedRef.current = true
       setData(d)
       // Main file was corrupted and restored from a backup
@@ -88,6 +93,8 @@ export function StoreProvider({ children }) {
         showToast('Daten aus Sicherung wiederhergestellt', { kind: 'error', duration: 5000 })
       } else if (!res.ok) {
         showToast('Daten konnten nicht geladen werden', { kind: 'error', duration: 5000 })
+      } else if (autoCreated) {
+        showToast(`KW ${isoWeek(autoCreated.id).week} angelegt`)
       }
     })
   }, [])

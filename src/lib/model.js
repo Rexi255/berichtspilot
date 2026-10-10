@@ -1,13 +1,13 @@
 // Data model: profiles, weeks, periods, seed data, migration + validation.
 // Field names are English since schema v3 (mapping: docs/GLOSSARY.md).
-import { WEEKDAY_KEYS, addDays, inRange, formatDE } from './dates.js'
+import { WEEKDAY_KEYS, addDays, inRange, formatDE, parseISO, mondayOf } from './dates.js'
 import { holidayOn } from './holidays.js'
 
 export const DAY_STATUSES = ['normal', 'holiday', 'sick', 'vacation']
 
 // Current schema version of daten.json. Older files are upgraded on load/import
 // via migrateData(); newer ones are rejected (downgrade protection).
-export const DATA_VERSION = 6
+export const DATA_VERSION = 7
 
 let idCounter = 0
 export const newId = (prefix) =>
@@ -193,6 +193,12 @@ function migrateV5toV6(d) {
   return out
 }
 
+/** Schema v6 -> v7: `settings.autoCreateWeek` — create the current week on start (on by default). */
+function migrateV6toV7(d) {
+  const settings = isObject(d.settings) ? d.settings : {}
+  return { ...d, version: 7, settings: { autoCreateWeek: true, ...settings } }
+}
+
 /** Only string → string entries survive (hand-edited or broken files). */
 function cleanSubjectMap(map) {
   if (!isObject(map)) return {}
@@ -220,12 +226,15 @@ export function migrateData(raw) {
   if (d.version < 4) d = migrateV3toV4(d)
   if (d.version < 5) d = migrateV4toV5(d)
   if (d.version < 6) d = migrateV5toV6(d)
+  if (d.version < 7) d = migrateV6toV7(d)
 
   // Defensive defaults in case single fields are missing (e.g. hand-edited file)
   d.periods ??= []
   if (!isObject(d.settings)) d.settings = {}
   d.settings.startView ??= 'overview'
   d.settings.snippets ??= []
+  // Only a real `false` turns it off — a missing or malformed value means the default
+  d.settings.autoCreateWeek = d.settings.autoCreateWeek !== false
   // Anything but a real `true` means off — a malformed value must not survive
   const webuntis = d.settings.webuntis
   d.settings.webuntis = isObject(webuntis) ? { ...webuntis, enabled: webuntis.enabled === true } : { enabled: false }
@@ -277,6 +286,10 @@ export function validateData(d) {
   const webuntis = d.settings?.webuntis
   if (webuntis !== undefined && (!isObject(webuntis) || typeof webuntis.enabled !== 'boolean')) {
     fail('Die WebUntis-Einstellung in der Datei ist ungültig.')
+  }
+  const autoCreate = d.settings?.autoCreateWeek
+  if (autoCreate !== undefined && typeof autoCreate !== 'boolean') {
+    fail('Die Einstellung „Aktuelle Woche beim Start anlegen" in der Datei ist ungültig.')
   }
   return d
 }
@@ -353,6 +366,23 @@ export function newWeek(mondayISO, profiles, periods = []) {
 }
 
 /**
+ * Should the week containing `todayISO` be created automatically on start?
+ * Only on work days Mon–Fri (the user's choice — nothing happens at the
+ * weekend), only inside the training period if one is set, and only if the
+ * week doesn't exist yet.
+ */
+export function shouldAutoCreate(data, todayISO) {
+  if (data.settings?.autoCreateWeek === false) return false
+  const weekday = parseISO(todayISO).getDay() // 0 = Sunday
+  if (weekday === 0 || weekday === 6) return false
+  const { trainingStart, trainingEnd } = data.settings ?? {}
+  if (trainingStart && todayISO < trainingStart) return false
+  if (trainingEnd && todayISO > trainingEnd) return false
+  const monday = mondayOf(parseISO(todayISO))
+  return !data.weeks.some((w) => w.id === monday)
+}
+
+/**
  * Empty copy of an existing week for a new Monday: keeps day types and subject
  * labels, clears all bullets. Holidays are detected fresh for the new dates.
  */
@@ -394,6 +424,7 @@ export function seedData() {
       startView: 'overview',
       snippets: [],
       webuntis: { enabled: false },
+      autoCreateWeek: true,
     },
     periods: [],
     profiles: [

@@ -30,27 +30,39 @@ WebUntis "Lehrstoff" ─────────────┘    (daten.json) 
 
 ## Next step
 
-**Phase 5 — create the current week automatically on start** (user,
-2026-10-10: WebUntis topics stay raw, step 3.5 dropped).
+**Phase 5 — Friday reminder if the current week is still a draft.** Ask the
+open question below first (it decides the size of the step).
 
-- Pure helper `shouldAutoCreate(data, todayISO)` in `src/lib/model.js` + tests:
-  true if `settings.autoCreateWeek` is on and the Monday of `todayISO` has no
-  week yet (weekend behaviour per the open question below).
-- `src/store.jsx`: after loading (and migrating), call it once per start; if
-  true → add `newWeek(monday, profiles, periods)` like `createWeek()` does. No
-  toast spam — one quiet hint at most ("KW n angelegt").
-- Schema v7: `settings.autoCreateWeek` (default `true`) → bump `DATA_VERSION`,
-  migration step + test v6 → v7, `validateData()`, `docs/DATA_MODEL.md`.
-- Settings → general section: switch "Aktuelle Woche beim Start anlegen".
-- Verify: lint/test/build; browser smoke test (empty localStorage → start →
-  current week exists; switch off → reload → no new week). CHANGELOG under Added.
+Recommended minimal version (option a), if the user agrees:
+- Pure helper `reminderDue(data, todayISO)` in `src/lib/model.js` (or a new
+  `src/lib/reminder.js`) + tests: true on Friday (weekday 5) if the current week
+  exists with `status: 'draft'` (or is missing) and `settings.fridayReminder` is
+  on; false on other days, for `done` weeks and outside the training period.
+- `src/store.jsx`: check once after loading (after the auto-create from
+  `shouldAutoCreate()`); if due → one toast with action "Woche öffnen"
+  (needs a way to navigate — see how `App.jsx` switches views) — or a banner on
+  the overview instead of a toast; decide while implementing, keep it quiet.
+- Schema v8: `settings.fridayReminder` (default `true`) → `DATA_VERSION`++,
+  migration v7 → v8 + test, `validateData()`, `docs/DATA_MODEL.md`.
+- Settings → "Verhalten": switch "Freitags an offene Woche erinnern".
+- Verify: lint/test/build; browser smoke test with a fixed clock
+  (`page.clock.setFixedTime`, see the step-5 smoke test approach in the done
+  log): Friday + draft → hint; Thursday or `done` → none; switch off → none.
+
+Option (b) (system notification while the app is closed) needs tray +
+autostart in `electron/main.js` — a bigger step with its own decision entry.
+
+Alternative unblocked step if the user prefers: auto-update via
+`electron-updater` + GitHub Releases (needs new allowlist hosts in
+`docs/ARCHITECTURE.md` and a decision entry).
 
 ## Open questions (for the user)
 
-- Auto-create the current week on start: also on Saturday/Sunday (the week is
-  usually written up on Friday or at the weekend)? Options: (a) always, any
-  weekday (recommended: the report is often finished at the weekend); (b) only
-  Mon–Fri. Ask at the start of the next step.
+- Friday reminder — which form? Options: (a) in-app hint when the app is
+  opened on Friday and the current week is still a draft (recommended: no
+  background process, no autostart, fits "easy to use"); (b) real system
+  notification on Friday afternoon, which needs the app to keep running in the
+  tray and start with the system. Ask at the start of the next step.
 
 Parked by the user (2026-10-10), not to be asked now: which speech model to
 bundle (E-010 has the measurements; real-voice recordings belong to that
@@ -112,7 +124,8 @@ decision).
 ### Phase 5 — Comfort
 - [ ] Auto-update (electron-updater, GitHub Releases)
 - [ ] Friday reminder (tray/notification) if the current week is still a draft
-- [ ] Create the current week automatically on start
+- [x] Create the current week automatically on start — Mon–Fri only (E-016),
+      schema v7 `settings.autoCreateWeek`, switch in Settings → Verhalten (2026-10-10)
 - [ ] Ideas from the old README roadmap: light theme, "copy all 3 blocks",
       full export/PDF, copy a single day from the previous week, character counter
 - [ ] Update the README "100 % offline" badge once network features exist
@@ -142,3 +155,4 @@ decision).
 | 2026-10-10 | Step 4.6a: `fillWeekFromWebuntis()` merge logic | branch `claude/intelligent-curie-yxizss` |
 | 2026-10-10 | Step 4.6b: "Aus WebUntis füllen" panel (browser smoke test with mocked API; real account checked by the user: works, one wrong topic from a parallel lesson) | branch `claude/intelligent-curie-yxizss` |
 | 2026-10-10 | Fix: WebUntis topics matched per subject (stray parallel lesson), one detail call per time range — re-run by the user: LF08 correct | abbe2bb |
+| 2026-10-10 | Phase 5: current week created on start (Mon–Fri, schema v7; browser smoke test with fixed clock Wed/Sat/Mon + v6 migration) | branch `claude/intelligent-curie-yxizss` |

@@ -289,3 +289,12 @@ Renaming would risk "lost" data for no functional gain.
 User (2026-10): everything programming-related is English (code, identifiers,
 comments, `daten.json` fields, docs, skills, commits, PRs, changelog). Only the UI
 and the IHK output stay German. Mapping in `GLOSSARY.md`.
+
+### E-016 · Create the current week on start: Mon–Fri only · accepted
+User (2026-10-10): the working week is Mon–Fri — nothing happens at the weekend,
+so an automatic week there is unnecessary. `shouldAutoCreate()` (`src/lib/model.js`)
+creates the running week once on start only on Mon–Fri, only inside
+`trainingStart`/`trainingEnd` if those are set, and never twice. It uses
+`newWeek()` (profile, holidays, periods), not the previous week as a template.
+The switch `settings.autoCreateWeek` (schema v7, default on) is a plain preference
+and travels with export/import (unlike the WebUntis opt-in).

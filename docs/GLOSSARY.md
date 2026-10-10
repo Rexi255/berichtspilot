@@ -38,6 +38,7 @@ names consistently. Add new terms here before using them.
 | Wochen-Editor | week editor (`WeekEditor`) | |
 | Einstellungen | `settings` | |
 | Start-Ansicht | `startView` | |
+| Aktuelle Woche beim Start anlegen | `settings.autoCreateWeek`, `shouldAutoCreate()` | schema v7; Mon–Fri only |
 | Verbindungen | connections (`data-section="connections"`) | settings section for online services |
 | WebUntis-Import (Schalter) | `settings.webuntis.enabled` | schema v5; only the switch is stored |
 | Stunde (WebUntis) | lesson / `gridEntry` | one timetable block from WebUntis |

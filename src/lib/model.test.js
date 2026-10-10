@@ -15,6 +15,7 @@ import {
   checkProfiles,
   duplicateProfile,
   profileForDate,
+  shouldAutoCreate,
 } from './model.js'
 
 const profileWith = (patch) => ({
@@ -96,7 +97,7 @@ describe('migrateData', () => {
   it('migrates a full v2 file to the current version with English names and values', () => {
     const d = migrateData(v2File())
     expect(d.version).toBe(DATA_VERSION)
-    expect(DATA_VERSION).toBe(6)
+    expect(DATA_VERSION).toBe(7)
 
     expect(d.settings).toEqual({
       trainingStart: '2025-08-01',
@@ -106,6 +107,7 @@ describe('migrateData', () => {
       snippets: ['Ticket bearbeitet'],
       eigenesFeld: 42,
       webuntis: { enabled: false },
+      autoCreateWeek: true,
     })
     expect(d.periods).toEqual([
       { id: 'zeitraum-1', type: 'vacation', label: 'Sommer', from: '2026-08-03', to: '2026-08-14' },
@@ -231,7 +233,9 @@ describe('migrateData', () => {
     }
     const d = migrateData(v4)
     expect(d.version).toBe(DATA_VERSION)
-    expect(d.settings).toEqual({ theme: 'forest', startView: 'editor', snippets: ['a'], webuntis: { enabled: false } })
+    expect(d.settings).toEqual({
+      theme: 'forest', startView: 'editor', snippets: ['a'], webuntis: { enabled: false }, autoCreateWeek: true,
+    })
     expect(() => validateData(d)).not.toThrow()
   })
 
@@ -251,7 +255,7 @@ describe('migrateData', () => {
     expect(webuntisOf({ enabled: 'ja' })).toEqual({ enabled: false })
     expect(webuntisOf({ enabled: true })).toEqual({ enabled: true })
     const d = migrateData({ version: 5, settings: 'kaputt', profiles: [], weeks: [] })
-    expect(d.settings).toEqual({ startView: 'overview', snippets: [], webuntis: { enabled: false } })
+    expect(d.settings).toEqual({ startView: 'overview', snippets: [], webuntis: { enabled: false }, autoCreateWeek: true })
     expect(() => validateData(d)).not.toThrow()
   })
 
@@ -263,7 +267,7 @@ describe('migrateData', () => {
       profiles: [profile(), profile({ id: 'p2', webuntisSubjects: { kom: 'Kommunikation', pfk: '' } })],
       weeks: [],
     })
-    expect(d.version).toBe(6)
+    expect(d.version).toBe(DATA_VERSION)
     expect(d.profiles.map((p) => p.webuntisSubjects)).toEqual([{}, { kom: 'Kommunikation', pfk: '' }])
     expect(d.settings.webuntis).toEqual({ enabled: true })
     expect(() => validateData(d)).not.toThrow()
@@ -276,6 +280,26 @@ describe('migrateData', () => {
     expect(mapOf('kaputt')).toEqual({})
     expect(mapOf(['LF01'])).toEqual({})
     expect(mapOf({ kom: 'Kommunikation', x: 5, y: null })).toEqual({ kom: 'Kommunikation' })
+  })
+
+  it('v6 -> v7 turns "create the current week on start" on and keeps an existing value', () => {
+    const d = migrateData({ version: 6, settings: { theme: 'forest', webuntis: { enabled: true } }, profiles: [], weeks: [] })
+    expect(d.version).toBe(7)
+    expect(d.settings).toEqual({
+      theme: 'forest', startView: 'overview', snippets: [], webuntis: { enabled: true }, autoCreateWeek: true,
+    })
+    expect(() => validateData(d)).not.toThrow()
+    expect(migrateData({ version: 7, settings: { autoCreateWeek: false }, profiles: [], weeks: [] })
+      .settings.autoCreateWeek).toBe(false)
+  })
+
+  it('treats a malformed autoCreateWeek value as the default (on)', () => {
+    const autoOf = (value) =>
+      migrateData({ version: 7, settings: { autoCreateWeek: value }, profiles: [], weeks: [] }).settings.autoCreateWeek
+    expect(autoOf('nein')).toBe(true)
+    expect(autoOf(null)).toBe(true)
+    expect(autoOf(0)).toBe(true)
+    expect(autoOf(true)).toBe(true)
   })
 
   it('keeps unknown enum values instead of dropping them', () => {
@@ -328,6 +352,9 @@ describe('validateData', () => {
     expect(() =>
       validateData({ settings: { webuntis: { enabled: 'ja' } }, profiles: [], weeks: [] })
     ).toThrow(/WebUntis/)
+    expect(() =>
+      validateData({ settings: { autoCreateWeek: 'ja' }, profiles: [], weeks: [] })
+    ).toThrow(/Aktuelle Woche/)
     expect(() =>
       validateData({ profiles: [{ id: 'p', name: 'HJ', weekdays: {}, webuntisSubjects: { kom: 1 } }], weeks: [] })
     ).toThrow(/Fächerzuordnung/)
@@ -495,5 +522,42 @@ describe('duplicateProfile / profileForDate', () => {
     expect(profileForDate([a, b], '2026-01-15')).toBe(a)
     expect(profileForDate([a, b], '2026-03-01')).toBe(b)
     expect(profileForDate([a, b], '2026-08-15')).toBeNull()
+  })
+})
+
+describe('shouldAutoCreate', () => {
+  const dataWith = (settings = {}, weekIds = []) => ({
+    settings: { autoCreateWeek: true, ...settings },
+    weeks: weekIds.map((id) => ({ id, days: [] })),
+  })
+
+  it('creates the current week on every work day Mon–Fri', () => {
+    // 2026-10-12 is a Monday … 2026-10-16 a Friday
+    for (const day of ['2026-10-12', '2026-10-13', '2026-10-14', '2026-10-15', '2026-10-16']) {
+      expect(shouldAutoCreate(dataWith(), day)).toBe(true)
+    }
+  })
+
+  it('does nothing at the weekend (Mon–Fri only, as the user chose)', () => {
+    expect(shouldAutoCreate(dataWith(), '2026-10-10')).toBe(false) // Saturday
+    expect(shouldAutoCreate(dataWith(), '2026-10-11')).toBe(false) // Sunday
+  })
+
+  it('does nothing if the week already exists', () => {
+    expect(shouldAutoCreate(dataWith({}, ['2026-10-12']), '2026-10-15')).toBe(false)
+    expect(shouldAutoCreate(dataWith({}, ['2026-10-05']), '2026-10-15')).toBe(true)
+  })
+
+  it('respects the switch', () => {
+    expect(shouldAutoCreate(dataWith({ autoCreateWeek: false }), '2026-10-12')).toBe(false)
+  })
+
+  it('stays inside the training period when one is set', () => {
+    const settings = { trainingStart: '2025-08-01', trainingEnd: '2028-07-31' }
+    expect(shouldAutoCreate(dataWith(settings), '2025-07-31')).toBe(false)
+    expect(shouldAutoCreate(dataWith(settings), '2025-08-01')).toBe(true)
+    expect(shouldAutoCreate(dataWith(settings), '2028-07-31')).toBe(true)
+    expect(shouldAutoCreate(dataWith(settings), '2028-08-01')).toBe(false)
+    expect(shouldAutoCreate(dataWith({ trainingStart: '', trainingEnd: '' }), '2030-01-07')).toBe(true)
   })
 })

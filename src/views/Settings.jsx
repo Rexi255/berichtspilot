@@ -351,6 +351,17 @@ export default function Settings() {
             value={data.settings.startView ?? 'overview'}
             onChange={(startView) => updateSettings({ startView })}
           />
+          <div className="mt-5">
+            <Switch
+              checked={data.settings.autoCreateWeek !== false}
+              onChange={(autoCreateWeek) => updateSettings({ autoCreateWeek })}
+              label="Aktuelle Woche beim Start anlegen"
+            />
+            <p className="mt-1.5 text-[12.5px] text-ink-3">
+              Fehlt die laufende Woche, legt die App sie Montag bis Freitag beim Start automatisch an —
+              mit Profil, Feiertagen und Urlaub, wie über „Woche anlegen“.
+            </p>
+          </div>
         </section>
 
         <section className="max-w-4xl">
