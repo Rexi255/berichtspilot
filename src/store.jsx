@@ -15,6 +15,7 @@ import {
   replaceData,
 } from './lib/model.js'
 import { isoWeek } from './lib/dates.js'
+import { setMapping } from './lib/webuntis.js'
 import { showToast } from './ui/toast.jsx'
 
 const StoreContext = createContext(null)
@@ -168,6 +169,16 @@ export function StoreProvider({ children }) {
     }))
   }, [])
 
+  // WebUntis subject → profile label ('' = ignore, null = remove), schema v6
+  const setWebuntisSubject = useCallback((profileId, short, label) => {
+    setData((d) => ({
+      ...d,
+      profiles: d.profiles.map((p) =>
+        p.id === profileId ? { ...p, webuntisSubjects: setMapping(p.webuntisSubjects, short, label) } : p
+      ),
+    }))
+  }, [])
+
   const createProfile = useCallback(() => {
     const p = newProfile()
     setData((d) => ({ ...d, profiles: [p, ...d.profiles] }))
@@ -280,6 +291,7 @@ export function StoreProvider({ children }) {
     createProfile,
     deleteProfile,
     duplicateProfile,
+    setWebuntisSubject,
     createPeriod,
     updatePeriod,
     deletePeriod,

@@ -238,6 +238,18 @@ preview. Checked with the real account (user, 2026-10-10): topics arrive;
 mixed-case short names (`kom`, `wipo`) — handled in 4.5b (case-insensitive
 mapping, "ignore") and 4.6 (untick in the preview).
 
+**Subject mapping (step 4.5b, 2026-10-10):** user: WebUntis mostly shows
+abbreviations (`kom` = Kommunikation, `wipo` = Wirtschaft und Politik); `pfk` is
+usually a support teacher attending the lesson (→ "ignore"); the parallel
+`LF08`/`LF10` on Wednesdays is an error in the school's timetable (really only
+`LF10`) — a one-off, so it is handled by unticking in the 4.6 preview, not by a
+mapping. Matching order in `mapSubjects()`: saved entry in
+`profile.webuntisSubjects` (`''` = ignore) → profile label equal to the
+WebUntis short **or long** name under `subjectKey()` (case, spaces, leading
+zeros ignored, so `kom`/"Kommunikation" and `LF7`/`LF07` match without an
+entry) → otherwise reported as unmapped. The map lives in the profile (schema
+v6) because subject labels are per half-year; it is shared data, not a secret.
+
 ### E-014 · Keep the file name `daten.json` · accepted
 Field names became English in schema v3, but the file name stays: existing
 installations, portable copies, backups (`.bak1–3`) and the README all rely on it.

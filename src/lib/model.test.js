@@ -96,7 +96,7 @@ describe('migrateData', () => {
   it('migrates a full v2 file to the current version with English names and values', () => {
     const d = migrateData(v2File())
     expect(d.version).toBe(DATA_VERSION)
-    expect(DATA_VERSION).toBe(5)
+    expect(DATA_VERSION).toBe(6)
 
     expect(d.settings).toEqual({
       trainingStart: '2025-08-01',
@@ -127,6 +127,7 @@ describe('migrateData', () => {
           fri: { type: 'work', subjects: [] },
           sat: { type: 'off', subjects: [] },
         },
+        webuntisSubjects: {},
       },
     ])
     expect(d.weeks[0]).toEqual({
@@ -229,7 +230,7 @@ describe('migrateData', () => {
       weeks: [],
     }
     const d = migrateData(v4)
-    expect(d.version).toBe(5)
+    expect(d.version).toBe(DATA_VERSION)
     expect(d.settings).toEqual({ theme: 'forest', startView: 'editor', snippets: ['a'], webuntis: { enabled: false } })
     expect(() => validateData(d)).not.toThrow()
   })
@@ -252,6 +253,29 @@ describe('migrateData', () => {
     const d = migrateData({ version: 5, settings: 'kaputt', profiles: [], weeks: [] })
     expect(d.settings).toEqual({ startView: 'overview', snippets: [], webuntis: { enabled: false } })
     expect(() => validateData(d)).not.toThrow()
+  })
+
+  it('v5 -> v6 adds an empty WebUntis subject map per profile, keeping existing ones', () => {
+    const profile = (extra = {}) => ({ id: 'p1', name: 'HJ', weekdays: {}, ...extra })
+    const d = migrateData({
+      version: 5,
+      settings: { webuntis: { enabled: true } },
+      profiles: [profile(), profile({ id: 'p2', webuntisSubjects: { kom: 'Kommunikation', pfk: '' } })],
+      weeks: [],
+    })
+    expect(d.version).toBe(6)
+    expect(d.profiles.map((p) => p.webuntisSubjects)).toEqual([{}, { kom: 'Kommunikation', pfk: '' }])
+    expect(d.settings.webuntis).toEqual({ enabled: true })
+    expect(() => validateData(d)).not.toThrow()
+  })
+
+  it('drops malformed WebUntis subject map entries', () => {
+    const mapOf = (value) =>
+      migrateData({ version: 6, profiles: [{ id: 'p', name: 'HJ', weekdays: {}, webuntisSubjects: value }], weeks: [] })
+        .profiles[0].webuntisSubjects
+    expect(mapOf('kaputt')).toEqual({})
+    expect(mapOf(['LF01'])).toEqual({})
+    expect(mapOf({ kom: 'Kommunikation', x: 5, y: null })).toEqual({ kom: 'Kommunikation' })
   })
 
   it('keeps unknown enum values instead of dropping them', () => {
@@ -304,6 +328,9 @@ describe('validateData', () => {
     expect(() =>
       validateData({ settings: { webuntis: { enabled: 'ja' } }, profiles: [], weeks: [] })
     ).toThrow(/WebUntis/)
+    expect(() =>
+      validateData({ profiles: [{ id: 'p', name: 'HJ', weekdays: {}, webuntisSubjects: { kom: 1 } }], weeks: [] })
+    ).toThrow(/Fächerzuordnung/)
   })
 })
 

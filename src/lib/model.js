@@ -7,7 +7,7 @@ export const DAY_STATUSES = ['normal', 'holiday', 'sick', 'vacation']
 
 // Current schema version of daten.json. Older files are upgraded on load/import
 // via migrateData(); newer ones are rejected (downgrade protection).
-export const DATA_VERSION = 5
+export const DATA_VERSION = 6
 
 let idCounter = 0
 export const newId = (prefix) =>
@@ -183,6 +183,23 @@ function migrateV4toV5(d) {
 }
 
 /**
+ * Schema v5 -> v6: `profile.webuntisSubjects` — WebUntis subject short name →
+ * subject label of the profile ('' = ignore that subject on import). Part of the
+ * shared record (no secrets); identical names need no entry.
+ */
+function migrateV5toV6(d) {
+  const out = { ...d, version: 6 }
+  out.profiles = mapList(d.profiles, (p) => (isObject(p) ? { webuntisSubjects: {}, ...p } : p))
+  return out
+}
+
+/** Only string → string entries survive (hand-edited or broken files). */
+function cleanSubjectMap(map) {
+  if (!isObject(map)) return {}
+  return Object.fromEntries(Object.entries(map).filter(([, label]) => typeof label === 'string'))
+}
+
+/**
  * Upgrade older daten.json files to the current schema version.
  * Throws for a file from a NEWER app version (downgrade protection).
  */
@@ -202,6 +219,7 @@ export function migrateData(raw) {
   if (d.version < 3) d = migrateV2toV3(d)
   if (d.version < 4) d = migrateV3toV4(d)
   if (d.version < 5) d = migrateV4toV5(d)
+  if (d.version < 6) d = migrateV5toV6(d)
 
   // Defensive defaults in case single fields are missing (e.g. hand-edited file)
   d.periods ??= []
@@ -211,6 +229,7 @@ export function migrateData(raw) {
   // Anything but a real `true` means off — a malformed value must not survive
   const webuntis = d.settings.webuntis
   d.settings.webuntis = isObject(webuntis) ? { ...webuntis, enabled: webuntis.enabled === true } : { enabled: false }
+  d.profiles = mapList(d.profiles, (p) => (isObject(p) ? { ...p, webuntisSubjects: cleanSubjectMap(p.webuntisSubjects) } : p))
   return d
 }
 
@@ -234,6 +253,10 @@ export function validateData(d) {
   for (const p of d.profiles) {
     if (!isObject(p) || typeof p.id !== 'string' || typeof p.name !== 'string' || !isObject(p.weekdays)) {
       fail('Ein Profil in der Datei ist unvollständig (id, Name oder Wochentage fehlen).')
+    }
+    if (p.webuntisSubjects !== undefined &&
+        (!isObject(p.webuntisSubjects) || Object.values(p.webuntisSubjects).some((v) => typeof v !== 'string'))) {
+      fail(`Die WebUntis-Fächerzuordnung im Profil „${p.name}" ist ungültig.`)
     }
   }
   for (const w of d.weeks) {
@@ -389,6 +412,7 @@ export function seedData() {
           fri: { type: 'work', subjects: [] },
           sat: { type: 'off', subjects: [] },
         },
+        webuntisSubjects: {},
       },
       {
         id: newId('profile'),
@@ -405,6 +429,7 @@ export function seedData() {
           fri: { type: 'work', subjects: [] },
           sat: { type: 'off', subjects: [] },
         },
+        webuntisSubjects: {},
       },
     ],
     weeks: [],
@@ -481,5 +506,6 @@ export function newProfile() {
       fri: { type: 'work', subjects: [] },
       sat: { type: 'off', subjects: [] },
     },
+    webuntisSubjects: {},
   }
 }

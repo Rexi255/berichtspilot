@@ -33,6 +33,11 @@ versioning follows [Semantic Versioning](https://semver.org/).
   Switching off also logs out. Schema v5 adds the switch to existing data.
   The switch is a per-device opt-in: an import with "Ersetzen" keeps it as it
   is, and opening the settings while logged out sends no request.
+- **Profiles → "WebUntis-Fächer"** (visible while the WebUntis import is on):
+  map WebUntis abbreviations to your subjects (e.g. `kom` → Kommunikation) or
+  ignore a WebUntis entry (e.g. a support teacher). Identical names like `LF07`
+  need no entry. Schema v6 adds the (empty) list to existing profiles. Groundwork
+  for "Woche aus WebUntis füllen".
 
 ### Changed
 

@@ -1,6 +1,6 @@
 # Data model — `daten.json`
 
-Current schema version: **5** (`DATA_VERSION` in `src/lib/model.js`).
+Current schema version: **6** (`DATA_VERSION` in `src/lib/model.js`).
 One JSON file holds the configuration **and** every training week. It is also the
 export/backup format. The file name stays German (`daten.json`) for compatibility
 with existing installations (DECISIONS E-014); all field names are English.
@@ -9,7 +9,7 @@ with existing installations (DECISIONS E-014); all field names are English.
 
 ```jsonc
 {
-  "version": 5,
+  "version": 6,
   "settings": {
     "trainingStart": "2025-08-01",   // optional; progress line + gap detection
     "trainingEnd": "2028-07-31",
@@ -36,7 +36,11 @@ with existing installations (DECISIONS E-014); all field names are English.
         "tue": { "type": "work", "subjects": [] },
         "…": "…",
         "sat": { "type": "off", "subjects": [] }
-      }
+      },
+      "webuntisSubjects": {           // schema v6: WebUntis short name → subject label
+        "kom": "Kommunikation",       // only for differing names (identical ones,
+        "pfk": ""                     // incl. case/leading zeros, map automatically);
+      }                               // "" = ignore this WebUntis subject on import
     }
   ],
   "weeks": [                         // sorted by id (ascending)
@@ -81,12 +85,17 @@ with existing installations (DECISIONS E-014); all field names are English.
 | 2 → 3 | all field names and enum values German → English (full mapping in `GLOSSARY.md`) |
 | 3 → 4 | `notes: ''` added to every day (existing values kept) |
 | 4 → 5 | `settings.webuntis = { enabled: false }` (existing value kept); `validateData()` rejects a non-boolean `enabled` |
+| 5 → 6 | `webuntisSubjects: {}` added to every profile (existing value kept); `validateData()` rejects non-string values |
 
 Defensive defaults after migration: `settings` that is not an object becomes `{}`;
 `settings.webuntis` that is not an object, or whose `enabled` isn't `true`, becomes
 "off" (`enabled: false`). Import "Ersetzen" (`replaceData()`) keeps the device's
 current `settings.webuntis` — the opt-in to network access is not taken from a
-shared file.
+shared file. `profile.webuntisSubjects` that is not an object becomes `{}`, and
+entries with non-string values are dropped. Keys are compared with
+`subjectKey()` (`src/lib/webuntis.js`: case, spaces, leading zeros ignored);
+`setMapping()` keeps one entry per key. The map is part of the shared record (no
+secrets) — it travels with export/import like the rest of the profile.
 
 Versions newer than `DATA_VERSION` are **rejected** (downgrade protection: otherwise
 autosave would overwrite the file with an older structure).

@@ -53,3 +53,102 @@ export function schoolDaysFromWebuntis(days) {
     })
     .sort((a, b) => a.date.localeCompare(b.date))
 }
+
+// ---------------------------------------------------------------------------
+// Subject mapping WebUntis → profile (step 4.5b)
+// ---------------------------------------------------------------------------
+
+/**
+ * Comparison key for subject names: case, spaces and leading zeros don't matter
+ * ("LF 07" = "lf7"). WebUntis mixes cases (`LF07`, `kom`, `wipo`).
+ */
+export const subjectKey = (name) =>
+  clean(name)
+    .toLowerCase()
+    .replace(/\s+/g, '')
+    .replace(/\d+/g, (n) => n.replace(/^0+(?=\d)/, ''))
+
+/** Unique subject labels of the profile's school weekdays, in weekday order. */
+export function profileSubjectLabels(profile) {
+  const labels = []
+  for (const day of Object.values(profile?.weekdays ?? {})) {
+    if (day?.type !== 'school') continue
+    for (const label of Array.isArray(day.subjects) ? day.subjects : []) {
+      if (clean(label) && !labels.some((l) => subjectKey(l) === subjectKey(label))) labels.push(label)
+    }
+  }
+  return labels
+}
+
+/** Saved mapping for a WebUntis short name: label, '' (= ignore) or undefined. */
+export function lookupMapping(map, short) {
+  const key = subjectKey(short)
+  if (!key || !map || typeof map !== 'object') return undefined
+  const hit = Object.entries(map).find(([k, v]) => subjectKey(k) === key && typeof v === 'string')
+  return hit?.[1]
+}
+
+/**
+ * Save `short → label` (`''` = ignore, `null` = remove) and drop spelling
+ * variants of the same key, so one WebUntis subject has exactly one entry.
+ */
+export function setMapping(map, short, label) {
+  const key = subjectKey(short)
+  const rest = Object.fromEntries(Object.entries(map ?? {}).filter(([k]) => subjectKey(k) !== key))
+  if (!key || label === null || label === undefined) return rest
+  return { ...rest, [clean(short)]: clean(label) }
+}
+
+/**
+ * School days from schoolDaysFromWebuntis() → profile subject labels.
+ * Per WebUntis subject: a saved mapping (`profile.webuntisSubjects`) wins; `''`
+ * there means "ignore" (e.g. a support-teacher entry). Otherwise the short or
+ * long name must match a subject label of the profile's school days
+ * (subjectKey). Anything else lands in `unmapped` so the UI can ask once.
+ * Two WebUntis subjects mapped to one label are merged (topics de-duplicated).
+ *
+ * → `[{ date, schoolBreak, cancelledSubjects, subjects: [{ label, topics, from: [short] }],
+ *      ignored: [short], unmapped: [{ short, long, topics }] }]`
+ */
+export function mapSubjects(schoolDays, profile) {
+  const labels = new Map()
+  for (const label of profileSubjectLabels(profile)) labels.set(subjectKey(label), label)
+  const saved = profile?.webuntisSubjects
+
+  return (Array.isArray(schoolDays) ? schoolDays : []).map((day) => {
+    const subjects = new Map()
+    const ignored = []
+    const unmapped = []
+    for (const s of day.subjects ?? []) {
+      const explicit = lookupMapping(saved, s.short)
+      if (explicit === '') {
+        ignored.push(s.short)
+        continue
+      }
+      const label = clean(explicit) || labels.get(subjectKey(s.short)) || labels.get(subjectKey(s.long))
+      if (!label) {
+        unmapped.push(s)
+        continue
+      }
+      const key = subjectKey(label)
+      if (!subjects.has(key)) subjects.set(key, { label, topics: [], from: [] })
+      const target = subjects.get(key)
+      target.from.push(s.short)
+      for (const t of s.topics) {
+        if (!target.topics.some((x) => x.toLowerCase() === t.toLowerCase())) target.topics.push(t)
+      }
+    }
+    return { ...day, subjects: [...subjects.values()], ignored, unmapped }
+  })
+}
+
+/** Unique unmapped WebUntis subjects of a mapped week (for "Fach zuordnen …"). */
+export function unmappedSubjects(mappedDays) {
+  const seen = new Map()
+  for (const day of mappedDays ?? []) {
+    for (const s of day.unmapped ?? []) {
+      if (!seen.has(subjectKey(s.short))) seen.set(subjectKey(s.short), { short: s.short, long: s.long })
+    }
+  }
+  return [...seen.values()]
+}

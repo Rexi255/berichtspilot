@@ -11,12 +11,14 @@ import {
   CopyIcon,
   WarningIcon,
   SunIcon,
+  ArrowRightIcon,
 } from '@phosphor-icons/react'
 import { useStore } from '../store.jsx'
 import { Button, IconButton, Input, Select, Segment, Panel, Field, SectionTitle, Pill, cx } from '../ui/basics.jsx'
 import { WEEKDAY_KEYS, WEEKDAY_LABELS, formatDE } from '../lib/dates.js'
 import { STATES } from '../lib/holidays.js'
 import { checkProfiles } from '../lib/model.js'
+import { profileSubjectLabels, subjectKey } from '../lib/webuntis.js'
 
 const move = (arr, from, to) => {
   if (to < 0 || to >= arr.length) return arr
@@ -74,10 +76,105 @@ function SubjectEditor({ subjects, onChange }) {
   )
 }
 
+/* ------------------- WebUntis subject mapping (per profile) ------------------- */
+
+// Select value for "ignore" (the stored value is '')
+const IGNORE = '__ignore__'
+
+// Only differing names need an entry: identical ones (LF07 = LF7 = lf07) and the
+// WebUntis long name are matched automatically on import (src/lib/webuntis.js)
+function WebuntisSubjectMap({ profile }) {
+  const { setWebuntisSubject } = useStore()
+  const labels = profileSubjectLabels(profile)
+  const entries = Object.entries(profile.webuntisSubjects ?? {}).sort(([a], [b]) => a.localeCompare(b, 'de'))
+  const [short, setShort] = useState('')
+  const [label, setLabel] = useState('')
+  // What the select shows: the last pick if it is still an option, else the first label
+  const choice = label === IGNORE || labels.includes(label) ? label : (labels[0] ?? IGNORE)
+
+  const add = () => {
+    if (!short.trim()) return
+    setWebuntisSubject(profile.id, short, choice === IGNORE ? '' : choice)
+    setShort('')
+  }
+
+  // Options for one row: the profile's labels, a saved label that is no longer in
+  // the profile (kept, marked), and "ignore"
+  const options = (current) => (
+    <>
+      {current && !labels.some((l) => subjectKey(l) === subjectKey(current)) && (
+        <option value={current}>{current} (nicht im Profil)</option>
+      )}
+      {labels.map((l) => (
+        <option key={l} value={l}>
+          {l}
+        </option>
+      ))}
+      <option value={IGNORE}>— ignorieren —</option>
+    </>
+  )
+
+  return (
+    <div>
+      <SectionTitle className="mb-2 px-1">WebUntis-Fächer</SectionTitle>
+      <Panel className="flex flex-col gap-2 px-4 py-3">
+        <p className="text-[12px] text-ink-3">
+          Gleich benannte Fächer (z. B. LF07) erkennt der Import selbst. Hier nur Abkürzungen eintragen
+          (z. B. kom → Kommunikation) oder Fächer ignorieren, die nicht ins Berichtsheft gehören.
+        </p>
+        {entries.map(([key, value]) => (
+          <div key={key} className="flex items-center gap-2">
+            <span className="flex h-7 w-28 items-center truncate rounded-md border border-white/[0.07] bg-inset/60 px-2.5 text-[12.5px] font-medium">
+              {key}
+            </span>
+            <ArrowRightIcon size={13} className="shrink-0 text-ink-3" />
+            <Select
+              value={value === '' ? IGNORE : value}
+              onChange={(e) => setWebuntisSubject(profile.id, key, e.target.value === IGNORE ? '' : e.target.value)}
+              className="h-7 w-48 text-[12.5px]"
+              aria-label={`Zuordnung für ${key}`}
+            >
+              {options(value)}
+            </Select>
+            <IconButton label="Zuordnung entfernen" danger onClick={() => setWebuntisSubject(profile.id, key, null)}>
+              <XIcon size={13} />
+            </IconButton>
+          </div>
+        ))}
+        <div className="mt-1 flex items-center gap-2">
+          <div className="w-28 shrink-0">
+            <Input
+              value={short}
+              placeholder="z. B. kom"
+              onChange={(e) => setShort(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && add()}
+              className="h-8"
+              aria-label="Fach in WebUntis"
+            />
+          </div>
+          <ArrowRightIcon size={13} className="shrink-0 text-ink-3" />
+          <Select
+            value={choice}
+            onChange={(e) => setLabel(e.target.value)}
+            className="h-8 w-48 text-[12.5px]"
+            aria-label="Fach im Profil"
+          >
+            {options('')}
+          </Select>
+          <Button size="sm" onClick={add} disabled={!short.trim()}>
+            <PlusIcon size={13} weight="bold" /> Zuordnen
+          </Button>
+        </div>
+      </Panel>
+    </div>
+  )
+}
+
 /* ------------------------------ Profile form ------------------------------ */
 
 function ProfileForm({ profile, onDuplicate }) {
   const { data, updateProfile, deleteProfile } = useStore()
+  const webuntisEnabled = data.settings.webuntis?.enabled === true
   const [confirmDelete, setConfirmDelete] = useState(false)
 
   const patch = (p) => updateProfile(profile.id, (old) => ({ ...old, ...p }))
@@ -207,6 +304,8 @@ function ProfileForm({ profile, onDuplicate }) {
           })}
         </div>
       </div>
+
+      {webuntisEnabled && <WebuntisSubjectMap profile={profile} />}
     </div>
   )
 }

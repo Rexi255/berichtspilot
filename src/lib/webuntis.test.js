@@ -1,7 +1,15 @@
 // WebUntis week → school days. Fixtures are hand-written from the shape in
 // docs/DECISIONS.md E-013 (no real timetable data in the repo).
 import { describe, it, expect } from 'vitest'
-import { schoolDaysFromWebuntis } from './webuntis.js'
+import {
+  schoolDaysFromWebuntis,
+  subjectKey,
+  profileSubjectLabels,
+  lookupMapping,
+  setMapping,
+  mapSubjects,
+  unmappedSubjects,
+} from './webuntis.js'
 
 const lesson = (start, subjectShort, topics = [], extra = {}) => ({
   start,
@@ -105,5 +113,131 @@ describe('schoolDaysFromWebuntis', () => {
     expect(days.map((d) => d.date)).toEqual(['2026-09-07', '2026-09-08'])
     expect(days[0].subjects[0].topics).toEqual(['a'])
     expect(days[1].subjects).toEqual([])
+  })
+})
+
+// Real-world spellings from the user's timetable (2026-10): mixed case,
+// abbreviations, a support-teacher entry `pfk`
+const profile = (webuntisSubjects = {}) => ({
+  weekdays: {
+    mon: { type: 'work', subjects: [] },
+    tue: { type: 'school', subjects: ['LF06', 'LF07', 'Kommunikation'] },
+    wed: { type: 'school', subjects: ['LF08', 'LF09', 'LF10', 'WiPo'] },
+    thu: { type: 'off', subjects: ['Ignoriert'] },
+  },
+  webuntisSubjects,
+})
+const sub = (short, topics = [], long = `${short} lang`) => ({ short, long, topics })
+const day = (subjects, extra = {}) => ({ date: '2026-10-06', schoolBreak: false, subjects, cancelledSubjects: [], ...extra })
+
+describe('subjectKey', () => {
+  it('ignores case, spaces and leading zeros', () => {
+    expect(subjectKey('LF07')).toBe('lf7')
+    expect(subjectKey(' lf 7 ')).toBe('lf7')
+    expect(subjectKey('LF10')).toBe('lf10')
+    expect(subjectKey('wipo')).toBe(subjectKey('WiPo'))
+    expect(subjectKey(null)).toBe('')
+  })
+})
+
+describe('profileSubjectLabels', () => {
+  it('collects school-day labels once, in weekday order', () => {
+    expect(profileSubjectLabels(profile())).toEqual(['LF06', 'LF07', 'Kommunikation', 'LF08', 'LF09', 'LF10', 'WiPo'])
+    expect(profileSubjectLabels(null)).toEqual([])
+  })
+})
+
+describe('lookupMapping / setMapping', () => {
+  it('finds saved entries whatever the spelling', () => {
+    const map = { kom: 'Kommunikation', PFK: '' }
+    expect(lookupMapping(map, 'KOM')).toBe('Kommunikation')
+    expect(lookupMapping(map, 'pfk')).toBe('')
+    expect(lookupMapping(map, 'LF07')).toBeUndefined()
+    expect(lookupMapping(undefined, 'kom')).toBeUndefined()
+  })
+
+  it('replaces spelling variants and removes with null', () => {
+    expect(setMapping({ KOM: 'X', pfk: '' }, ' kom ', 'Kommunikation')).toEqual({ pfk: '', kom: 'Kommunikation' })
+    expect(setMapping({ pfk: '' }, 'PFK', null)).toEqual({})
+    expect(setMapping(undefined, 'pfk', '')).toEqual({ pfk: '' })
+    expect(setMapping({ a: 'b' }, '  ', 'x')).toEqual({ a: 'b' })
+  })
+})
+
+describe('mapSubjects', () => {
+  it('maps identical names automatically (case, leading zeros) and via the long name', () => {
+    const [d] = mapSubjects(
+      [day([sub('lf6', ['Persönlichkeit']), sub('kom', ['Gesprächsführung'], 'Kommunikation'), sub('wipo', [], 'Wirtschaft und Politik')])],
+      profile()
+    )
+    expect(d.subjects).toEqual([
+      { label: 'LF06', topics: ['Persönlichkeit'], from: ['lf6'] },
+      { label: 'Kommunikation', topics: ['Gesprächsführung'], from: ['kom'] },
+      { label: 'WiPo', topics: [], from: ['wipo'] },
+    ])
+    expect(d.unmapped).toEqual([])
+  })
+
+  it('uses saved mappings first, including "ignore"', () => {
+    const [d] = mapSubjects(
+      [day([sub('pfk', ['Hilfe']), sub('wipo', ['Wahlen'], 'Wirtschaft und Politik'), sub('LF07')])],
+      profile({ pfk: '', WIPO: 'WiPo', LF07: 'LF06' })
+    )
+    expect(d.ignored).toEqual(['pfk'])
+    expect(d.subjects.map((s) => s.label)).toEqual(['WiPo', 'LF06'])
+  })
+
+  it('reports unknown subjects and keeps day fields', () => {
+    const [d] = mapSubjects(
+      [day([sub('Sport', ['Ballspiele'], 'Sport'), sub('LF08')], { cancelledSubjects: ['pfk'] })],
+      profile()
+    )
+    expect(d.unmapped).toEqual([sub('Sport', ['Ballspiele'], 'Sport')])
+    expect(d.subjects.map((s) => s.label)).toEqual(['LF08'])
+    expect(d).toMatchObject({ date: '2026-10-06', schoolBreak: false, cancelledSubjects: ['pfk'] })
+  })
+
+  it('merges two WebUntis subjects mapped to the same label', () => {
+    const [d] = mapSubjects(
+      [day([sub('LF10', ['Router', 'ACLs']), sub('LF10a', ['acls', 'NAT'])])],
+      profile({ lf10a: 'LF10' })
+    )
+    expect(d.subjects).toEqual([{ label: 'LF10', topics: ['Router', 'ACLs', 'NAT'], from: ['LF10', 'LF10a'] }])
+  })
+
+  it('works on the output of schoolDaysFromWebuntis end to end', () => {
+    const days = schoolDaysFromWebuntis([
+      {
+        date: '2026-10-07',
+        holiday: false,
+        lessons: [
+          lesson('07:45', 'LF08', ['Übungsaufgaben']),
+          lesson('11:15', 'pfk', [], { status: 'CANCELLED' }),
+          lesson('13:00', 'wipo', ['Politischer Wochenrückblick']),
+        ],
+      },
+      { date: '2026-10-08', holiday: false, lessons: [] },
+    ])
+    const mapped = mapSubjects(days, profile())
+    expect(mapped[0].subjects).toEqual([
+      { label: 'LF08', topics: ['Übungsaufgaben'], from: ['LF08'] },
+      { label: 'WiPo', topics: ['Politischer Wochenrückblick'], from: ['wipo'] },
+    ])
+    expect(mapped[0].cancelledSubjects).toEqual(['pfk'])
+    expect(mapped[1].subjects).toEqual([])
+    expect(mapSubjects(null, profile())).toEqual([])
+  })
+})
+
+describe('unmappedSubjects', () => {
+  it('lists each unknown subject once across the week', () => {
+    const mapped = mapSubjects(
+      [day([sub('Sport'), sub('sport')]), day([sub('Reli', [], 'Religion'), sub('SPORT')], { date: '2026-10-07' })],
+      profile()
+    )
+    expect(unmappedSubjects(mapped)).toEqual([
+      { short: 'Sport', long: 'Sport lang' },
+      { short: 'Reli', long: 'Religion' },
+    ])
   })
 })
