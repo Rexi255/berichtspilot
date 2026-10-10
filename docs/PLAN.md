@@ -32,32 +32,20 @@ WebUntis "Lehrstoff" ─────────────┘    (daten.json) 
 
 ## Next step
 
-**Ship v2.0.0.** Everything for the release is done on branch
-`claude/intelligent-curie-yxizss` (2026-10-10): README overhaul with new
-screenshots, `package.json` 2.0.0, `CHANGELOG.md` `## [2.0.0] - 2026-10-10`,
-PR #1 into `main` open, CI green. Added before the release on user request:
-own WebUntis address (E-019) and the setup wizard (E-020). The user closed the V2 scope — no further additions; the UI
-overhaul is v2.1 (E-018 addendum).
+**v2.0.0 is released** (2026-10-10, https://github.com/Rexi255/berichtspilot/releases/tag/v2.0.0).
+Merged into `main` via PR #1, tagged `v2.0.0`, release workflow green, all five
+assets attached. Work continues on branch `claude/intelligent-curie-yxizss`
+(currently `main` + this plan update); deliver via PR into `main` again.
 
-0. **Real check of the setup wizard by the user** (E-020): `npm run build:renderer`,
-   then from a new, empty folder `<repo>/node_modules/electron/dist/electron <repo>`
-   (fresh install, your real `daten.json` stays untouched) → walk through the
-   wizard. Looks and works right = go. (WebUntis address E-019: confirmed by the
-   user 2026-10-10.)
-1. Wait for CI on the PR to be green, then merge it into `main` (the branch is
-   a fast-forward of `main`, a merge commit is fine too). If the merge happens on
-   a later day, adjust the date of `## [2.0.0]` in `CHANGELOG.md` first.
-2. Tag on the merged `main`: `git checkout main && git pull && git tag v2.0.0 &&
-   git push origin v2.0.0`. The release workflow checks tag = `package.json`
-   version, runs lint + tests, builds the installer + AppImage and attaches them
-   with `latest.yml`, `latest-linux.yml` and the `.blockmap` to a GitHub release.
-   Check that the release is **not** a draft/pre-release and has all five files
-   (otherwise the updater can't see it). Optionally rename it "Berichtspilot 2.0.0".
-3. Install `Berichtspilot-Setup-2.0.0.exe` by hand (1.x has no updater); check
-   that the existing data is migrated and Settings → "Updates" says "neueste
-   Version".
-4. Real update test (open question below), then start v2.1 (UI overhaul,
-   "Later / to-do") or the parked dictation phase — ask the user which first.
+1. The user installs `Berichtspilot-Setup-2.0.0.exe` by hand once (1.x has no
+   updater) and checks: data migrated (schema v10, no setup wizard for existing
+   data), Settings → "Updates" says "neueste Version".
+2. Real in-app update test (open question below): ship a small `v2.0.1` (bump
+   `package.json`, CHANGELOG section, tag) and update from inside the installed
+   2.0.0 — sidebar card → download → install → restart on 2.0.1.
+3. Then ask the user what comes first: UI overhaul (v2.1, "Later / to-do"),
+   the parked dictation phase, or WebUntis-assisted setup (fill school days +
+   subjects from the timetable, see E-020).
 
 ## Open questions (for the user)
 
@@ -160,8 +148,10 @@ decision).
       fresh install → all steps incl. errors → daten.json checked; skip + re-run)
 - [x] Release dry run: local `build:win` → `Berichtspilot-Setup-2.0.0.exe` +
       `latest.yml` (version 2.0.0) (2026-10-10)
-- [ ] PR into `main` merged (CI green)
-- [ ] Tag `v2.0.0` → release workflow → GitHub release with all assets
+- [x] PR #1 merged into `main` (674cea3, CI green) (2026-10-10)
+- [x] Tag `v2.0.0` → release workflow green → GitHub release "Berichtspilot 2.0.0"
+      (Latest, not draft) with installer, `.blockmap`, AppImage, `latest.yml`,
+      `latest-linux.yml`; `/releases/latest/download/latest.yml` = 2.0.0 (2026-10-10)
 - [ ] Installed by hand once; real update test (see open questions)
 
 ### Later / to-do
@@ -221,3 +211,4 @@ decision).
 | 2026-10-10 | Phase 6: V2 release prepared — README + screenshots, version 2.0.0, CHANGELOG, docs check, local `build:win` dry run | PR #1 |
 | 2026-10-10 | E-019: own WebUntis address (schema v9, `webuntis:configure`, only `*.webuntis.com`) | PR #1 |
 | 2026-10-10 | E-020: setup wizard on a fresh install (schema v10 `setupDone`) | PR #1 |
+| 2026-10-10 | v2.0.0 released: PR #1 merged, tag pushed, release workflow green, release notes from CHANGELOG | 674cea3, tag `v2.0.0` |
