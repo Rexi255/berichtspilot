@@ -1,10 +1,14 @@
 // Auto-update status (E-017, electron/updater.js) → what the UI shows.
 // Status: `{ ok, state, current, version?, percent?, code?, error? }`; on
 // 'error', `version` is set only if a download/install failed — otherwise the
-// check itself failed.
+// check itself failed. Retrying either one downloads again (a cached, verified
+// file is reused; a missing installer is fetched anew).
+
+/** "v1.3.0" → "1.3.0" — one normaliser for every place that shows a version */
+const bareVersion = (version) => String(version ?? '').replace(/^v/i, '')
 
 /** "1.3.0" → "v1.3.0" (electron-updater reports versions without the v) */
-export const versionLabel = (version) => (version ? `v${String(version).replace(/^v/i, '')}` : '')
+export const versionLabel = (version) => (version ? `v${bareVersion(version)}` : '')
 
 /**
  * The quiet hint in the sidebar: only while a found release needs a click.
@@ -27,7 +31,7 @@ export function updateHint(status) {
  */
 export function updateSummary(status) {
   if (!status) return { tone: 'neutral', text: 'Wird geprüft …' }
-  const v = `Version ${String(status.version || '').replace(/^v/i, '')}`
+  const v = `Version ${bareVersion(status.version)}`
   switch (status.state) {
     case 'checking':
       return { tone: 'neutral', text: 'Suche nach Updates …' }

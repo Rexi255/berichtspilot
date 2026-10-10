@@ -2,7 +2,7 @@
 // check → download → install flow — without Electron or electron-updater.
 import { EventEmitter } from 'node:events'
 import { describe, it, expect, vi } from 'vitest'
-import { createUpdater, updateSupport, describeUpdateError, meansNoUpdate, PARTITION } from './updater.js'
+import { createUpdater, updateSupport, describeUpdateError, meansNoUpdate, stripHeaders, PARTITION } from './updater.js'
 
 const codeError = (code, message = code) => Object.assign(new Error(message), { code })
 
@@ -16,7 +16,13 @@ function fakeUpdater({ check, download } = {}) {
 
 function setup({ updater = fakeUpdater(), isPackaged = true, platform = 'win32', env = {} } = {}) {
   let filter = null
-  const ses = { webRequest: { onBeforeRequest: vi.fn((fn) => (filter = fn)) } }
+  let headerFilter = null
+  const ses = {
+    webRequest: {
+      onBeforeRequest: vi.fn((fn) => (filter = fn)),
+      onBeforeSendHeaders: vi.fn((fn) => (headerFilter = fn)),
+    },
+  }
   const fromPartition = vi.fn(() => ses)
   const onChange = vi.fn()
   const loadUpdater = vi.fn(() => updater)
@@ -27,23 +33,43 @@ function setup({ updater = fakeUpdater(), isPackaged = true, platform = 'win32',
     getSession: () => ({ fromPartition }),
     platform,
     env,
+    nsisInstalled: () => true,
   })
   const allowed = (url) => {
     let result
     filter({ url }, (r) => (result = r))
     return !result.cancel
   }
-  return { up, updater, onChange, loadUpdater, fromPartition, allowed }
+  const sentHeaders = (requestHeaders) => {
+    let result
+    headerFilter({ requestHeaders }, (r) => (result = r))
+    return result.requestHeaders
+  }
+  return { up, updater, onChange, loadUpdater, fromPartition, allowed, sentHeaders }
 }
 
 describe('updateSupport', () => {
   it('allows the NSIS install and the AppImage only', () => {
-    expect(updateSupport({ isPackaged: true, platform: 'win32', env: {} }).ok).toBe(true)
+    const nsisInstalled = () => true
+    expect(updateSupport({ isPackaged: true, platform: 'win32', env: {}, nsisInstalled }).ok).toBe(true)
     expect(updateSupport({ isPackaged: true, platform: 'linux', env: { APPIMAGE: '/x/B.AppImage' } }).ok).toBe(true)
     expect(updateSupport({ isPackaged: false, platform: 'win32', env: {} }).ok).toBe(false)
     expect(updateSupport({ isPackaged: true, platform: 'win32', env: { PORTABLE_EXECUTABLE_DIR: 'D:\\' } }).ok).toBe(false)
     expect(updateSupport({ isPackaged: true, platform: 'linux', env: {} }).ok).toBe(false)
     expect(updateSupport({ isPackaged: true, platform: 'darwin', env: {} }).ok).toBe(false)
+  })
+
+  it('never updates an unpacked folder (no NSIS uninstaller next to the .exe)', () => {
+    expect(updateSupport({ isPackaged: true, platform: 'win32', env: {}, nsisInstalled: () => false }).ok).toBe(false)
+  })
+})
+
+describe('stripHeaders', () => {
+  it('drops the per-install staging id, whatever its case', () => {
+    expect(stripHeaders({ 'x-user-staging-id': 'uuid', 'X-User-Staging-Id': 'uuid', Accept: '*/*' })).toEqual({
+      Accept: '*/*',
+    })
+    expect(stripHeaders(undefined)).toEqual({})
   })
 })
 
@@ -84,8 +110,19 @@ describe('meansNoUpdate', () => {
     expect(meansNoUpdate(codeError('ERR_UPDATER_NO_PUBLISHED_VERSIONS'))).toBe(true)
   })
 
+  it('treats a missing production release (wrapped 404 of /releases/latest) as "no update"', () => {
+    const wrapped = (inner) =>
+      codeError(
+        'ERR_UPDATER_INVALID_RELEASE_FEED',
+        `Cannot parse releases feed: Error: Unable to find latest version on GitHub (https://github.com/x/y/releases/latest), please ensure a production release exists: ${inner}`
+      )
+    expect(meansNoUpdate(wrapped('HttpError: 404 Not Found\nHeaders: {}'))).toBe(true)
+    expect(meansNoUpdate(wrapped('HttpError: 500 Internal Server Error'))).toBe(false)
+    expect(meansNoUpdate(codeError('ERR_UPDATER_INVALID_RELEASE_FEED', 'Cannot parse releases feed: bad XML'))).toBe(false)
+  })
+
   it('keeps wrapped network errors and other codes as errors', () => {
-    const offline = codeError('ERR_UPDATER_LATEST_VERSION_NOT_FOUND', 'Unable to find latest version: net::ERR_INTERNET_DISCONNECTED')
+    const offline = codeError('ERR_UPDATER_CHANNEL_FILE_NOT_FOUND', 'Cannot find latest.yml: net::ERR_INTERNET_DISCONNECTED')
     expect(meansNoUpdate(offline)).toBe(false)
     expect(meansNoUpdate(codeError('ERR_UPDATER_INVALID_UPDATE_INFO'))).toBe(false)
     expect(meansNoUpdate(new Error('x'))).toBe(false)
@@ -114,6 +151,12 @@ describe('createUpdater', () => {
     expect(allowed('https://api.github.com/repos/Rexi255/berichtspilot')).toBe(false)
     expect(allowed('http://github.com/Rexi255/berichtspilot/releases.atom')).toBe(false)
     expect(allowed('https://evil.example/latest.yml')).toBe(false)
+  })
+
+  it('never sends the per-install staging id', async () => {
+    const { up, sentHeaders } = setup()
+    await up.check()
+    expect(sentHeaders({ 'x-user-staging-id': 'uuid', accept: '*/*' })).toEqual({ accept: '*/*' })
   })
 
   it('reports "none" when the current version is the newest', async () => {
@@ -158,6 +201,27 @@ describe('createUpdater', () => {
     expect(up.install()).toEqual({ ok: true })
     expect(updater.quitAndInstall).toHaveBeenCalledWith(true, true)
     expect(onChange.mock.calls.map(([s]) => s.state)).toEqual(['checking', 'available', 'downloading', 'downloading', 'ready'])
+  })
+
+  it('reports an install that electron-updater refused (only via its error event)', async () => {
+    const updater = fakeUpdater({ check: async () => ({ isUpdateAvailable: true, updateInfo: { version: '1.3.0' } }) })
+    updater.quitAndInstall = vi.fn(() => updater.emit('error', new Error("No update filepath provided, can't quit and install")))
+    const { up } = setup({ updater })
+    await up.check()
+    await up.download()
+    expect(up.install()).toMatchObject({ ok: false, error: expect.any(String) })
+    expect(up.status()).toMatchObject({ ok: false, state: 'error', version: '1.3.0', code: 'update' })
+    expect(updater.listenerCount('error')).toBe(1) // the temporary listener is gone again
+  })
+
+  it('calls quitAndInstall only once, even on a second click', async () => {
+    const updater = fakeUpdater({ check: async () => ({ isUpdateAvailable: true, updateInfo: { version: '1.3.0' } }) })
+    const { up } = setup({ updater })
+    await up.check()
+    await up.download()
+    expect(up.install()).toEqual({ ok: true })
+    expect(up.install()).toEqual({ ok: true })
+    expect(updater.quitAndInstall).toHaveBeenCalledOnce()
   })
 
   it('does not download without a found update', async () => {

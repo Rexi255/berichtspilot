@@ -126,6 +126,10 @@ decision).
   - [x] 5.3 UI: sidebar card `src/ui/UpdateHint.jsx` (download → progress →
         install, one toast per version), Settings → "Updates", pure state
         mapping `src/lib/update.js` (2026-10-10)
+  - [x] Review fixes (2026-10-10): refused install reported, single install
+        call, staging-id header stripped, `win-unpacked` unsupported, 404 of
+        `/releases/latest` = "no update"; unreadable `daten.json` + backups
+        block loading instead of seeding over them (see E-017)
 - [x] ~~Friday reminder if the current week is still a draft~~ — dropped by the
       user (2026-10-10): neither an in-app hint nor a system notification
 - [x] Create the current week automatically on start — Mon–Fri only (E-016),
@@ -163,3 +167,4 @@ decision).
 | 2026-10-10 | Step 5.1: auto-update decision E-017, release plumbing, portable build dropped (local `build:win` writes `latest.yml` + `.blockmap` + `app-update.yml`) | branch `claude/intelligent-curie-yxizss` |
 | 2026-10-10 | Step 5.2: `electron/updater.js` + IPC `update:*`, schema v8 `settings.updateCheck` (packaged build checked against the real repo → `none`; non-allowlisted host → `blocked`) | branch `claude/intelligent-curie-yxizss` |
 | 2026-10-10 | Step 5.3: update UI — sidebar card + Settings → "Updates" (browser smoke test with mocked `window.api` through all states; `build:win` unpacked exe: v1.2.0, real GitHub check → "neueste Version"). User: overhaul ships as v2.0.0 (E-018) | branch `claude/intelligent-curie-yxizss` |
+| 2026-10-10 | Code-review fixes (updater install/headers/support check, load-error guard; Electron screenshot with corrupt `daten.json` + backups: files untouched). Not fixed by choice: a deleted current week is auto-created again on the next start (would need a schema change) | branch `claude/intelligent-curie-yxizss` |

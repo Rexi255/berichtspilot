@@ -119,9 +119,10 @@ wraps electron-updater's `autoUpdater` (`autoDownload` and
 through its own session partition `electron-updater`, not through `net.js`; before
 the first request, `webRequest.onBeforeRequest` on that partition cancels every
 URL that isn't https to `UPDATE_HOSTS` (redirects included — a cancelled request
-surfaces as `code: 'blocked'`). Only the packaged NSIS install and the AppImage
-can update (`updateSupport()`); everything else is `unsupported` and never loads
-electron-updater. A newest release without `latest*.yml`
+surfaces as `code: 'blocked'`); `onBeforeSendHeaders` strips electron-updater's
+per-install `x-user-staging-id`. Only the packaged NSIS install (uninstaller next
+to the exe) and the AppImage can update (`updateSupport()`); everything else is
+`unsupported` and never loads electron-updater. A newest release without `latest*.yml`
 (`ERR_UPDATER_CHANNEL_FILE_NOT_FOUND`, e.g. v1.2.0) counts as "no update", not as
 an error. Errors get German texts via `describeUpdateError()` (network cases
 reuse `describeFailure()`).

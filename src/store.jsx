@@ -58,6 +58,12 @@ export const api = typeof window !== 'undefined' && window.api ? window.api : br
 
 const byId = (a, b) => (a.id < b.id ? -1 : 1)
 
+// Store an update status and pass it on to the caller
+const keepStatus = (setUpdate) => (status) => {
+  setUpdate(status)
+  return status
+}
+
 export function StoreProvider({ children }) {
   const [data, setData] = useState(null)
   const [loadError, setLoadError] = useState(null)
@@ -65,6 +71,9 @@ export function StoreProvider({ children }) {
   const [saveStatus, setSaveStatus] = useState('idle') // idle | saving | saved | error
   // Auto-update status from the main process (electron/updater.js)
   const [update, setUpdate] = useState(null)
+  // Install started (shared by sidebar + Settings; the ref guards double clicks)
+  const [installingUpdate, setInstallingUpdate] = useState(false)
+  const installingRef = useRef(false)
   const timerRef = useRef(null)
   const loadedRef = useRef(false)
   // Current state for mutations that must read it BEFORE setData (undo)
@@ -79,12 +88,25 @@ export function StoreProvider({ children }) {
   useEffect(() => {
     api.loadData().then((res) => {
       setDataPath(res.path ?? '')
+      // daten.json and every backup exist but are unreadable: never fall back to
+      // seed data — the next autosave would rotate the originals out of the backups
+      if (!res.ok) {
+        setLoadError({
+          message: `daten.json und alle Sicherungen sind nicht lesbar (${res.error ?? 'unbekannter Fehler'}).`,
+          hint: 'Deine Dateien bleiben unverändert. Ersetze daten.json im Datenordner durch eine lesbare Kopie (z. B. einen Export) und starte Berichtspilot neu.',
+          canReveal: true,
+        })
+        return
+      }
       let d
-      if (res.ok && res.data) {
+      if (res.data) {
         try {
           d = migrateData(res.data)
         } catch (error) {
-          setLoadError(String(error.message ?? error))
+          setLoadError({
+            message: String(error.message ?? error),
+            hint: 'Bitte aktualisiere Berichtspilot auf die neueste Version — deine daten.json bleibt unverändert.',
+          })
           return
         }
       } else {
@@ -99,8 +121,6 @@ export function StoreProvider({ children }) {
       // Main file was corrupted and restored from a backup
       if (res.fromBackup) {
         showToast('Daten aus Sicherung wiederhergestellt', { kind: 'error', duration: 5000 })
-      } else if (!res.ok) {
-        showToast('Daten konnten nicht geladen werden', { kind: 'error', duration: 5000 })
       } else if (autoCreated) {
         showToast(`KW ${isoWeek(autoCreated.id).week} angelegt`)
       }
@@ -275,20 +295,32 @@ export function StoreProvider({ children }) {
     setData((d) => ({ ...d, settings: { ...d.settings, webuntis: { ...d.settings.webuntis, enabled } } }))
   }, [])
 
-  const keepUpdate = (status) => {
-    setUpdate(status)
-    return status
-  }
+  // Stable references: UpdateHint's toast effect depends on downloadUpdate
+  const checkForUpdate = useCallback(() => api.updateCheck().then(keepStatus(setUpdate)), [])
+  const downloadUpdate = useCallback(() => api.updateDownload().then(keepStatus(setUpdate)), [])
 
   // Installing quits the app: write pending changes first (the 400 ms autosave
-  // would be lost) and don't install if that fails
+  // would be lost) and don't install if that fails. Never rejects.
   const installUpdate = useCallback(async () => {
+    if (installingRef.current) return { ok: true } // already on its way (other button)
+    installingRef.current = true
+    setInstallingUpdate(true)
     clearTimeout(timerRef.current)
-    if (dataRef.current) {
-      const saved = await saveNow(dataRef.current)
-      if (!saved.ok) return { ok: false, error: 'Daten konnten nicht gespeichert werden — Update abgebrochen.' }
+    let res
+    try {
+      const saved = dataRef.current ? await saveNow(dataRef.current) : { ok: true }
+      res = saved.ok
+        ? await api.updateInstall()
+        : { ok: false, error: 'Daten konnten nicht gespeichert werden — Update abgebrochen.' }
+    } catch {
+      res = { ok: false, error: 'Update konnte nicht installiert werden' }
     }
-    return api.updateInstall()
+    // ok → the app quits right away; stay "installing" until it does
+    if (!res.ok) {
+      installingRef.current = false
+      setInstallingUpdate(false)
+    }
+    return res
   }, [saveNow])
 
   const exportData = useCallback(() => api.exportData(data), [data])
@@ -342,9 +374,10 @@ export function StoreProvider({ children }) {
     importData,
     saveNow: () => data && saveNow(data),
     update,
-    checkForUpdate: () => api.updateCheck().then(keepUpdate),
-    downloadUpdate: () => api.updateDownload().then(keepUpdate),
+    checkForUpdate,
+    downloadUpdate,
     installUpdate,
+    installingUpdate,
   }
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>

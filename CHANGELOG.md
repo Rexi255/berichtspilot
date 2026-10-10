@@ -83,6 +83,14 @@ versioning follows [Semantic Versioning](https://semver.org/).
   groundwork for the upcoming in-app update. The release build stops if the tag
   doesn't match the app version.
 
+### Fixed
+
+- **Unreadable data is never overwritten:** if `daten.json` and all three
+  backups exist but can't be read, the app no longer starts with empty sample
+  data (whose autosave would have pushed the originals out of the backups). It
+  shows "Daten können nicht geladen werden" with a button to open the data
+  folder and leaves every file untouched.
+
 ### Removed
 
 - **Portable Windows build:** there is no `…-portable.exe` any more — it can't

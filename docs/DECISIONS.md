@@ -349,6 +349,26 @@ the portable build**. Releases now ship the NSIS installer and the AppImage only
   - The allowlist sits on the `electron-updater` partition (opened with the
     same `{ cache: false }` electron-updater uses); checked in real Electron
     that a non-allowlisted host ends as `code: 'blocked'`.
+- **Review fixes (2026-10-10, after 5.3):**
+  - electron-updater sends a random per-install UUID (`x-user-staging-id`,
+    stored in `userData/.updaterId`) with every request — for staged rollouts,
+    which we don't use. It is stripped via `webRequest.onBeforeSendHeaders` on
+    the same partition, so "only IP + app version" above stays true.
+  - "NSIS install" = packaged win32 **and** an `Uninstall *.exe` next to the
+    exe. An unpacked folder (`release/win-unpacked`, a copied folder) is
+    `unsupported` — the silent installer would otherwise install a second copy
+    instead of updating that folder. A local update test therefore needs the
+    installed build, not `win-unpacked`.
+  - `quitAndInstall()` returns nothing and reports a refused install only via a
+    synchronous `'error'` event — `install()` listens for it during the call
+    and answers `{ ok: false }`; a second call after a successful one is a
+    no-op (a refused repeat would reset electron-updater's own double-call
+    guard). The renderer keeps the "installing" flag in the store, shared by
+    the sidebar card and Settings.
+  - GitHubProvider wraps the 404 of `/releases/latest` (no production release)
+    as `ERR_UPDATER_INVALID_RELEASE_FEED`; it is recognised by its nested
+    message and counts as "no update" (`ERR_UPDATER_LATEST_VERSION_NOT_FOUND`
+    never surfaces).
 
 ### E-018 · The overhaul ships as v2.0.0; it stays on its branch until complete · accepted
 User (2026-10-10): the overhaul is big enough for a major version — it becomes

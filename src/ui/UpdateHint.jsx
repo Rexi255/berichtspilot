@@ -2,7 +2,7 @@
 // while a found release needs a click — download → progress → install. Plus one
 // toast per version and session when a release shows up. Nothing downloads or
 // installs without the click.
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import { ArrowCircleUpIcon, CircleNotchIcon } from '@phosphor-icons/react'
 import { useStore } from '../store.jsx'
 import { updateHint, versionLabel } from '../lib/update.js'
@@ -12,30 +12,20 @@ import { showToast } from './toast.jsx'
 /**
  * Click handlers shared by the sidebar card and Settings. Failures arrive as
  * status (shown inline); only a failed install start needs a toast, because the
- * app would otherwise just stay open without a word.
+ * app would otherwise just stay open without a word. The "installing" flag lives
+ * in the store, so both buttons spin (and stay disabled) together.
  */
 export function useUpdateActions() {
-  const { downloadUpdate, installUpdate } = useStore()
-  const [installing, setInstalling] = useState(false)
+  const { downloadUpdate, installUpdate, installingUpdate } = useStore()
 
   const download = () => downloadUpdate().catch(() => {})
 
   const install = async () => {
-    setInstalling(true)
-    try {
-      const res = await installUpdate()
-      // ok → the app quits right away; keep the spinner until it does
-      if (!res.ok) {
-        setInstalling(false)
-        showToast(res.error || 'Update konnte nicht installiert werden', { kind: 'error', duration: 6000 })
-      }
-    } catch {
-      setInstalling(false)
-      showToast('Update konnte nicht installiert werden', { kind: 'error', duration: 6000 })
-    }
+    const res = await installUpdate()
+    if (!res.ok) showToast(res.error || 'Update konnte nicht installiert werden', { kind: 'error', duration: 6000 })
   }
 
-  return { download, install, installing }
+  return { download, install, installing: installingUpdate }
 }
 
 /** The action of the current step as a full-width button / progress bar. */
@@ -83,7 +73,8 @@ function subtitle(hint) {
   if (hint.step === 'download') return 'Neue Version verfügbar'
   if (hint.step === 'downloading') return `Wird heruntergeladen … ${hint.percent} %`
   if (hint.step === 'install') return 'Bereit · App startet neu'
-  return hint.error || 'Download fehlgeschlagen'
+  // Download or install failed — the retry downloads again (restores a missing installer too)
+  return hint.error || 'Update fehlgeschlagen'
 }
 
 export default function UpdateHint() {
