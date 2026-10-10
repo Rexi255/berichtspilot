@@ -151,6 +151,52 @@ describe('fetchWeek', () => {
     expect(res.days[0].lessons.map((l) => l.topics)).toEqual([[], ['Netzplan']])
   })
 
+  // Real case (2026-10-10): a stray LF08 entry parallel to LF10 got LF10's topic
+  it('gives parallel lessons only the topics of their own subject, one call per time range', async () => {
+    const week = {
+      days: [
+        {
+          date: '2026-09-23',
+          gridEntries: [
+            entry('2026-09-23', '07:45', '09:15', 'LF08'),
+            entry('2026-09-23', '11:30', '13:00', 'LF08'),
+            entry('2026-09-23', '11:30', '13:00', 'LF10'),
+          ],
+        },
+      ],
+    }
+    const withSubject = (shortName, teachingContent) => ({
+      subject: { id: 1, shortName, longName: `${shortName} lang`, displayName: `${shortName} lang` },
+      teachingContent,
+    })
+    const fetchImpl = server({
+      week,
+      details: {
+        '2026-09-23T07:45': { calendarEntries: [withSubject('LF08', 'PacketTracer Szenario')] },
+        '2026-09-23T11:30': {
+          calendarEntries: [withSubject('LF08', ''), withSubject('LF10', 'Aktuelles zur Politik')],
+        },
+      },
+    })
+    const res = await fetchWeek(session(), '2026-09-21', { fetchImpl })
+    expect(res.days[0].lessons.map((l) => [l.subjectShort, l.topics])).toEqual([
+      ['LF08', ['PacketTracer Szenario']],
+      ['LF08', []],
+      ['LF10', ['Aktuelles zur Politik']],
+    ])
+    expect(fetchImpl.mock.calls.filter(([url]) => url.startsWith(DETAIL_URL))).toHaveLength(2)
+  })
+
+  it('uses every entry when the detail answer names no subjects', async () => {
+    const week = { days: [{ date: '2026-09-07', gridEntries: [entry('2026-09-07', '07:45', '09:15', 'LF03')] }] }
+    const fetchImpl = server({
+      week,
+      details: { '2026-09-07T07:45': { calendarEntries: [{ teachingContent: 'A' }, { teachingContent: 'B' }] } },
+    })
+    const res = await fetchWeek(session(), '2026-09-07', { fetchImpl })
+    expect(res.days[0].lessons[0].topics).toEqual(['A', 'B'])
+  })
+
   it('runs at most a few topic calls at once', async () => {
     const gridEntries = Array.from({ length: 8 }, (_, i) =>
       entry('2026-09-07', `${String(8 + i).padStart(2, '0')}:00`, `${String(8 + i).padStart(2, '0')}:45`, `F${i}`)

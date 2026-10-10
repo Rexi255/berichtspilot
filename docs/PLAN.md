@@ -30,16 +30,16 @@ WebUntis "Lehrstoff" ─────────────┘    (daten.json) 
 
 ## Next step
 
-**A) Manual check of step 4.6b with the real account (user, ~5 min)** — the
-WebUntis panel is built and smoke-tested against a mocked `window.api` only.
-Ask the user to run `npm run dev`, switch WebUntis on (Einstellungen →
-Verbindungen), open a past school week in the editor and click "Aus WebUntis
-füllen". Check: login prompt when logged out ("Anmelden" → retry), preview per
-day, unticking the wrong Wed `LF08` lesson, "zuordnen" for an unknown subject
-(saved in the profile, preview updates without a new fetch), apply → toast with
-"Rückgängig", written text untouched. Record the result (and what the real
-"Lehrstoff" texts look like — terse? teacher shorthand?) in the Done log, fix
-anything found as `fix:` commits.
+**A) Re-run "Aus WebUntis füllen" with the real account (user, ~2 min).**
+First run (2026-10-10, week 22.–23.09.2026) worked as intended except one
+thing: `LF08` on Wednesday also showed "Aktuelles zur Politik" — the topic of
+`LF10` from a stray parallel `LF08` entry in the school's timetable. Fixed by
+matching topics to the lesson's subject (DECISIONS E-013, "Topics per subject").
+The fix assumes the detail answer carries `calendarEntries[].subject`; if `LF08`
+**still** shows the LF10 topic, the field is named differently → run
+`npm run probe:webuntis` for that week and adapt `entrySubjects()` in
+`electron/webuntis.js`. Record the outcome in the Done log. Still open from the
+first run: unticking, "zuordnen" and "Rückgängig" weren't reported on — ask.
 
 **B) Then: step 3.5 or Phase 5** — depends on the open question below. If the
 raw topics are good enough, skip 3.5 and take Phase 5 "Create the current week
@@ -144,4 +144,5 @@ decision).
 | 2026-10-10 | Step 4.5a: WebUntis week fetch + normaliser (real account checked by the user) | f9c4b79 |
 | 2026-10-10 | Step 4.5b: WebUntis subject mapping, schema v6 | branch `claude/intelligent-curie-yxizss` |
 | 2026-10-10 | Step 4.6a: `fillWeekFromWebuntis()` merge logic | branch `claude/intelligent-curie-yxizss` |
-| 2026-10-10 | Step 4.6b: "Aus WebUntis füllen" panel (browser smoke test with mocked API; real account pending) | branch `claude/intelligent-curie-yxizss` |
+| 2026-10-10 | Step 4.6b: "Aus WebUntis füllen" panel (browser smoke test with mocked API; real account checked by the user: works, one wrong topic from a parallel lesson) | branch `claude/intelligent-curie-yxizss` |
+| 2026-10-10 | Fix: WebUntis topics matched per subject (stray parallel lesson), one detail call per time range | branch `claude/intelligent-curie-yxizss` |

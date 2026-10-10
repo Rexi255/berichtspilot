@@ -268,6 +268,18 @@ Only subjects of days that would actually be filled are offered for mapping.
 "Übernehmen" recomputes `fillWeekFromWebuntis()` on the week as it is at click
 time (via `dropSubjects()`), so edits made while the panel is open are respected.
 
+**Topics per subject, not per time slot (2026-10-10, real-account check):** the
+detail call asks for a time range and returns *every* calendar entry in that
+slot. The school's timetable lists a stray `LF08` parallel to `LF10` (Wed 3rd
+double period, a teacher who doesn't exist yet), so `LF08` got LF10's topic
+"Aktuelles zur Politik". Fix in `electron/webuntis.js`: a lesson only takes the
+`teachingContent` of entries whose `subject` (`shortName`/`longName`/
+`displayName`, or a `subjects[]` list) matches its own subject; if the answer
+names no subjects at all, every entry is used as before. The field name is
+assumed from the WebUntis v2 API, not yet seen in our probe output — confirmed
+by the user's re-run if `LF08` then shows only its own topic. Parallel lessons
+with the same times now share one detail request.
+
 ### E-014 · Keep the file name `daten.json` · accepted
 Field names became English in schema v3, but the file name stays: existing
 installations, portable copies, backups (`.bak1–3`) and the README all rely on it.

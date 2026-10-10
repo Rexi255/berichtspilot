@@ -36,14 +36,33 @@ function subjectOf(entry) {
   return { subjectShort: str(element?.shortName), subjectLong: str(element?.longName) }
 }
 
-/** `teachingContent` from a calendar-entry/detail answer (entries and their single periods). */
-function topicsOf(detail) {
+/** Lower-case subject names a calendar entry carries (`subject`, or a `subjects[]` list). */
+function entrySubjects(entry) {
+  const list = [entry?.subject, ...(Array.isArray(entry?.subjects) ? entry.subjects : [])]
+  return list
+    .flatMap((s) => [s?.shortName, s?.longName, s?.displayName])
+    .map((n) => str(n).toLowerCase())
+    .filter(Boolean)
+}
+
+/**
+ * `teachingContent` of one lesson from a calendar-entry/detail answer (entries
+ * and their single periods). The detail call asks for a time range, so it
+ * returns *all* parallel lessons in that slot — e.g. a stray second subject in
+ * the school's timetable. Only entries of the lesson's own subject count; if
+ * the answer names no subjects at all, every entry is used (old behaviour).
+ */
+function topicsOf(detail, lesson = {}) {
   const topics = []
   const add = (t) => {
     const topic = str(t).slice(0, MAX_TOPIC_LENGTH)
     if (topic && !topics.includes(topic)) topics.push(topic)
   }
-  for (const entry of Array.isArray(detail?.calendarEntries) ? detail.calendarEntries : []) {
+  const entries = Array.isArray(detail?.calendarEntries) ? detail.calendarEntries : []
+  const own = [lesson.subjectShort, lesson.subjectLong].map((n) => str(n).toLowerCase()).filter(Boolean)
+  const named = entries.some((e) => entrySubjects(e).length > 0)
+  for (const entry of entries) {
+    if (named && !entrySubjects(entry).some((n) => own.includes(n))) continue
     add(entry?.teachingContent)
     for (const single of Array.isArray(entry?.singleEntries) ? entry.singleEntries : []) add(single?.teachingContent)
   }
@@ -122,20 +141,28 @@ async function fetchWeek(session, mondayISO, { ses, fetchImpl } = {}) {
 
   // Topics per lesson block (the API returns nothing for a whole-week range).
   // A failed call leaves that lesson's topics empty instead of failing the week.
-  const blocks = days.flatMap((d) => d.lessons).filter((l) => l.status !== 'CANCELLED' && l.rawStart && l.rawEnd)
-  await mapLimited(blocks, DETAIL_CONCURRENCY, async (lesson) => {
+  // Parallel lessons share one time range → one request per range.
+  const lessons = days.flatMap((d) => d.lessons).filter((l) => l.status !== 'CANCELLED' && l.rawStart && l.rawEnd)
+  const ranges = [...new Set(lessons.map((l) => `${l.rawStart}|${l.rawEnd}`))]
+  const details = new Map()
+  await mapLimited(ranges, DETAIL_CONCURRENCY, async (range) => {
+    const [startDateTime, endDateTime] = range.split('|')
     const detail = await authorized(
       (personId) =>
         `${DETAIL_URL}?${new URLSearchParams({
           elementId: String(personId),
           elementType: '5',
-          startDateTime: lesson.rawStart,
-          endDateTime: lesson.rawEnd,
+          startDateTime,
+          endDateTime,
           homeworkOption: 'DUE',
         })}`
     )
-    if (detail.ok) lesson.topics = topicsOf(detail.data)
+    if (detail.ok) details.set(range, detail.data)
   })
+  for (const lesson of lessons) {
+    const detail = details.get(`${lesson.rawStart}|${lesson.rawEnd}`)
+    if (detail) lesson.topics = topicsOf(detail, lesson)
+  }
 
   return {
     ok: true,

@@ -45,6 +45,8 @@ versioning follows [Semantic Versioning](https://semver.org/).
   cancelled lessons and school breaks. Wrong lessons can be unticked, unknown
   WebUntis subjects mapped or ignored right there (remembered in the profile).
   Applying is undoable. Logged out? The panel offers "Anmelden" and retries.
+  Two lessons at the same time (e.g. a stray entry in the school's timetable)
+  each get only the topic of their own subject.
 
 ### Changed
 
