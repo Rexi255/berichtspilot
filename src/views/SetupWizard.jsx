@@ -360,79 +360,83 @@ export default function SetupWizard() {
   const Body = STEP_BODY[step]
 
   return (
-    <main className="aurora min-h-0 flex-1 overflow-y-auto">
-      <div className="mx-auto flex min-h-full max-w-2xl flex-col justify-center px-6 py-8">
-        {step === 'welcome' ? (
-          <Panel className="px-8 py-6">
-            <WelcomeStep fresh={fresh} onStart={() => go('training')} onImport={importFromWizard} onSkip={skipSetup} />
-          </Panel>
-        ) : (
-          <>
-            {/* progress: one dot per step, the current one with its title */}
-            <ol className="mb-4 flex items-center gap-2" aria-label="Fortschritt">
-              {DOTS.map((s, i) => {
-                const done = i < DOTS.indexOf(step)
-                const current = s === step
-                return (
-                  <li key={s} className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => done && go(s)}
-                      disabled={!done}
-                      aria-current={current ? 'step' : undefined}
-                      title={STEP_META[s].title}
-                      className={cx(
-                        'grid h-6 w-6 place-items-center rounded-full text-[11px] font-semibold transition-colors duration-150',
-                        current && 'bg-accent text-inset',
-                        done && 'bg-accent/20 text-accent-light hover:bg-accent/30',
-                        !current && !done && 'bg-white/[0.06] text-ink-3'
-                      )}
-                    >
-                      {done ? <CheckIcon size={12} weight="bold" /> : i + 1}
-                    </button>
-                    {i < DOTS.length - 1 && <span className={cx('h-px w-6', done ? 'bg-accent/40' : 'bg-white/[0.08]')} />}
-                  </li>
-                )
-              })}
-            </ol>
-
-            <Panel className="flex flex-col">
-              <div className="flex items-center gap-2 border-b border-white/[0.05] px-6 py-4">
-                <meta.icon size={18} className="text-accent" />
-                <h2 className="text-[16px] font-semibold">{meta.title}</h2>
-                {step === 'webuntis' && <span className="text-[12px] text-ink-3">(optional)</span>}
-              </div>
-              <div className="px-6 py-5">{Body && <Body answers={answers} set={set} />}</div>
-              {errors.length > 0 && (
-                <div className="mx-6 mb-4 rounded-lg border border-sick/30 bg-sick/[0.07] px-3 py-2 text-[12.5px] text-sick" role="alert">
-                  {errors.map((e) => (
-                    <div key={e}>{e}</div>
-                  ))}
-                </div>
-              )}
-              <div className="flex items-center gap-2 border-t border-white/[0.05] px-6 py-3">
-                <Button variant="ghost" size="sm" onClick={skipSetup}>
-                  {fresh ? 'Überspringen' : 'Abbrechen'}
-                </Button>
-                <div className="flex-1" />
-                <Button size="sm" onClick={() => go(SETUP_STEPS[index - 1])}>
-                  <ArrowLeftIcon size={14} /> Zurück
-                </Button>
-                <Button variant="primary" size="sm" onClick={next}>
-                  {step === 'summary' ? (
-                    <>
-                      <CheckIcon size={14} weight="bold" /> Einrichtung abschließen
-                    </>
-                  ) : (
-                    <>
-                      Weiter <ArrowRightIcon size={14} />
-                    </>
-                  )}
-                </Button>
-              </div>
+    // .aurora clips (overflow: hidden, unlayered — beats Tailwind's overflow
+    // utilities), so the scrolling happens in an inner element
+    <main className="aurora min-h-0 flex-1">
+      <div className="h-full overflow-y-auto">
+        <div className="mx-auto flex min-h-full max-w-2xl flex-col justify-center px-6 py-8">
+          {step === 'welcome' ? (
+            <Panel className="px-8 py-6">
+              <WelcomeStep fresh={fresh} onStart={() => go('training')} onImport={importFromWizard} onSkip={skipSetup} />
             </Panel>
-          </>
-        )}
+          ) : (
+            <>
+              {/* progress: one dot per step, the current one with its title */}
+              <ol className="mb-4 flex items-center gap-2" aria-label="Fortschritt">
+                {DOTS.map((s, i) => {
+                  const done = i < DOTS.indexOf(step)
+                  const current = s === step
+                  return (
+                    <li key={s} className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => done && go(s)}
+                        disabled={!done}
+                        aria-current={current ? 'step' : undefined}
+                        title={STEP_META[s].title}
+                        className={cx(
+                          'grid h-6 w-6 place-items-center rounded-full text-[11px] font-semibold transition-colors duration-150',
+                          current && 'bg-accent text-inset',
+                          done && 'bg-accent/20 text-accent-light hover:bg-accent/30',
+                          !current && !done && 'bg-white/[0.06] text-ink-3'
+                        )}
+                      >
+                        {done ? <CheckIcon size={12} weight="bold" /> : i + 1}
+                      </button>
+                      {i < DOTS.length - 1 && <span className={cx('h-px w-6', done ? 'bg-accent/40' : 'bg-white/[0.08]')} />}
+                    </li>
+                  )
+                })}
+              </ol>
+
+              <Panel className="flex flex-col">
+                <div className="flex items-center gap-2 border-b border-white/[0.05] px-6 py-4">
+                  <meta.icon size={18} className="text-accent" />
+                  <h2 className="text-[16px] font-semibold">{meta.title}</h2>
+                  {step === 'webuntis' && <span className="text-[12px] text-ink-3">(optional)</span>}
+                </div>
+                <div className="px-6 py-5">{Body && <Body answers={answers} set={set} />}</div>
+                {errors.length > 0 && (
+                  <div className="mx-6 mb-4 rounded-lg border border-sick/30 bg-sick/[0.07] px-3 py-2 text-[12.5px] text-sick" role="alert">
+                    {errors.map((e) => (
+                      <div key={e}>{e}</div>
+                    ))}
+                  </div>
+                )}
+                <div className="flex items-center gap-2 border-t border-white/[0.05] px-6 py-3">
+                  <Button variant="ghost" size="sm" onClick={skipSetup}>
+                    {fresh ? 'Überspringen' : 'Abbrechen'}
+                  </Button>
+                  <div className="flex-1" />
+                  <Button size="sm" onClick={() => go(SETUP_STEPS[index - 1])}>
+                    <ArrowLeftIcon size={14} /> Zurück
+                  </Button>
+                  <Button variant="primary" size="sm" onClick={next}>
+                    {step === 'summary' ? (
+                      <>
+                        <CheckIcon size={14} weight="bold" /> Einrichtung abschließen
+                      </>
+                    ) : (
+                      <>
+                        Weiter <ArrowRightIcon size={14} />
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </Panel>
+            </>
+          )}
+        </div>
       </div>
     </main>
   )
