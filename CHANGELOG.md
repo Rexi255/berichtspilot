@@ -8,8 +8,8 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [2.0.0] - 2026-10-10
 
-The automation release: notes per day, AI phrasing via the clipboard, WebUntis
-import and in-app updates. Upgrading from 1.x: install this version by hand once
+The automation release: setup wizard, notes per day, AI phrasing via the
+clipboard, WebUntis import and in-app updates. Upgrading from 1.x: install this version by hand once
 (1.x has no updater); `daten.json` is migrated automatically.
 
 ### Added
@@ -63,6 +63,15 @@ import and in-app updates. Upgrading from 1.x: install this version by hand once
   with profile, holidays and vacation like "Woche anlegen" — and shows a short
   hint "KW n angelegt". Switch "Aktuelle Woche beim Start anlegen" under
   Settings → Verhalten (on by default; schema v7 adds it to existing files).
+- **Setup wizard ("Einrichtung"):** on a fresh install, a short wizard opens
+  instead of sample data: training start and end (with quick picks for 2 to
+  3.5 years), federal state, the current school half-year with school and work
+  days and the subjects per school day, optionally the WebUntis address, and
+  the start behavior — then a summary. It can be skipped (it won't ask again),
+  an existing export can be imported right from the first screen, and
+  Settings → Verhalten → "Einrichtungsassistent starten" runs it again later
+  (it edits the half-year valid today). Existing data isn't affected: schema
+  v10 marks it as set up.
 - **In-app updates:** the installed app (setup `.exe` or AppImage) asks GitHub
   once per start whether a newer version exists — only the app version and your
   IP address reach GitHub, no training data. A found update shows up quietly as

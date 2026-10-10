@@ -97,7 +97,7 @@ describe('migrateData', () => {
   it('migrates a full v2 file to the current version with English names and values', () => {
     const d = migrateData(v2File())
     expect(d.version).toBe(DATA_VERSION)
-    expect(DATA_VERSION).toBe(9)
+    expect(DATA_VERSION).toBe(10)
 
     expect(d.settings).toEqual({
       trainingStart: '2025-08-01',
@@ -108,7 +108,7 @@ describe('migrateData', () => {
       eigenesFeld: 42,
       webuntis: { enabled: false, host: '', school: '' },
       autoCreateWeek: true,
-      updateCheck: true,
+      updateCheck: true, setupDone: true,
     })
     expect(d.periods).toEqual([
       { id: 'zeitraum-1', type: 'vacation', label: 'Sommer', from: '2026-08-03', to: '2026-08-14' },
@@ -236,7 +236,7 @@ describe('migrateData', () => {
     expect(d.version).toBe(DATA_VERSION)
     expect(d.settings).toEqual({
       theme: 'forest', startView: 'editor', snippets: ['a'], webuntis: { enabled: false, host: '', school: '' }, autoCreateWeek: true,
-      updateCheck: true,
+      updateCheck: true, setupDone: true,
     })
     expect(() => validateData(d)).not.toThrow()
   })
@@ -258,7 +258,7 @@ describe('migrateData', () => {
     expect(webuntisOf({ enabled: true })).toEqual({ enabled: true, host: '', school: '' })
     const d = migrateData({ version: 5, settings: 'kaputt', profiles: [], weeks: [] })
     expect(d.settings).toEqual({
-      startView: 'overview', snippets: [], webuntis: { enabled: false, host: '', school: '' }, autoCreateWeek: true, updateCheck: true,
+      startView: 'overview', snippets: [], webuntis: { enabled: false, host: '', school: '' }, autoCreateWeek: true, updateCheck: true, setupDone: true,
     })
     expect(() => validateData(d)).not.toThrow()
   })
@@ -291,7 +291,7 @@ describe('migrateData', () => {
     expect(d.version).toBe(DATA_VERSION)
     expect(d.settings).toEqual({
       theme: 'forest', startView: 'overview', snippets: [], webuntis: { enabled: true, host: '', school: '' }, autoCreateWeek: true,
-      updateCheck: true,
+      updateCheck: true, setupDone: true,
     })
     expect(() => validateData(d)).not.toThrow()
     expect(migrateData({ version: 7, settings: { autoCreateWeek: false }, profiles: [], weeks: [] })
@@ -312,7 +312,7 @@ describe('migrateData', () => {
     expect(d.version).toBe(DATA_VERSION)
     expect(d.settings).toEqual({
       theme: 'forest', startView: 'overview', snippets: [], webuntis: { enabled: false, host: '', school: '' }, autoCreateWeek: false,
-      updateCheck: true,
+      updateCheck: true, setupDone: true,
     })
     expect(() => validateData(d)).not.toThrow()
     expect(migrateData({ version: 8, settings: { updateCheck: false }, profiles: [], weeks: [] })
@@ -329,10 +329,27 @@ describe('migrateData', () => {
 
   it('v8 -> v9 adds an empty WebUntis address and keeps the switch', () => {
     const d = migrateData({ version: 8, settings: { webuntis: { enabled: true }, updateCheck: false }, profiles: [], weeks: [] })
-    expect(d.version).toBe(9)
+    expect(d.version).toBe(DATA_VERSION)
     expect(d.settings.webuntis).toEqual({ enabled: true, host: '', school: '' })
     expect(d.settings.updateCheck).toBe(false)
     expect(() => validateData(d)).not.toThrow()
+  })
+
+  it('v9 -> v10 marks existing files as set up; a malformed value counts as done', () => {
+    const d = migrateData({ version: 9, settings: { theme: 'forest' }, profiles: [], weeks: [] })
+    expect(d.version).toBe(10)
+    expect(d.settings.setupDone).toBe(true)
+    expect(() => validateData(d)).not.toThrow()
+    const doneOf = (value) =>
+      migrateData({ version: 10, settings: { setupDone: value }, profiles: [], weeks: [] }).settings.setupDone
+    expect(doneOf(false)).toBe(false)
+    expect(doneOf('nein')).toBe(true)
+    expect(doneOf(undefined)).toBe(true)
+    expect(() => validateData({ settings: { setupDone: 'ja' }, profiles: [], weeks: [] })).toThrow(/Einrichtung/)
+  })
+
+  it('a fresh seed waits for the setup wizard', () => {
+    expect(seedData().settings.setupDone).toBe(false)
   })
 
   it('keeps a valid WebUntis address and drops a malformed host', () => {
@@ -608,6 +625,11 @@ describe('shouldAutoCreate', () => {
 
   it('respects the switch', () => {
     expect(shouldAutoCreate(dataWith({ autoCreateWeek: false }), '2026-10-12')).toBe(false)
+  })
+
+  it('waits until the setup wizard ran or was skipped', () => {
+    expect(shouldAutoCreate(dataWith({ setupDone: false }), '2026-10-12')).toBe(false)
+    expect(shouldAutoCreate(dataWith({ setupDone: true }), '2026-10-12')).toBe(true)
   })
 
   it('stays inside the training period when one is set', () => {

@@ -8,7 +8,7 @@ export const DAY_STATUSES = ['normal', 'holiday', 'sick', 'vacation']
 
 // Current schema version of daten.json. Older files are upgraded on load/import
 // via migrateData(); newer ones are rejected (downgrade protection).
-export const DATA_VERSION = 9
+export const DATA_VERSION = 10
 
 let idCounter = 0
 export const newId = (prefix) =>
@@ -220,6 +220,15 @@ function migrateV8toV9(d) {
   return { ...d, version: 9, settings: { ...settings, webuntis: { host: '', school: '', ...webuntis } } }
 }
 
+/**
+ * Schema v9 -> v10: `settings.setupDone` — the setup wizard ran or was skipped.
+ * Existing files are set up already (true); only seedData() starts with false.
+ */
+function migrateV9toV10(d) {
+  const settings = isObject(d.settings) ? d.settings : {}
+  return { ...d, version: 10, settings: { setupDone: true, ...settings } }
+}
+
 /** Only string → string entries survive (hand-edited or broken files). */
 function cleanSubjectMap(map) {
   if (!isObject(map)) return {}
@@ -250,6 +259,7 @@ export function migrateData(raw) {
   if (d.version < 7) d = migrateV6toV7(d)
   if (d.version < 8) d = migrateV7toV8(d)
   if (d.version < 9) d = migrateV8toV9(d)
+  if (d.version < 10) d = migrateV9toV10(d)
 
   // Defensive defaults in case single fields are missing (e.g. hand-edited file)
   d.periods ??= []
@@ -259,6 +269,8 @@ export function migrateData(raw) {
   // Only a real `false` turns it off — a missing or malformed value means the default
   d.settings.autoCreateWeek = d.settings.autoCreateWeek !== false
   d.settings.updateCheck = d.settings.updateCheck !== false
+  // Only a real `false` shows the wizard again — never for a malformed value
+  d.settings.setupDone = d.settings.setupDone !== false
   // Anything but a real `true` means off — a malformed value must not survive.
   // A malformed host is dropped here; the main process checks it again anyway
   const webuntis = isObject(d.settings.webuntis) ? d.settings.webuntis : {}
@@ -327,6 +339,10 @@ export function validateData(d) {
   const updateCheck = d.settings?.updateCheck
   if (updateCheck !== undefined && typeof updateCheck !== 'boolean') {
     fail('Die Einstellung „Beim Start nach Updates suchen" in der Datei ist ungültig.')
+  }
+  const setupDone = d.settings?.setupDone
+  if (setupDone !== undefined && typeof setupDone !== 'boolean') {
+    fail('Die Einstellung „Einrichtung abgeschlossen" in der Datei ist ungültig.')
   }
   return d
 }
@@ -407,11 +423,13 @@ export function newWeek(mondayISO, profiles, periods = []) {
 /**
  * Should the week containing `todayISO` be created automatically on start?
  * Only on work days Mon–Fri (the user's choice — nothing happens at the
- * weekend), only inside the training period if one is set, and only if the
- * week doesn't exist yet.
+ * weekend), only inside the training period if one is set, only after the
+ * setup wizard, and only if the week doesn't exist yet.
  */
 export function shouldAutoCreate(data, todayISO) {
   if (data.settings?.autoCreateWeek === false) return false
+  // Not before the setup wizard: the week would get the seed's sample profiles
+  if (data.settings?.setupDone === false) return false
   const weekday = parseISO(todayISO).getDay() // 0 = Sunday
   if (weekday === 0 || weekday === 6) return false
   const { trainingStart, trainingEnd } = data.settings ?? {}
@@ -465,6 +483,7 @@ export function seedData() {
       webuntis: { enabled: false, host: '', school: '' },
       autoCreateWeek: true,
       updateCheck: true,
+      setupDone: false, // fresh install → the setup wizard opens
     },
     periods: [],
     profiles: [

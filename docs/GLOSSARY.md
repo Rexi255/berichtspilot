@@ -41,6 +41,7 @@ names consistently. Add new terms here before using them.
 | Aktuelle Woche beim Start anlegen | `settings.autoCreateWeek`, `shouldAutoCreate()` | schema v7; Mon–Fri only |
 | Verbindungen | connections (`data-section="connections"`) | settings section for online services |
 | WebUntis-Import (Schalter) | `settings.webuntis.enabled` | schema v5 |
+| Einrichtung / Einrichtungsassistent | setup wizard / `settings.setupDone` | schema v10; `src/lib/setup.js`, `src/views/SetupWizard.jsx` (E-020) |
 | WebUntis-Adresse | `settings.webuntis.host` + `school` / WebUntis address | schema v9; parsed by `parseWebuntisAddress()`, only `*.webuntis.com` (E-019) |
 | Stunde (WebUntis) | lesson / `gridEntry` | one timetable block from WebUntis |
 | Lehrstoff | `teachingContent` | topic the teacher entered for a lesson (WebUntis field name) |

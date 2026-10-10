@@ -24,10 +24,10 @@ Keep this file in sync when changing process boundaries, IPC or networking.
 │ src/main.jsx → App.jsx (shell: Titlebar, Sidebar, GSAP view transitions)     │
 │ src/store.jsx  StoreProvider: loads on start, holds `data`, 400 ms autosave  │
 │ src/views/*    Overview · WeekEditor (+ PhrasingPanel, WebuntisPanel) ·      │
-│                Profiles · Settings                                           │
+│                Profiles · Settings · SetupWizard                             │
 │ src/ui/*       Titlebar · Sidebar · UpdateHint · basics · toast              │
 │ src/lib/*      pure logic: dates · holidays · format · model · notes ·       │
-│                phrasing · webuntis · update                                  │
+│                phrasing · webuntis · update · setup                          │
 └──────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -35,7 +35,9 @@ Keep this file in sync when changing process boundaries, IPC or networking.
 
 1. Start: `store.jsx` → `api.loadData()` → main reads `daten.json` (fallback: newest
    intact `.bakN`) → `migrateData()` upgrades old schemas → `setData`.
-   No file ⇒ `seedData()`.
+   No file ⇒ `seedData()` with `settings.setupDone: false` ⇒ `App.jsx` shows
+   `SetupWizard` instead of the shell (also when opened from Settings, store
+   flag `setupOpen`); the current week is auto-created only after it (E-020).
 2. Every store mutation produces a new `data` object (immutable updates).
 3. A debounced effect (400 ms) → `api.saveData(data)` → main writes
    `daten.json.tmp` + fsync → rotates backups → `rename` onto `daten.json`.

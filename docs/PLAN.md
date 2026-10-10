@@ -35,13 +35,15 @@ WebUntis "Lehrstoff" ─────────────┘    (daten.json) 
 **Ship v2.0.0.** Everything for the release is done on branch
 `claude/intelligent-curie-yxizss` (2026-10-10): README overhaul with new
 screenshots, `package.json` 2.0.0, `CHANGELOG.md` `## [2.0.0] - 2026-10-10`,
-PR #1 into `main` open, CI green. The user closed the V2 scope — no further additions; the UI
+PR #1 into `main` open, CI green. Added before the release on user request:
+own WebUntis address (E-019) and the setup wizard (E-020). The user closed the V2 scope — no further additions; the UI
 overhaul is v2.1 (E-018 addendum).
 
-0. **Real check of E-019 by the user:** `npm run dev` (your `daten.json` gets an
-   empty address on migration) → Settings → "Verbindungen" → paste your school's
-   WebUntis address → "Anmelden" → "Aus WebUntis füllen" in a school week. Works
-   like before = go; otherwise fix first.
+0. **Real check of the setup wizard by the user** (E-020): `npm run build:renderer`,
+   then from a new, empty folder `<repo>/node_modules/electron/dist/electron <repo>`
+   (fresh install, your real `daten.json` stays untouched) → walk through the
+   wizard. Looks and works right = go. (WebUntis address E-019: confirmed by the
+   user 2026-10-10.)
 1. Wait for CI on the PR to be green, then merge it into `main` (the branch is
    a fast-forward of `main`, a merge commit is fine too). If the merge happens on
    a later day, adjust the date of `## [2.0.0]` in `CHANGELOG.md` first.
@@ -152,6 +154,10 @@ decision).
       `settings.webuntis.host` + `school`, main accepts only `*.webuntis.com`,
       `webuntis:setEnabled` → `webuntis:configure` (2026-10-10; Electron screenshots
       with/without address + v8 → v9 migration checked; real login still open)
+- [x] Setup wizard on a fresh install (user, E-020): `src/lib/setup.js` +
+      `src/views/SetupWizard.jsx`, schema v10 `settings.setupDone`, re-run from
+      Settings → Verhalten (2026-10-10; driven end to end in Electron via CDP:
+      fresh install → all steps incl. errors → daten.json checked; skip + re-run)
 - [x] Release dry run: local `build:win` → `Berichtspilot-Setup-2.0.0.exe` +
       `latest.yml` (version 2.0.0) (2026-10-10)
 - [ ] PR into `main` merged (CI green)
@@ -214,3 +220,4 @@ decision).
 | 2026-10-10 | Code-review fixes (updater install/headers/support check, load-error guard; Electron screenshot with corrupt `daten.json` + backups: files untouched). Not fixed by choice: a deleted current week is auto-created again on the next start (would need a schema change) | branch `claude/intelligent-curie-yxizss` |
 | 2026-10-10 | Phase 6: V2 release prepared — README + screenshots, version 2.0.0, CHANGELOG, docs check, local `build:win` dry run | PR #1 |
 | 2026-10-10 | E-019: own WebUntis address (schema v9, `webuntis:configure`, only `*.webuntis.com`) | PR #1 |
+| 2026-10-10 | E-020: setup wizard on a fresh install (schema v10 `setupDone`) | PR #1 |

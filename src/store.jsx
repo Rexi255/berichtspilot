@@ -17,6 +17,7 @@ import {
 } from './lib/model.js'
 import { isoWeek, mondayOf, toISO } from './lib/dates.js'
 import { setMapping } from './lib/webuntis.js'
+import { applySetup } from './lib/setup.js'
 import { showToast } from './ui/toast.jsx'
 
 const StoreContext = createContext(null)
@@ -73,6 +74,9 @@ export function StoreProvider({ children }) {
   const [update, setUpdate] = useState(null)
   // Install started (shared by sidebar + Settings; the ref guards double clicks)
   const [installingUpdate, setInstallingUpdate] = useState(false)
+  // Setup wizard opened again from Settings (a fresh install opens it through
+  // settings.setupDone === false). UI state only, never saved.
+  const [setupRequested, setSetupRequested] = useState(false)
   const installingRef = useRef(false)
   const timerRef = useRef(null)
   const loadedRef = useRef(false)
@@ -303,6 +307,28 @@ export function StoreProvider({ children }) {
     setData((d) => ({ ...d, settings: { ...d.settings, webuntis: { ...d.settings.webuntis, host, school } } }))
   }, [])
 
+  // ---------------- Setup wizard ----------------
+
+  // Finish: apply the answers (src/lib/setup.js), then create the current week
+  // like a normal start would have — it was held back while the wizard was open
+  const completeSetup = useCallback((answers) => {
+    const today = new Date()
+    const next = applySetup(dataRef.current, answers)
+    const created = shouldAutoCreate(next, toISO(today)) ? newWeek(mondayOf(today), next.profiles, next.periods) : null
+    setData(created ? { ...next, weeks: [...next.weeks, created].sort(byId) } : next)
+    setSetupRequested(false)
+    showToast(created ? `Eingerichtet — KW ${isoWeek(created.id).week} angelegt` : 'Berichtspilot ist eingerichtet')
+  }, [])
+
+  // Skip / close: a fresh install keeps the sample data and won't ask again
+  const skipSetup = useCallback(() => {
+    setData((d) => (d.settings.setupDone ? d : { ...d, settings: { ...d.settings, setupDone: true } }))
+    setSetupRequested(false)
+  }, [])
+
+  const openSetup = useCallback(() => setSetupRequested(true), [])
+  const setupOpen = Boolean(data) && (data.settings.setupDone === false || setupRequested)
+
   // Stable references: UpdateHint's toast effect depends on downloadUpdate
   const checkForUpdate = useCallback(() => api.updateCheck().then(keepStatus(setUpdate)), [])
   const downloadUpdate = useCallback(() => api.updateDownload().then(keepStatus(setUpdate)), [])
@@ -381,6 +407,10 @@ export function StoreProvider({ children }) {
     setWebuntisAddress,
     exportData,
     importData,
+    setupOpen,
+    completeSetup,
+    skipSetup,
+    openSetup,
     saveNow: () => data && saveNow(data),
     update,
     checkForUpdate,

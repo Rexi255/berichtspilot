@@ -11,6 +11,7 @@ import Overview from './views/Overview.jsx'
 import WeekEditor from './views/WeekEditor.jsx'
 import Profiles from './views/Profiles.jsx'
 import Settings from './views/Settings.jsx'
+import SetupWizard from './views/SetupWizard.jsx'
 import { mondayOf } from './lib/dates.js'
 
 const VIEWS = ['overview', 'editor', 'profiles', 'settings']
@@ -18,7 +19,13 @@ const VIEWS = ['overview', 'editor', 'profiles', 'settings']
 // Gate in front of the actual shell: render only once the data is loaded —
 // so the shell can take its start view straight from the settings.
 function Content() {
-  const { data, loadError } = useStore()
+  const { data, loadError, setupOpen } = useStore()
+
+  // Apply the selected color theme on <html>; the CSS tokens (data-theme) follow.
+  // Here rather than in the shell, so the setup wizard is themed too.
+  useEffect(() => {
+    document.documentElement.dataset.theme = data?.settings?.theme || 'northern-lights'
+  }, [data?.settings?.theme])
 
   // Data comes from a newer app version, or daten.json and all backups are
   // unreadable: don't touch them, say so clearly — otherwise the next autosave
@@ -45,6 +52,9 @@ function Content() {
       <div className="grid h-full place-items-center text-[13px] text-ink-3">Lade Daten …</div>
     )
   }
+
+  // Fresh install (or opened again from Settings): the wizard instead of the shell
+  if (setupOpen) return <SetupWizard />
 
   return <Shell />
 }
@@ -82,11 +92,6 @@ function Shell() {
     )
     return () => anim.kill()
   }, [view])
-
-  // Apply the selected color theme on <html>; the CSS tokens (data-theme) follow.
-  useEffect(() => {
-    document.documentElement.dataset.theme = data?.settings?.theme || 'northern-lights'
-  }, [data?.settings?.theme])
 
   const openWeek = (id) => {
     setMonday(id)

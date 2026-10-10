@@ -1,6 +1,6 @@
 # Data model — `daten.json`
 
-Current schema version: **9** (`DATA_VERSION` in `src/lib/model.js`).
+Current schema version: **10** (`DATA_VERSION` in `src/lib/model.js`).
 One JSON file holds the configuration **and** every training week. It is also the
 export/backup format. The file name stays German (`daten.json`) for compatibility
 with existing installations (DECISIONS E-014); all field names are English.
@@ -9,7 +9,7 @@ with existing installations (DECISIONS E-014); all field names are English.
 
 ```jsonc
 {
-  "version": 9,
+  "version": 10,
   "settings": {
     "trainingStart": "2025-08-01",   // optional; progress line + gap detection
     "trainingEnd": "2028-07-31",
@@ -24,8 +24,10 @@ with existing installations (DECISIONS E-014); all field names are English.
     },
     "autoCreateWeek": true,          // schema v7: create the current week on start
                                      // (Mon–Fri, inside the training period)
-    "updateCheck": true              // schema v8: look for a new app version on
+    "updateCheck": true,             // schema v8: look for a new app version on
                                      // start (E-017); checking by hand always works
+    "setupDone": true                // schema v10: setup wizard ran or was skipped
+                                     // (E-020); only a fresh seed has false
   },
   "periods": [                       // vacation / school breaks
     { "id": "period-…", "type": "vacation" | "schoolBreak", "label": "", "from": "YYYY-MM-DD", "to": "YYYY-MM-DD" }
@@ -96,13 +98,15 @@ with existing installations (DECISIONS E-014); all field names are English.
 | 6 → 7 | `settings.autoCreateWeek = true` (existing value kept); `validateData()` rejects a non-boolean value |
 | 7 → 8 | `settings.updateCheck = true` (existing value kept); `validateData()` rejects a non-boolean value |
 | 8 → 9 | `settings.webuntis.host = ''`, `school = ''` (existing values kept) — the address is entered once in Settings (E-019); `validateData()` rejects non-string values |
+| 9 → 10 | `settings.setupDone = true` (existing files are set up; existing value kept); `validateData()` rejects a non-boolean value |
 
 Defensive defaults after migration: `settings` that is not an object becomes `{}`;
 `settings.webuntis` that is not an object, or whose `enabled` isn't `true`, becomes
 "off" (`enabled: false`); a `host` that isn't `<name>.webuntis.com` becomes `''`
 (the main process checks it again before any request). `settings.autoCreateWeek` is only off for a real
 `false` — missing or malformed values become `true` (the default); the same
-holds for `settings.updateCheck`. Import "Ersetzen" (`replaceData()`) keeps the
+holds for `settings.updateCheck` and `settings.setupDone` (only a real `false`
+opens the wizard). Import "Ersetzen" (`replaceData()`) keeps the
 device's current `settings.webuntis` (switch + address) and `settings.updateCheck` — opt-ins to
 network access are not taken from a shared file. `profile.webuntisSubjects` that is not an object becomes `{}`, and
 entries with non-string values are dropped. Keys are compared with

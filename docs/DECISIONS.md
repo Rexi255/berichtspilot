@@ -404,3 +404,25 @@ belongs to the old school). Existing files get an empty address — entered once
 by hand, no school is pre-filled. The probe reads the address from daten.json.
 Considered: searching schools by name via Untis' school search service — nicer,
 but another external host; possible later.
+
+### E-020 · Setup wizard on a fresh install · accepted
+User (2026-10-10, before the v2.0.0 release): a fresh install should open a
+setup wizard that can be skipped or walked through, so nobody has to hunt
+through Settings and Profiles first. Steps: welcome (start · import an export ·
+skip) → training start/end (+ quick durations 2–3.5 years) and federal state →
+current half-year profile (suggested Aug–Jan / Feb–Jul, weekdays work/school/off,
+subjects) → WebUntis address (optional, E-019) → start behavior (auto-create
+week, update check) → summary.
+
+- Trigger: schema v10 `settings.setupDone` — `false` only in `seedData()`;
+  migrated files get `true` (they are set up). Skipping sets it too, so the
+  wizard never nags; Settings → Verhalten can open it again (UI state only).
+- While it is open, no week is auto-created (it would get the seed's sample
+  profiles); finishing creates the current week like a normal start would.
+- Applying (`applySetup()`, pure, tested): on a fresh install the wizard's
+  profile replaces the seed's sample profiles; on a re-run it edits the profile
+  valid today in place, or is added in front. WebUntis off keeps a stored address.
+- No WebUntis login inside the wizard: the main process only learns the address
+  once it is saved; the login happens the first time "Aus WebUntis füllen" is
+  used. Considered for later: filling school days + subjects straight from the
+  WebUntis timetable during setup.

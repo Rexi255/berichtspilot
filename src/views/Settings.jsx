@@ -21,6 +21,7 @@ import {
   CircleNotchIcon,
   ArrowClockwiseIcon,
   ArrowCircleUpIcon,
+  SparkleIcon,
 } from '@phosphor-icons/react'
 import { useStore, api } from '../store.jsx'
 import { SectionTitle, Button, IconButton, Input, Segment, Panel, Pill, Switch, cx } from '../ui/basics.jsx'
@@ -419,7 +420,7 @@ const SHORTCUTS = [
 /* -------------------------------- View -------------------------------- */
 
 export default function Settings() {
-  const { data, dataPath, updateSettings } = useStore()
+  const { data, dataPath, updateSettings, openSetup } = useStore()
   const activeTheme = data.settings.theme || 'northern-lights'
 
   return (
@@ -472,6 +473,14 @@ export default function Settings() {
               Fehlt die laufende Woche, legt die App sie Montag bis Freitag beim Start automatisch an —
               mit Profil, Feiertagen und Urlaub, wie über „Woche anlegen“.
             </p>
+          </div>
+          <div className="mt-5 flex items-center gap-3">
+            <Button size="sm" onClick={openSetup}>
+              <SparkleIcon size={14} /> Einrichtungsassistent starten
+            </Button>
+            <span className="text-[12.5px] text-ink-3">
+              Ausbildung, aktuelles Halbjahr und WebUntis noch einmal Schritt für Schritt durchgehen.
+            </span>
           </div>
         </section>
 

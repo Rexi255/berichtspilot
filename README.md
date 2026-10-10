@@ -42,6 +42,9 @@ internet connection are needed.
 
 ## New in 2.0
 
+- 🧭 **Setup wizard** — a fresh install walks you through training dates, federal
+  state, your current school half-year (school/work days, subjects) and WebUntis
+  in a few steps. Skippable, and available again under Settings → Verhalten.
 - 📝 **Notes per day** — a collapsible raw-text field per day (keywords, dictated
   text). Never part of the output, but included in the search.
 - ✂️ **"In Stichpunkte übernehmen"** — splits notes into bullets without any AI

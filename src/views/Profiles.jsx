@@ -30,7 +30,7 @@ const move = (arr, from, to) => {
 
 /* ----------------------- Subjects of a school day ----------------------- */
 
-function SubjectEditor({ subjects, onChange }) {
+export function SubjectEditor({ subjects, onChange }) {
   const [draft, setDraft] = useState('')
 
   const add = () => {
