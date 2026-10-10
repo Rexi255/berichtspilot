@@ -42,7 +42,8 @@ function createWebUntisSession({ fetchImpl, now = Date.now, electron = () => req
 
   async function fetchToken() {
     const gen = generation
-    const res = await request(TOKEN_URL, fetchImpl ? { fetchImpl } : { ses: partition() })
+    // The server labels the bare JWT as application/json → read it as text
+    const res = await request(TOKEN_URL, { expect: 'text', ...(fetchImpl ? { fetchImpl } : { ses: partition() }) })
     if (gen !== generation) return NOT_LOGGED_IN
     if (!res.ok) {
       if (res.code === 'auth') cached = null

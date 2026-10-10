@@ -9,7 +9,9 @@ const jwt = (payload) => `${b64({ alg: 'HS256' })}.${b64(payload)}.c2ln`
 const NOW = 1_800_000_000_000 // ms
 const token = (secondsLeft, extra = {}) => jwt({ person_id: 4711, exp: NOW / 1000 + secondsLeft, ...extra })
 
-function response(status, body = '', contentType = 'text/plain;charset=UTF-8') {
+// Default content type as the real server sends it for token/new: the bare JWT
+// labelled application/json (not valid JSON)
+function response(status, body = '', contentType = 'application/json;charset=UTF-8') {
   return {
     ok: status >= 200 && status < 300,
     status,

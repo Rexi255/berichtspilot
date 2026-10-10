@@ -101,6 +101,15 @@ describe('request', () => {
     expect(res).toMatchObject({ ok: false, code: 'parse' })
   })
 
+  it("returns raw text with expect: 'text', even when labelled JSON", async () => {
+    // WebUntis token/new: bare JWT with content type application/json
+    const res = await request(`${BASE}/api/token/new`, {
+      expect: 'text',
+      fetchImpl: async () => response(200, 'aaa.bbb.ccc'),
+    })
+    expect(res).toEqual({ ok: true, status: 200, data: 'aaa.bbb.ccc' })
+  })
+
   it('maps HTTP errors', async () => {
     const res = await request(`${BASE}/api/x`, { fetchImpl: async () => response(401) })
     expect(res).toEqual({ ok: false, status: 401, code: 'auth', error: 'Bitte erneut anmelden.' })

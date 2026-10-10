@@ -194,7 +194,8 @@ it is cheap to re-fetch from the web session, so no `safeStorage` is needed for
 W1 (only the partition's cookies persist, managed by Chromium). Login is
 detected by polling `token/new` every 2 s while the login window is open; the
 window closes itself on success. A 200 answer that is not a JWT counts as "not
-logged in". `logout()` bumps a generation counter so a token request still in
+logged in". Note: `token/new` sends the bare JWT labelled `application/json`
+(not valid JSON) — it is read with `request(…, { expect: 'text' })`. `logout()` bumps a generation counter so a token request still in
 flight cannot re-populate the cache afterwards.
 
 ### E-014 · Keep the file name `daten.json` · accepted

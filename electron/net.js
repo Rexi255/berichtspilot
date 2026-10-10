@@ -76,6 +76,8 @@ function describeFailure({ status, error, url } = {}) {
  * `ses`: Electron session whose `fetch` (with its cookies) is used — e.g. the
  * `persist:webuntis` partition. `fetchImpl` overrides it (tests).
  * `expect: 'json'`: a non-JSON answer is a failure (HTML = login page → 'auth').
+ * `expect: 'text'`: always the raw text, whatever the content type claims
+ * (WebUntis labels the bare JWT from `token/new` as application/json).
  */
 async function request(
   url,
@@ -98,6 +100,7 @@ async function request(
     })
     if (!res.ok) return { ok: false, status: res.status, ...describeFailure({ status: res.status, url }) }
     const text = await res.text()
+    if (expect === 'text') return { ok: true, status: res.status, data: text }
     const contentType = res.headers?.get?.('content-type') || ''
     const isJson = /json/i.test(contentType)
     if (!isJson && expect === 'json') {
