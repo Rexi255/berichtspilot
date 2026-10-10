@@ -27,52 +27,36 @@ WebUntis "Lehrstoff" ─────────────┘    (daten.json) 
 - Nothing leaves the machine without the user seeing it (E-009 – E-011).
 - Without network/accounts everything works like v1.2 (every automation is optional).
 - Output format and `daten.json` safety stay untouched.
+- Release target **v2.0.0**; all work stays on `claude/intelligent-curie-yxizss`,
+  no merge into `main` before V2 is complete (E-018).
 
 ## Next step
 
-**Phase 5 — auto-update, step 5.3: UI.** The main process is done (5.2): read
-E-017 (incl. "Implementation") and the `update:*` rows in `ARCHITECTURE.md`.
-Everything the UI needs is already in the store (`src/store.jsx`, `useStore()`):
+**Collect the user's V2 additions.** Phase 5 auto-update is complete (5.3 UI
+done). The user decided (E-018): the overhaul ships as **v2.0.0**, everything
+stays on branch `claude/intelligent-curie-yxizss` until V2 is complete — no
+merge into `main`, no tag before that. Before the release the user wants to add
+a few more things they haven't named yet.
 
-- `update` — status `{ ok, state, current, version?, percent?, code?, error? }`,
-  kept current by `update:changed` events (`null` until the first answer);
-  `state` = `idle` | `checking` | `available` | `none` | `downloading` | `ready` |
-  `error` | `unsupported` (dev, portable, browser mode — `error` holds a German
-  reason). On `error`, `version` is set if a download failed (retry = download
-  again), otherwise the check failed (retry = check again).
-- `checkForUpdate()`, `downloadUpdate()` → resolve with the new status;
-  `installUpdate()` saves `daten.json` first, then quits → `{ ok, error? }`.
-- The start check already runs (store, once after load, only while
-  `settings.updateCheck` is on).
-
-Build:
-
-- **Hint:** quiet, not modal. Proposal: an entry in the sidebar footer
-  (`src/ui/Sidebar.jsx`, next to the storage badge) that appears only for
-  `available` / `downloading` / `ready` / download `error`: "Update auf vX.Y.Z" →
-  button "Herunterladen" → progress bar (`percent`) → "Neu starten und
-  installieren". Plus one toast when `available` first appears (not on every
-  start-check repeat in the same session).
-- **Settings:** new section "Über" (or inside "Verhalten") in
-  `src/views/Settings.jsx`: current version (`update.current`), switch "Beim
-  Start nach Updates suchen" (`updateSettings({ updateCheck })`), button "Nach
-  Updates suchen" with the result inline ("Du hast die neueste Version" /
-  "Version X verfügbar" / German error / `unsupported` reason, button disabled
-  then). Reuse `Switch`, `Button`, `Pill`, `Panel` from `src/ui/basics.jsx`.
-- Verify: lint/test/build + browser smoke test (vite preview; mock
-  `window.api` update functions in the page to walk through all states incl.
-  progress) and `npm run build:win` + start the unpacked exe with
-  `--user-data-dir=<scratch>` (otherwise it uses `%APPDATA%\Berichtspilot`):
-  Settings must show v1.2.0 and "neueste Version". A scratch helper that
-  evaluates JS in the running app via `--remote-debugging-port` + CDP worked
-  well in 5.2.
-- Then ask the open question below (real update test).
+1. Ask the user (German) which additions they want for V2. Offer the open ideas
+   from the roadmap as a starting point ("Ideas from the old README roadmap"
+   below: light theme, "copy all 3 blocks", full export/PDF, copy a single day
+   from the previous week, character counter) and the parked dictation phase.
+2. Turn the answer into a new roadmap phase ("Phase 6 — V2 additions") with
+   small, numbered steps, each with files + acceptance criteria, and implement
+   the first one with `/next`.
+3. Last phase before merging: **V2 release** — README overhaul (features of the
+   overhaul, new screenshots), bump `package.json` to 2.0.0, move
+   `## [Unreleased]` in `CHANGELOG.md` to `## [2.0.0]`, PR into `main`, tag
+   `v2.0.0` (release workflow builds installer + AppImage + `latest*.yml`),
+   then the real update test (see open questions).
 
 ## Open questions (for the user)
 
-- Real update test (after 5.3): tag a release with the updater (e.g. `v1.3.0`),
-  install it, then publish a small follow-up (`v1.3.1`) and update in-app — or
-  first a pre-release? Ask when 5.3 is done.
+- Which additions belong in V2 before the release? (see "Next step")
+- Real update test (after v2.0.0 is out): v2.0.0 is the first release with the
+  updater and has to be installed by hand once. Then publish a small follow-up
+  (`v2.0.1`) and update in-app — or first a pre-release? Ask at release time.
 
 Parked by the user (2026-10-10), not to be asked now: which speech model to
 bundle (E-010 has the measurements; real-voice recordings belong to that
@@ -132,21 +116,23 @@ decision).
         login retry, apply + undo (2026-10-10; real account checked by the user)
 
 ### Phase 5 — Comfort
-- [ ] Auto-update (electron-updater, GitHub Releases) — E-017: check on start,
-      download + restart only on click; portable build dropped
+- [x] Auto-update (electron-updater, GitHub Releases) — E-017: check on start,
+      download + restart only on click; portable build dropped (2026-10-10)
   - [x] 5.1 Decision E-017, `build.publish` (GitHub), release workflow attaches
         `latest*.yml` + `.blockmap`, tag/version guard, allowlist rows (2026-10-10)
   - [x] 5.2 Main process: `electron/updater.js`, IPC `update:*`, schema v8 switch
         `settings.updateCheck`, start check from the store (2026-10-10; real
         check against GitHub: v1.2.0 → `none`, allowlist verified in Electron)
-  - [ ] 5.3 UI: update hint + Settings row
+  - [x] 5.3 UI: sidebar card `src/ui/UpdateHint.jsx` (download → progress →
+        install, one toast per version), Settings → "Updates", pure state
+        mapping `src/lib/update.js` (2026-10-10)
 - [x] ~~Friday reminder if the current week is still a draft~~ — dropped by the
       user (2026-10-10): neither an in-app hint nor a system notification
 - [x] Create the current week automatically on start — Mon–Fri only (E-016),
       schema v7 `settings.autoCreateWeek`, switch in Settings → Verhalten (2026-10-10)
 - [ ] Ideas from the old README roadmap: light theme, "copy all 3 blocks",
       full export/PDF, copy a single day from the previous week, character counter
-- [ ] Update the README "100 % offline" badge once network features exist
+- [x] README "100 % offline" badge → "local-first · online optional" (2026-10-10)
 
 ### Later / to-do
 - [ ] Automatic entry into the IHK portal (deferred by the user, E-012)
@@ -176,3 +162,4 @@ decision).
 | 2026-10-10 | Phase 5: current week created on start (Mon–Fri, schema v7; browser smoke test with fixed clock Wed/Sat/Mon + v6 migration) | branch `claude/intelligent-curie-yxizss` |
 | 2026-10-10 | Step 5.1: auto-update decision E-017, release plumbing, portable build dropped (local `build:win` writes `latest.yml` + `.blockmap` + `app-update.yml`) | branch `claude/intelligent-curie-yxizss` |
 | 2026-10-10 | Step 5.2: `electron/updater.js` + IPC `update:*`, schema v8 `settings.updateCheck` (packaged build checked against the real repo → `none`; non-allowlisted host → `blocked`) | branch `claude/intelligent-curie-yxizss` |
+| 2026-10-10 | Step 5.3: update UI — sidebar card + Settings → "Updates" (browser smoke test with mocked `window.api` through all states; `build:win` unpacked exe: v1.2.0, real GitHub check → "neueste Version"). User: overhaul ships as v2.0.0 (E-018) | branch `claude/intelligent-curie-yxizss` |

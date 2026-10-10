@@ -349,3 +349,12 @@ the portable build**. Releases now ship the NSIS installer and the AppImage only
   - The allowlist sits on the `electron-updater` partition (opened with the
     same `{ cache: false }` electron-updater uses); checked in real Electron
     that a non-allowlisted host ends as `code: 'blocked'`.
+
+### E-018 · The overhaul ships as v2.0.0; it stays on its branch until complete · accepted
+User (2026-10-10): the overhaul is big enough for a major version — it becomes
+**v2.0.0**, not 1.3.0. All work stays on `claude/intelligent-curie-yxizss`;
+nothing is merged into `main` (and no release is tagged) until V2 is complete,
+including the additions the user still wants to name. Consequences: v2.0.0 is
+the first release with the updater and has to be installed by hand once (E-017);
+the real in-app update test happens after it (e.g. v2.0.0 → v2.0.1).
+`package.json` `version` is bumped to 2.0.0 only as part of the release step.

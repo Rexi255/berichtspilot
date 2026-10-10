@@ -1,4 +1,5 @@
-// Navigation sidebar with an animated active indicator + backup actions.
+// Navigation sidebar with an animated active indicator, the update hint and
+// backup actions.
 import { useEffect, useRef, useState } from 'react'
 import { gsap } from 'gsap'
 import {
@@ -11,6 +12,7 @@ import {
 } from '@phosphor-icons/react'
 import { useStore } from '../store.jsx'
 import { cx } from './basics.jsx'
+import UpdateHint from './UpdateHint.jsx'
 
 const ENTRIES = [
   { id: 'overview', label: 'Übersicht', Icon: SquaresFourIcon },
@@ -95,6 +97,7 @@ export default function Sidebar({ view, onView }) {
       </nav>
 
       <div className="mt-auto flex flex-col gap-1 border-t border-white/[0.06] p-3">
+        <UpdateHint />
         <button
           type="button"
           onClick={handleExport}

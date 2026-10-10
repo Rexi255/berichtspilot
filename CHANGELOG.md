@@ -52,12 +52,17 @@ versioning follows [Semantic Versioning](https://semver.org/).
   with profile, holidays and vacation like "Woche anlegen" — and shows a short
   hint "KW n angelegt". Switch "Aktuelle Woche beim Start anlegen" under
   Settings → Verhalten (on by default; schema v7 adds it to existing files).
-- **Update check (groundwork for in-app updates):** the installed app (setup
-  `.exe` or AppImage) asks GitHub once per start whether a newer version exists —
-  only the app version and your IP address reach GitHub, no training data.
-  Nothing is downloaded or installed without a click; the buttons and the switch
-  "Beim Start nach Updates suchen" follow with the next step (schema v8 adds the
-  switch, on by default; an import with "Ersetzen" keeps this device's value).
+- **In-app updates:** the installed app (setup `.exe` or AppImage) asks GitHub
+  once per start whether a newer version exists — only the app version and your
+  IP address reach GitHub, no training data. A found update shows up quietly as
+  a card at the bottom of the sidebar ("Update auf vX.Y.Z", plus one short hint
+  per version): "Herunterladen" → progress bar → "Jetzt installieren" (saves
+  your data, installs silently and restarts the app). Nothing is downloaded or
+  installed without a click. Settings → "Updates" shows the current version,
+  "Nach Updates suchen" with the result inline, and the switch "Beim Start nach
+  Updates suchen" (schema v8 adds it, on by default; an import with "Ersetzen"
+  keeps this device's value). Versions up to 1.2.0 have no updater — the first
+  version with it has to be installed by hand once.
 
 ### Changed
 

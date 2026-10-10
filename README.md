@@ -13,7 +13,7 @@ The app's user interface is German.
 ![Platform](https://img.shields.io/badge/Platform-Windows%20%C2%B7%20Linux-2ea043.svg)
 ![Electron](https://img.shields.io/badge/Electron-43-47848F.svg?logo=electron&logoColor=white)
 ![React](https://img.shields.io/badge/React-19-61DAFB.svg?logo=react&logoColor=black)
-![Offline](https://img.shields.io/badge/100%25-offline-blue.svg)
+![Local first](https://img.shields.io/badge/local--first-online%20optional-blue.svg)
 
 <img src="docs/screenshots/overview.png" alt="Overview with documented training weeks and progress" width="820">
 
@@ -32,7 +32,8 @@ has three input fields for it. This app takes over the tedious part:
 - The three **output blocks** are generated live in exactly the required format —
   including every blank-line rule — and copied to the clipboard with one click.
 
-Everything runs locally. No cloud, no account, no internet connection required.
+Everything runs locally. The online features (WebUntis import, update check) are
+optional — without them, no cloud, no account and no internet connection are needed.
 
 ## Features
 

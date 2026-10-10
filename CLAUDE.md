@@ -94,9 +94,9 @@ electron/net.js      network layer: host allowlist, timeout, German error texts 
 electron/updater.js  auto-update via electron-updater (E-017): check / download / install, allowlist on its session
 electron/webuntis-probe.js  dev spike `--webuntis-probe` (E-013); shape.js = JSON/URL anonymiser
 src/store.jsx        central state (React context), 400 ms autosave, all mutations
-src/lib/             PURE logic, fully tested: dates · holidays · format · model · notes · phrasing
+src/lib/             PURE logic, fully tested: dates · holidays · format · model · notes · phrasing · webuntis · update
 src/views/           screens: overview · week editor (+ PhrasingPanel, WebuntisPanel) · profiles · settings
-src/ui/              design system: Titlebar, Sidebar, basics, toast, Logo
+src/ui/              design system: Titlebar, Sidebar, UpdateHint, basics, toast, Logo
 src/index.css        Tailwind v4 + design tokens/themes (data-theme on <html>)
 docs/                knowledge base (see above)
 ```

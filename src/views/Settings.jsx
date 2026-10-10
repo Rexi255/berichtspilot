@@ -1,6 +1,6 @@
 // Settings: appearance (color themes), behavior (start view), snippets
-// (autocomplete templates), connections (WebUntis), data location and a
-// keyboard shortcut reference.
+// (autocomplete templates), connections (WebUntis), updates, data location and
+// a keyboard shortcut reference.
 // Each theme card carries data-theme={id} itself; that way its preview colors
 // (bg-base, bg-accent …) render in that theme automatically — without
 // duplicating the color values in JS.
@@ -20,10 +20,13 @@ import {
   SignOutIcon,
   CircleNotchIcon,
   ArrowClockwiseIcon,
+  ArrowCircleUpIcon,
 } from '@phosphor-icons/react'
 import { useStore, api } from '../store.jsx'
 import { SectionTitle, Button, IconButton, Input, Segment, Panel, Pill, Switch, cx } from '../ui/basics.jsx'
 import { showToast } from '../ui/toast.jsx'
+import { UpdateAction, useUpdateActions } from '../ui/UpdateHint.jsx'
+import { updateHint, updateSummary, canCheckForUpdate } from '../lib/update.js'
 
 // Order + labels of the themes; the colors live in index.css.
 export const THEMES = [
@@ -293,6 +296,63 @@ function WebuntisConnection() {
   )
 }
 
+/* ------------------------------- Updates ------------------------------- */
+
+// Current version, result of the last check and the on-start switch (E-017).
+// Download/install use the same actions as the sidebar hint.
+function UpdateSettings() {
+  const { data, updateSettings, update, checkForUpdate } = useStore()
+  const actions = useUpdateActions()
+  const summary = updateSummary(update)
+  const hint = updateHint(update)
+  const unsupported = update?.state === 'unsupported'
+
+  return (
+    <Panel className="max-w-2xl">
+      <div className="flex items-center gap-3 px-4 py-3">
+        <div className="min-w-0 flex-1">
+          <div className="text-[12px] font-medium text-ink-2">
+            Berichtspilot {update?.current ? `Version ${update.current}` : ''}
+          </div>
+          <div className="mt-1 flex min-w-0 items-center gap-2">
+            <Pill color={summary.tone} className="min-w-0 max-w-full">
+              <span className="truncate" title={summary.text}>
+                {summary.text}
+              </span>
+            </Pill>
+          </div>
+        </div>
+        {hint ? (
+          <UpdateAction hint={hint} actions={actions} className="w-40 shrink-0" />
+        ) : (
+          <Button size="sm" onClick={() => checkForUpdate().catch(() => {})} disabled={!canCheckForUpdate(update)}>
+            {update?.state === 'checking' ? (
+              <CircleNotchIcon size={14} className="animate-spin" />
+            ) : (
+              <ArrowClockwiseIcon size={14} />
+            )}
+            {update?.state === 'error' ? 'Erneut suchen' : 'Nach Updates suchen'}
+          </Button>
+        )}
+      </div>
+
+      <div className="border-t border-white/[0.05] px-4 py-3">
+        <Switch
+          checked={data.settings.updateCheck !== false}
+          onChange={(updateCheck) => updateSettings({ updateCheck })}
+          label="Beim Start nach Updates suchen"
+          disabled={unsupported}
+        />
+        <p className="mt-1.5 text-[12px] text-ink-3">
+          Fragt bei jedem Start einmal bei GitHub nach, ob es eine neue Version gibt — dabei wird
+          nur die App-Version übertragen, keine Berichtsdaten. Heruntergeladen und installiert wird
+          nur, wenn du darauf klickst.
+        </p>
+      </div>
+    </Panel>
+  )
+}
+
 /* ---------------------- Keyboard shortcut reference ---------------------- */
 
 const SHORTCUTS = [
@@ -383,6 +443,16 @@ export default function Settings() {
             Optionale Online-Dienste. Ausgeschaltet funktioniert alles wie bisher — ohne Netzwerk.
           </p>
           <WebuntisConnection />
+        </section>
+
+        <section className="max-w-4xl" data-section="updates">
+          <SectionTitle className="mb-1 flex items-center gap-1.5">
+            <ArrowCircleUpIcon size={14} /> Updates
+          </SectionTitle>
+          <p className="mb-3 text-[12.5px] text-ink-3">
+            Neue Versionen kommen direkt von GitHub und lassen sich mit einem Klick installieren.
+          </p>
+          <UpdateSettings />
         </section>
 
         <section className="max-w-4xl">
