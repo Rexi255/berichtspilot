@@ -30,21 +30,27 @@ WebUntis "Lehrstoff" ─────────────┘    (daten.json) 
 
 ## Next step
 
-**Step 3.5 or Phase 5** — depends on the open question below. If the
-raw topics are good enough, skip 3.5 and take Phase 5 "Create the current week
-automatically on start": in `src/store.jsx` after loading, if
-`settings.autoCreateWeek` (schema v7, default `true`, toggle in Settings →
-Allgemein) and the current Monday has no week → `newWeek(monday, profiles,
-periods)` once per start; pure helper `shouldAutoCreate(data, todayISO)` in
-`src/lib/model.js` + tests (not on Sat/Sun? — decide with the user), migration
-test v6 → v7, `DATA_MODEL.md`, CHANGELOG.
+**Phase 5 — create the current week automatically on start** (user,
+2026-10-10: WebUntis topics stay raw, step 3.5 dropped).
+
+- Pure helper `shouldAutoCreate(data, todayISO)` in `src/lib/model.js` + tests:
+  true if `settings.autoCreateWeek` is on and the Monday of `todayISO` has no
+  week yet (weekend behaviour per the open question below).
+- `src/store.jsx`: after loading (and migrating), call it once per start; if
+  true → add `newWeek(monday, profiles, periods)` like `createWeek()` does. No
+  toast spam — one quiet hint at most ("KW n angelegt").
+- Schema v7: `settings.autoCreateWeek` (default `true`) → bump `DATA_VERSION`,
+  migration step + test v6 → v7, `validateData()`, `docs/DATA_MODEL.md`.
+- Settings → general section: switch "Aktuelle Woche beim Start anlegen".
+- Verify: lint/test/build; browser smoke test (empty localStorage → start →
+  current week exists; switch off → reload → no new week). CHANGELOG under Added.
 
 ## Open questions (for the user)
 
-- After the first real "Aus WebUntis füllen" run: are the "Lehrstoff" texts good
-  enough as bullets, or should step 3.5 polish them (e.g. include school days in
-  the clipboard-bridge prompt)? Options: (a) keep raw, edit by hand; (b) extend
-  "Mit KI formulieren" to school subjects. Recommendation: decide on real data.
+- Auto-create the current week on start: also on Saturday/Sunday (the week is
+  usually written up on Friday or at the weekend)? Options: (a) always, any
+  weekday (recommended: the report is often finished at the weekend); (b) only
+  Mon–Fri. Ask at the start of the next step.
 
 Parked by the user (2026-10-10), not to be asked now: which speech model to
 bundle (E-010 has the measurements; real-voice recordings belong to that
@@ -77,7 +83,8 @@ decision).
       patterns (2026-10-10)
 - [x] 3.4 Clipboard bridge UI ("Mit KI formulieren"): copy prompt → paste answer →
       preview per day → apply, undoable (2026-10-10)
-- [ ] 3.5 School days: polish topic keywords per subject (after WebUntis delivers them)
+- [x] ~~3.5 School days: polish topic keywords per subject~~ — dropped by the user
+      (2026-10-10): the raw "Lehrstoff" texts are good enough
 
 ### Phase 4 — WebUntis import (E-013)
 - [x] 4.1 Spike with the real account: probe `npm run probe:webuntis` +
