@@ -23,11 +23,12 @@ contextBridge.exposeInMainWorld('api', {
   // Native question dialog; returns the index of the clicked button
   askDialog: (options) => ipcRenderer.invoke('dialog:ask', options),
 
-  // WebUntis session (on/off, login window, status, logout) → { ok, loggedIn, personId?, error?, school? }
+  // WebUntis session (switch + address, login window, status, logout) → { ok, loggedIn, personId?, code?, error? }
   webuntisStatus: () => ipcRenderer.invoke('webuntis:status'),
   webuntisLogin: () => ipcRenderer.invoke('webuntis:login'),
   webuntisLogout: () => ipcRenderer.invoke('webuntis:logout'),
-  webuntisSetEnabled: (on) => ipcRenderer.invoke('webuntis:setEnabled', on === true),
+  webuntisConfigure: ({ enabled, host, school } = {}) =>
+    ipcRenderer.invoke('webuntis:configure', { enabled: enabled === true, host: String(host ?? ''), school: String(school ?? '') }),
   // One timetable week (Mon–Sat) incl. lesson topics → { ok, days } (see electron/webuntis.js)
   webuntisWeek: (mondayISO) => ipcRenderer.invoke('webuntis:week', String(mondayISO)),
 

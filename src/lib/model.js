@@ -2,12 +2,13 @@
 // Field names are English since schema v3 (mapping: docs/GLOSSARY.md).
 import { WEEKDAY_KEYS, addDays, inRange, formatDE, parseISO, mondayOf } from './dates.js'
 import { holidayOn } from './holidays.js'
+import { WEBUNTIS_HOST } from './webuntis.js'
 
 export const DAY_STATUSES = ['normal', 'holiday', 'sick', 'vacation']
 
 // Current schema version of daten.json. Older files are upgraded on load/import
 // via migrateData(); newer ones are rejected (downgrade protection).
-export const DATA_VERSION = 8
+export const DATA_VERSION = 9
 
 let idCounter = 0
 export const newId = (prefix) =>
@@ -173,8 +174,8 @@ function migrateV3toV4(d) {
 }
 
 /**
- * Schema v4 -> v5: `settings.webuntis` (only the on/off switch — server and
- * school are fixed by the allowlist, credentials/tokens never go into the file).
+ * Schema v4 -> v5: `settings.webuntis` (the on/off switch; credentials/tokens
+ * never go into the file).
  */
 function migrateV4toV5(d) {
   const settings = isObject(d.settings) ? d.settings : {}
@@ -208,6 +209,17 @@ function migrateV7toV8(d) {
   return { ...d, version: 8, settings: { updateCheck: true, ...settings } }
 }
 
+/**
+ * Schema v8 -> v9: `settings.webuntis.host` + `school` — the user's own
+ * WebUntis address (E-019) instead of a school built into the app. Empty for
+ * existing files: the address is entered once in Settings → "Verbindungen".
+ */
+function migrateV8toV9(d) {
+  const settings = isObject(d.settings) ? d.settings : {}
+  const webuntis = isObject(settings.webuntis) ? settings.webuntis : {}
+  return { ...d, version: 9, settings: { ...settings, webuntis: { host: '', school: '', ...webuntis } } }
+}
+
 /** Only string → string entries survive (hand-edited or broken files). */
 function cleanSubjectMap(map) {
   if (!isObject(map)) return {}
@@ -237,6 +249,7 @@ export function migrateData(raw) {
   if (d.version < 6) d = migrateV5toV6(d)
   if (d.version < 7) d = migrateV6toV7(d)
   if (d.version < 8) d = migrateV7toV8(d)
+  if (d.version < 9) d = migrateV8toV9(d)
 
   // Defensive defaults in case single fields are missing (e.g. hand-edited file)
   d.periods ??= []
@@ -246,9 +259,16 @@ export function migrateData(raw) {
   // Only a real `false` turns it off — a missing or malformed value means the default
   d.settings.autoCreateWeek = d.settings.autoCreateWeek !== false
   d.settings.updateCheck = d.settings.updateCheck !== false
-  // Anything but a real `true` means off — a malformed value must not survive
-  const webuntis = d.settings.webuntis
-  d.settings.webuntis = isObject(webuntis) ? { ...webuntis, enabled: webuntis.enabled === true } : { enabled: false }
+  // Anything but a real `true` means off — a malformed value must not survive.
+  // A malformed host is dropped here; the main process checks it again anyway
+  const webuntis = isObject(d.settings.webuntis) ? d.settings.webuntis : {}
+  const host = typeof webuntis.host === 'string' ? webuntis.host.trim().toLowerCase() : ''
+  d.settings.webuntis = {
+    ...webuntis,
+    enabled: webuntis.enabled === true,
+    host: WEBUNTIS_HOST.test(host) ? host : '',
+    school: typeof webuntis.school === 'string' ? webuntis.school.trim() : '',
+  }
   d.profiles = mapList(d.profiles, (p) => (isObject(p) ? { ...p, webuntisSubjects: cleanSubjectMap(p.webuntisSubjects) } : p))
   return d
 }
@@ -295,7 +315,9 @@ export function validateData(d) {
     fail('Die Zeiträume müssen eine Liste sein.')
   }
   const webuntis = d.settings?.webuntis
-  if (webuntis !== undefined && (!isObject(webuntis) || typeof webuntis.enabled !== 'boolean')) {
+  if (webuntis !== undefined && (!isObject(webuntis) || typeof webuntis.enabled !== 'boolean' ||
+      (webuntis.host !== undefined && typeof webuntis.host !== 'string') ||
+      (webuntis.school !== undefined && typeof webuntis.school !== 'string'))) {
     fail('Die WebUntis-Einstellung in der Datei ist ungültig.')
   }
   const autoCreate = d.settings?.autoCreateWeek
@@ -310,9 +332,9 @@ export function validateData(d) {
 }
 
 /**
- * Import "Ersetzen": take everything from the file except the WebUntis and the
- * update-check switches — they are this device's opt-ins to network access
- * (E-007), not part of the shared record.
+ * Import "Ersetzen": take everything from the file except the WebUntis settings
+ * (switch + address) and the update-check switch — they are this device's
+ * opt-ins to network access (E-007), not part of the shared record.
  */
 export function replaceData(current, imported) {
   const { webuntis, updateCheck } = current.settings
@@ -440,7 +462,7 @@ export function seedData() {
       theme: 'northern-lights',
       startView: 'overview',
       snippets: [],
-      webuntis: { enabled: false },
+      webuntis: { enabled: false, host: '', school: '' },
       autoCreateWeek: true,
       updateCheck: true,
     },

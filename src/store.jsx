@@ -44,7 +44,7 @@ const browserApi = {
   webuntisStatus: async () => ({ ok: false, loggedIn: false, error: DESKTOP_ONLY }),
   webuntisLogin: async () => ({ ok: false, loggedIn: false, error: DESKTOP_ONLY }),
   webuntisLogout: async () => ({ ok: false, error: DESKTOP_ONLY }),
-  webuntisSetEnabled: async () => ({ ok: true }),
+  webuntisConfigure: async () => ({ ok: true }),
   webuntisWeek: async () => ({ ok: false, error: DESKTOP_ONLY }),
   updateStatus: async () => NO_UPDATES,
   updateCheck: async () => NO_UPDATES,
@@ -151,19 +151,22 @@ export function StoreProvider({ children }) {
     return () => clearTimeout(timerRef.current)
   }, [data, saveNow])
 
-  // The main process enforces the WebUntis switch (off = no request at all, and
-  // switching off logs out). Synced here — not in Settings — so every path that
-  // changes the flag counts: the toggle, an import, loading the file.
+  // The main process enforces the WebUntis switch and address (off or no
+  // address = no request at all; switching off or changing the address logs
+  // out). Synced here — not in Settings — so every path that changes them
+  // counts: the settings, an import, loading the file.
   // Layout effect: runs before any child's passive effect, so the main process
-  // already knows "on" when Settings asks for the status right after toggling.
+  // already knows the new state when Settings asks for the status right after.
   const webuntisEnabled = data ? data.settings.webuntis?.enabled === true : null
+  const webuntisHost = data?.settings.webuntis?.host ?? ''
+  const webuntisSchool = data?.settings.webuntis?.school ?? ''
   useLayoutEffect(() => {
     if (webuntisEnabled === null) return
-    api.webuntisSetEnabled(webuntisEnabled).then(
+    api.webuntisConfigure({ enabled: webuntisEnabled, host: webuntisHost, school: webuntisSchool }).then(
       (res) => !res.ok && showToast(res.error || 'Abmelden fehlgeschlagen', { kind: 'error', duration: 5000 }),
       () => showToast('WebUntis konnte nicht umgeschaltet werden', { kind: 'error', duration: 5000 })
     )
-  }, [webuntisEnabled])
+  }, [webuntisEnabled, webuntisHost, webuntisSchool])
 
   // ---------------- Mutations (always immutable) ----------------
 
@@ -289,10 +292,15 @@ export function StoreProvider({ children }) {
     setData((d) => ({ ...d, settings: { ...d.settings, ...patch } }))
   }, [])
 
-  // Only the on/off switch is stored — login state lives in the main process,
-  // which follows this flag via the layout effect above
+  // Only the switch and the address are stored — login state lives in the main
+  // process, which follows them via the layout effect above
   const setWebuntisEnabled = useCallback((enabled) => {
     setData((d) => ({ ...d, settings: { ...d.settings, webuntis: { ...d.settings.webuntis, enabled } } }))
+  }, [])
+
+  // Address as parsed by parseWebuntisAddress() (host '' = none)
+  const setWebuntisAddress = useCallback(({ host, school }) => {
+    setData((d) => ({ ...d, settings: { ...d.settings, webuntis: { ...d.settings.webuntis, host, school } } }))
   }, [])
 
   // Stable references: UpdateHint's toast effect depends on downloadUpdate
@@ -370,6 +378,7 @@ export function StoreProvider({ children }) {
     deletePeriod,
     updateSettings,
     setWebuntisEnabled,
+    setWebuntisAddress,
     exportData,
     importData,
     saveNow: () => data && saveNow(data),

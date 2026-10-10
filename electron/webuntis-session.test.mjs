@@ -1,7 +1,11 @@
 // WebUntis session: token caching/renewal, login detection, logout — without Electron.
 import { Buffer } from 'node:buffer'
 import { describe, it, expect, vi } from 'vitest'
-import { createWebUntisSession, TOKEN_URL, SCHOOL_INFO } from './webuntis-session.js'
+import { createWebUntisSession, cleanServer } from './webuntis-session.js'
+
+// The user's own WebUntis address (E-019) — a made-up school
+const SERVER = { host: 'beispiel-bbs.webuntis.com', school: 'Beispiel BBS' }
+const TOKEN_URL = 'https://beispiel-bbs.webuntis.com/WebUntis/api/token/new'
 
 const b64 = (obj) => Buffer.from(JSON.stringify(obj)).toString('base64url')
 const jwt = (payload) => `${b64({ alg: 'HS256' })}.${b64(payload)}.c2ln`
@@ -27,11 +31,11 @@ function setup(fetchImpl, { now = () => NOW, enabled = true } = {}) {
   const ses = { setPermissionRequestHandler: vi.fn(), clearStorageData: vi.fn(async () => {}) }
   const electron = () => ({ session: { fromPartition: () => ses } })
   const wu = createWebUntisSession({ fetchImpl, now, electron })
-  if (enabled) wu.setEnabled(true)
+  if (enabled) wu.configure({ enabled: true, ...SERVER })
   return { wu, ses }
 }
 
-const LOGGED_OUT = { ok: true, loggedIn: false, school: SCHOOL_INFO }
+const LOGGED_OUT = { ok: true, loggedIn: false }
 
 describe('getToken', () => {
   it('fetches the token from token/new and caches it', async () => {
@@ -83,7 +87,7 @@ describe('enabled switch', () => {
     const fetchImpl = vi.fn(async () => response(200, token(900)))
     const { wu } = setup(fetchImpl, { enabled: false })
     expect(await wu.getToken({ force: true })).toMatchObject({ ok: false, code: 'disabled' })
-    expect(await wu.status()).toMatchObject({ ok: false, loggedIn: false, code: 'disabled', school: SCHOOL_INFO })
+    expect(await wu.status()).toMatchObject({ ok: false, loggedIn: false, code: 'disabled' })
     expect(await wu.openLogin()).toMatchObject({ loggedIn: false, code: 'disabled' })
     expect(fetchImpl).not.toHaveBeenCalled()
   })
@@ -92,7 +96,7 @@ describe('enabled switch', () => {
     const fetchImpl = vi.fn(async () => response(200, token(900)))
     const { wu, ses } = setup(fetchImpl)
     await wu.getToken()
-    expect(await wu.setEnabled(false)).toEqual({ ok: true })
+    expect(await wu.configure({ enabled: false, ...SERVER })).toEqual({ ok: true })
     expect(ses.clearStorageData).toHaveBeenCalled()
     expect((await wu.getToken({ force: true })).code).toBe('disabled')
     expect(fetchImpl).toHaveBeenCalledTimes(1)
@@ -116,11 +120,11 @@ describe('enabled switch', () => {
     const ses = { setPermissionRequestHandler: vi.fn(), clearStorageData: vi.fn(async () => {}) }
     const electron = () => ({ session: { fromPartition: () => ses }, BrowserWindow: function () { return win } })
     const wu = createWebUntisSession({ fetchImpl, now: () => NOW, electron })
-    await wu.setEnabled(true)
+    await wu.configure({ enabled: true, ...SERVER })
     const pending = wu.openLogin()
     await vi.waitFor(() => expect(handlers.closed).toBeDefined())
     const callsBefore = fetchImpl.mock.calls.length
-    await wu.setEnabled(false)
+    await wu.configure({ enabled: false, ...SERVER })
     expect(await pending).toMatchObject({ loggedIn: false })
     expect(destroyed).toBe(true)
     expect(fetchImpl).toHaveBeenCalledTimes(callsBefore)
@@ -129,7 +133,7 @@ describe('enabled switch', () => {
   it('passes a failing logout on when switching off', async () => {
     const { wu, ses } = setup(async () => response(200, token(900)))
     ses.clearStorageData.mockRejectedValue(new Error('busy'))
-    expect(await wu.setEnabled(false)).toMatchObject({ ok: false })
+    expect(await wu.configure({ enabled: false, ...SERVER })).toMatchObject({ ok: false })
   })
 })
 
@@ -137,13 +141,13 @@ describe('status', () => {
   it('reports logged in with the person id — never the token', async () => {
     const { wu } = setup(async () => response(200, token(900)))
     await wu.getToken() // as after a login
-    expect(await wu.status()).toEqual({ ok: true, loggedIn: true, personId: 4711, school: SCHOOL_INFO })
+    expect(await wu.status()).toEqual({ ok: true, loggedIn: true, personId: 4711 })
   })
 
   it('omits a person id that is not an integer', async () => {
     const { wu } = setup(async () => response(200, token(900, { person_id: 'x' })))
     await wu.getToken()
-    expect(await wu.status()).toEqual({ ok: true, loggedIn: true, school: SCHOOL_INFO })
+    expect(await wu.status()).toEqual({ ok: true, loggedIn: true })
   })
 
   it('answers "not logged in" after app start without a request', async () => {
@@ -206,5 +210,80 @@ describe('logout', () => {
     const { wu, ses } = setup(async () => response(200, token(900)))
     ses.clearStorageData.mockRejectedValue(new Error('busy'))
     expect(await wu.logout()).toMatchObject({ ok: false })
+  })
+})
+
+describe('address', () => {
+  // A login window stub that records the loaded URL
+  function withWindow(fetchImpl) {
+    const loaded = []
+    const win = {
+      on: () => {},
+      isDestroyed: () => false,
+      focus: () => {},
+      loadURL: (url) => loaded.push(url),
+      close: () => {},
+      webContents: { on: () => {}, setWindowOpenHandler: () => {} },
+    }
+    const ses = { setPermissionRequestHandler: vi.fn(), clearStorageData: vi.fn(async () => {}) }
+    const electron = () => ({ session: { fromPartition: () => ses }, BrowserWindow: function () { return win } })
+    return { wu: createWebUntisSession({ fetchImpl, now: () => NOW, electron }), loaded, ses }
+  }
+
+  it('without an address: no request, a hint instead', async () => {
+    const fetchImpl = vi.fn(async () => response(200, token(900)))
+    const { wu } = setup(fetchImpl, { enabled: false })
+    await wu.configure({ enabled: true, host: '', school: '' })
+    expect(await wu.getToken({ force: true })).toMatchObject({ ok: false, code: 'no-server' })
+    expect(await wu.status()).toMatchObject({ ok: false, loggedIn: false, code: 'no-server' })
+    expect(await wu.openLogin()).toMatchObject({ loggedIn: false, code: 'no-server' })
+    expect(wu.apiBase()).toBeNull()
+    expect(fetchImpl).not.toHaveBeenCalled()
+  })
+
+  it('refuses hosts outside *.webuntis.com', async () => {
+    const fetchImpl = vi.fn(async () => response(200, token(900)))
+    const { wu } = setup(fetchImpl, { enabled: false })
+    for (const host of ['evil.io', 'beispiel.webuntis.com.evil.io', 'webuntis.com', 'a.b.webuntis.com', 42]) {
+      await wu.configure({ enabled: true, host, school: '' })
+      expect((await wu.getToken({ force: true })).code).toBe('no-server')
+    }
+    expect(fetchImpl).not.toHaveBeenCalled()
+  })
+
+  it('sends the token request to the configured host only', async () => {
+    const fetchImpl = vi.fn(async () => response(200, token(900)))
+    const { wu } = setup(fetchImpl)
+    await wu.getToken()
+    expect(fetchImpl.mock.calls.map(([url]) => url)).toEqual([TOKEN_URL])
+    expect(wu.apiBase()).toEqual({ base: 'https://beispiel-bbs.webuntis.com/WebUntis', host: SERVER.host })
+  })
+
+  it('a changed address logs out; the first configuration after start does not', async () => {
+    const fetchImpl = vi.fn(async () => response(200, token(900)))
+    const { wu, ses } = setup(fetchImpl)
+    expect(ses.clearStorageData).not.toHaveBeenCalled()
+    await wu.getToken()
+    expect(await wu.configure({ enabled: true, ...SERVER })).toEqual({ ok: true }) // same address
+    expect(ses.clearStorageData).not.toHaveBeenCalled()
+    await wu.configure({ enabled: true, host: 'andere-schule.webuntis.com', school: '' })
+    expect(ses.clearStorageData).toHaveBeenCalledTimes(1)
+    expect(await wu.status()).toEqual(LOGGED_OUT)
+  })
+
+  it('opens the login page of the configured school (school name URL-encoded)', async () => {
+    const { wu, loaded } = withWindow(vi.fn(redirectRejected))
+    await wu.configure({ enabled: true, ...SERVER })
+    wu.openLogin()
+    await vi.waitFor(() => expect(loaded).toHaveLength(1))
+    expect(loaded[0]).toBe('https://beispiel-bbs.webuntis.com/WebUntis/?school=Beispiel%20BBS')
+  })
+
+  it('cleanServer normalises the host and checks the school name', () => {
+    expect(cleanServer({ host: ' Beispiel-BBS.WebUntis.com ', school: ' x ' })).toEqual({ host: 'beispiel-bbs.webuntis.com', school: 'x' })
+    expect(cleanServer({ host: 'nessa.webuntis.com' })).toEqual({ host: 'nessa.webuntis.com', school: '' })
+    expect(cleanServer({ host: 'nessa.webuntis.com', school: 'a' + String.fromCharCode(10) + 'b' })).toBeNull()
+    expect(cleanServer({ host: 'nessa.webuntis.com', school: 'x'.repeat(101) })).toBeNull()
+    expect(cleanServer()).toBeNull()
   })
 })

@@ -257,3 +257,55 @@ export function dropSubjects(mappedDays, unticked) {
     subjects: (m.subjects ?? []).filter((s) => !unticked.has(pickKey(m.date, s.label))),
   }))
 }
+
+// ---------------------------------------------------------------------------
+// WebUntis address (E-019): the user pastes the address of their school's
+// WebUntis page; only the host and the school name are kept. The main process
+// checks the host again before any request (electron/net.js).
+// ---------------------------------------------------------------------------
+
+/** Cloud hosts only: `<name>.webuntis.com` (one label, no port, no credentials). */
+export const WEBUNTIS_HOST = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.webuntis\.com$/
+const MAX_SCHOOL_LENGTH = 100
+
+/** `school` from the query (`?school=…`) or from the hash route (`#/basic/login?school=…`). */
+function schoolOf(url) {
+  const fromQuery = url.searchParams.get('school')
+  if (fromQuery) return fromQuery
+  const hashQuery = url.hash.split('?')[1]
+  return hashQuery ? new URLSearchParams(hashQuery).get('school') || '' : ''
+}
+
+/**
+ * Parse what the user pasted (a full WebUntis address, or just the host) →
+ * `{ ok: true, host, school }` or `{ ok: false, error }` (German, for the UI).
+ * `school` may be '' — some hosts serve a single school, and the login page
+ * then asks for it itself.
+ */
+export function parseWebuntisAddress(text) {
+  const input = typeof text === 'string' ? text.trim() : ''
+  if (!input) return { ok: false, error: 'Bitte die Adresse deiner WebUntis-Seite eintragen.' }
+  let url
+  try {
+    url = new URL(/^[a-z][a-z0-9+.-]*:\/\//i.test(input) ? input : `https://${input}`)
+  } catch {
+    return { ok: false, error: 'Das ist keine gültige Adresse.' }
+  }
+  if (url.protocol !== 'https:') return { ok: false, error: 'Die Adresse muss mit https:// beginnen.' }
+  const host = url.hostname.toLowerCase()
+  if (url.username || url.password || url.port !== '' || !WEBUNTIS_HOST.test(host)) {
+    return {
+      ok: false,
+      error: 'Nur WebUntis-Adressen der Form https://<name>.webuntis.com werden unterstützt.',
+    }
+  }
+  const school = clean(schoolOf(url))
+  if (school.length > MAX_SCHOOL_LENGTH || [...school].some((c) => c.charCodeAt(0) < 32)) {
+    return { ok: false, error: 'Der Schulname in der Adresse ist ungültig.' }
+  }
+  return { ok: true, host, school }
+}
+
+/** Display form of a stored address: `host` or `host · school`. */
+export const webuntisAddressLabel = ({ host, school } = {}) =>
+  host ? (school ? `${host} · ${school}` : host) : ''

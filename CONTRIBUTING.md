@@ -62,6 +62,9 @@ npm ci
 npm run probe:webuntis    # = electron . --webuntis-probe (close Berichtspilot first)
 ```
 
+The probe uses the WebUntis address saved in Settings → "Verbindungen" (it reads
+it from `daten.json`); enter it there first.
+
 A window opens: log in via the school portal, open the timetable (a week with
 lessons), click one or two lessons that have a topic under **"Lehrstoff"**, close the window. The probe
 writes `webuntis-probe.json` next to `daten.json` (in dev: the project folder;

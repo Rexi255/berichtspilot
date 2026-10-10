@@ -4,21 +4,36 @@
 // short-lived bearer token from `/api/token/new`. The token stays in the main
 // process (needed for the API calls in step 4.5); the renderer only learns
 // "logged in?" and the person id.
-const { request } = require('./net')
+// Which WebUntis server and school: the user's own address from
+// settings.webuntis (E-019), passed in via configure() — nothing built in.
+const { request, isWebuntisHost } = require('./net')
 const { isJwt, decodeJwtPayload, expiresSoon } = require('./jwt')
 
-const HOST = 'bbz-dithmarschen.webuntis.com'
-const SCHOOL = 'bbz-dithmarschen'
-// Shown read-only in Settings (sent along with every status, not stored)
-const SCHOOL_INFO = { name: 'BBZ Dithmarschen', host: HOST }
-const BASE = `https://${HOST}/WebUntis`
-const LOGIN_URL = `${BASE}/?school=${SCHOOL}`
-const TOKEN_URL = `${BASE}/api/token/new`
 const PARTITION = 'persist:webuntis'
+const MAX_SCHOOL_LENGTH = 100
 const LOGIN_POLL_MS = 2000
 
 const NOT_LOGGED_IN = { ok: false, code: 'auth', error: 'Bitte erneut anmelden.' }
 const DISABLED = { ok: false, code: 'disabled', error: 'WebUntis ist ausgeschaltet.' }
+const NO_SERVER = { ok: false, code: 'no-server', error: 'Bitte zuerst die Adresse deiner WebUntis-Seite eintragen.' }
+
+/**
+ * `{ host, school }` from the renderer → checked copy, or null. The host must be
+ * a WebUntis cloud host (the network boundary, E-019); the school name only
+ * ends up URL-encoded in the login address.
+ */
+function cleanServer({ host, school } = {}) {
+  const h = typeof host === 'string' ? host.trim().toLowerCase() : ''
+  if (!isWebuntisHost(h)) return null
+  const sc = typeof school === 'string' ? school.trim() : ''
+  if (sc.length > MAX_SCHOOL_LENGTH || [...sc].some((c) => c.charCodeAt(0) < 32)) return null
+  return { host: h, school: sc }
+}
+
+const baseOf = (server) => `https://${server.host}/WebUntis`
+const tokenUrlOf = (server) => `${baseOf(server)}/api/token/new`
+const loginUrlOf = (server) =>
+  server.school ? `${baseOf(server)}/?school=${encodeURIComponent(server.school)}` : `${baseOf(server)}/`
 
 /**
  * Session handle for the WebUntis account. Dependencies are injectable so the
@@ -35,6 +50,7 @@ function createWebUntisSession({ fetchImpl, now = Date.now, electron = () => req
   // Mirrors settings.webuntis.enabled (set by the renderer on load and on every
   // change). Off = no WebUntis request at all, whatever path asks for one.
   let enabled = false
+  let server = null // { host, school } — checked by cleanServer()
   // The web session is a session cookie, so after an app start (and after an
   // auth failure or logout) we know we're logged out — status() then answers
   // without a request; only an explicit login asks the server again.
@@ -53,7 +69,11 @@ function createWebUntisSession({ fetchImpl, now = Date.now, electron = () => req
   async function fetchToken() {
     const gen = generation
     // The server labels the bare JWT as application/json → read it as text
-    const res = await request(TOKEN_URL, { expect: 'text', ...(fetchImpl ? { fetchImpl } : { ses: partition() }) })
+    const res = await request(tokenUrlOf(server), {
+      expect: 'text',
+      hosts: [server.host],
+      ...(fetchImpl ? { fetchImpl } : { ses: partition() }),
+    })
     if (gen !== generation) return NOT_LOGGED_IN
     if (!res.ok) {
       if (res.code === 'auth') {
@@ -83,6 +103,7 @@ function createWebUntisSession({ fetchImpl, now = Date.now, electron = () => req
    */
   async function getToken({ force = false } = {}) {
     if (!enabled) return DISABLED
+    if (!server) return NO_SERVER
     if (!force && cached && !expiresSoon(cached.payload, now())) return { ok: true, ...cached }
     if (!pending) {
       const p = fetchToken().finally(() => {
@@ -102,10 +123,10 @@ function createWebUntisSession({ fetchImpl, now = Date.now, electron = () => req
     return { ok: false, loggedIn: false, code: res.code, error: res.error }
   }
 
-  /** `{ ok, loggedIn, personId?, code?, error?, school }` — safe to pass to the renderer. */
+  /** `{ ok, loggedIn, personId?, code?, error? }` — safe to pass to the renderer. */
   async function status() {
-    const res = !enabled ? DISABLED : loggedOut && !cached ? NOT_LOGGED_IN : await getToken()
-    return { ...toStatus(res), school: SCHOOL_INFO }
+    const res = !enabled ? DISABLED : !server ? NO_SERVER : loggedOut && !cached ? NOT_LOGGED_IN : await getToken()
+    return toStatus(res)
   }
 
   /**
@@ -118,10 +139,10 @@ function createWebUntisSession({ fetchImpl, now = Date.now, electron = () => req
       if (!login.win.isDestroyed()) login.win.focus()
       return login.promise
     }
-    if (!enabled) return status()
+    if (!enabled || !server) return status()
     // User-initiated → ask the server even if we believe we're logged out
     const current = toStatus(await getToken({ force: loggedOut }))
-    if (current.loggedIn) return { ...current, school: SCHOOL_INFO }
+    if (current.loggedIn) return current
 
     const { BrowserWindow } = electron()
     const prefs = { partition: PARTITION, sandbox: true, contextIsolation: true, nodeIntegration: false }
@@ -153,11 +174,11 @@ function createWebUntisSession({ fetchImpl, now = Date.now, electron = () => req
         clearInterval(poll)
         login = null
         if (!win.isDestroyed()) win.close()
-        resolve({ ...toStatus(res), school: SCHOOL_INFO })
+        resolve(toStatus(res))
       }
       const poll = setInterval(async () => {
         const res = await getToken({ force: true })
-        if (res.ok || res.code === 'disabled') finish(res)
+        if (res.ok || res.code === 'disabled' || res.code === 'no-server') finish(res)
       }, LOGIN_POLL_MS)
       // Closed by the user: one last check (the login may have just finished).
       // Closed by logout()/switching off: no request — the session is gone anyway
@@ -167,7 +188,7 @@ function createWebUntisSession({ fetchImpl, now = Date.now, electron = () => req
       })
     })
     login = { win, promise }
-    win.loadURL(LOGIN_URL)
+    win.loadURL(loginUrlOf(server))
     return promise
   }
 
@@ -186,13 +207,26 @@ function createWebUntisSession({ fetchImpl, now = Date.now, electron = () => req
     }
   }
 
-  /** Follow the on/off switch from daten.json; switching off also logs out. */
-  async function setEnabled(on) {
+  /**
+   * Follow settings.webuntis from daten.json: the switch and the address.
+   * Switching off logs out; so does a changed address (the session belongs to
+   * the old school). A host that isn't a WebUntis cloud host counts as none.
+   */
+  async function configure({ enabled: on, host, school } = {}) {
+    const next = cleanServer({ host, school })
+    // The first call after start (no server yet) is no change of school
+    const changed = server !== null && (next?.host !== server.host || next?.school !== server.school)
     enabled = on === true
-    return enabled ? { ok: true } : logout()
+    server = next
+    return enabled && !changed ? { ok: true } : logout()
   }
 
-  return { getToken, status, openLogin, logout, setEnabled }
+  /** API base of the configured server (`https://<host>/WebUntis`) + its host, or null. */
+  function apiBase() {
+    return server ? { base: baseOf(server), host: server.host } : null
+  }
+
+  return { getToken, status, openLogin, logout, configure, apiBase }
 }
 
-module.exports = { createWebUntisSession, PARTITION, BASE, TOKEN_URL, LOGIN_URL, SCHOOL_INFO }
+module.exports = { createWebUntisSession, cleanServer, PARTITION }

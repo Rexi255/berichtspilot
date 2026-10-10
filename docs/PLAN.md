@@ -38,6 +38,10 @@ screenshots, `package.json` 2.0.0, `CHANGELOG.md` `## [2.0.0] - 2026-10-10`,
 PR #1 into `main` open, CI green. The user closed the V2 scope — no further additions; the UI
 overhaul is v2.1 (E-018 addendum).
 
+0. **Real check of E-019 by the user:** `npm run dev` (your `daten.json` gets an
+   empty address on migration) → Settings → "Verbindungen" → paste your school's
+   WebUntis address → "Anmelden" → "Aus WebUntis füllen" in a school week. Works
+   like before = go; otherwise fix first.
 1. Wait for CI on the PR to be green, then merge it into `main` (the branch is
    a fast-forward of `main`, a merge commit is fine too). If the merge happens on
    a later day, adjust the date of `## [2.0.0]` in `CHANGELOG.md` first.
@@ -143,6 +147,11 @@ decision).
       network table, new screenshots from fictional demo data (2026-10-10)
 - [x] `package.json` + lock → 2.0.0, `CHANGELOG.md` `## [2.0.0] - 2026-10-10`,
       ARCHITECTURE diagram + DATA_MODEL example brought up to date (2026-10-10)
+- [x] Own WebUntis address instead of the built-in school (user, E-019): address
+      field in Settings → "Verbindungen", `parseWebuntisAddress()`, schema v9
+      `settings.webuntis.host` + `school`, main accepts only `*.webuntis.com`,
+      `webuntis:setEnabled` → `webuntis:configure` (2026-10-10; Electron screenshots
+      with/without address + v8 → v9 migration checked; real login still open)
 - [x] Release dry run: local `build:win` → `Berichtspilot-Setup-2.0.0.exe` +
       `latest.yml` (version 2.0.0) (2026-10-10)
 - [ ] PR into `main` merged (CI green)
@@ -204,3 +213,4 @@ decision).
 | 2026-10-10 | Step 5.3: update UI — sidebar card + Settings → "Updates" (browser smoke test with mocked `window.api` through all states; `build:win` unpacked exe: v1.2.0, real GitHub check → "neueste Version"). User: overhaul ships as v2.0.0 (E-018) | branch `claude/intelligent-curie-yxizss` |
 | 2026-10-10 | Code-review fixes (updater install/headers/support check, load-error guard; Electron screenshot with corrupt `daten.json` + backups: files untouched). Not fixed by choice: a deleted current week is auto-created again on the next start (would need a schema change) | branch `claude/intelligent-curie-yxizss` |
 | 2026-10-10 | Phase 6: V2 release prepared — README + screenshots, version 2.0.0, CHANGELOG, docs check, local `build:win` dry run | PR #1 |
+| 2026-10-10 | E-019: own WebUntis address (schema v9, `webuntis:configure`, only `*.webuntis.com`) | PR #1 |

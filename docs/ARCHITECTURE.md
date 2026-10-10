@@ -65,8 +65,8 @@ the bridge with `localStorage` stubs — handy for smoke tests.
 | `dialog:ask` | `askDialog(opts)` | native question dialog → button index |
 | `window:minimize` / `window:maximize` / `window:close` | `minimize()` / `maximize()` / `close()` | custom title bar |
 | `window:maximized` (event main → renderer) | `onMaximized(cb)` | maximized state |
-| `webuntis:setEnabled` | `webuntisSetEnabled(on)` | mirror `settings.webuntis.enabled` into main (synced by `src/store.jsx` on load and every change); off = every WebUntis call answers `code: 'disabled'` without a request, and logs out → `{ ok, error? }` |
-| `webuntis:status` | `webuntisStatus()` | WebUntis session → `{ ok, loggedIn, personId?, code?, error?, school }` (never the token; `school` = `{ name, host }` for display) |
+| `webuntis:configure` | `webuntisConfigure({ enabled, host, school })` | mirror `settings.webuntis` into main (synced by `src/store.jsx` on load and every change). `cleanServer()` accepts only a `<name>.webuntis.com` host (E-019); off = `code: 'disabled'`, no valid address = `code: 'no-server'`, both without a request. Switching off or changing the address logs out → `{ ok, error? }` |
+| `webuntis:status` | `webuntisStatus()` | WebUntis session → `{ ok, loggedIn, personId?, code?, error? }` (never the token) |
 | `webuntis:login` | `webuntisLogin()` | open the isolated login window; resolves on detected login or window close → same shape as status |
 | `webuntis:logout` | `webuntisLogout()` | wipe the `persist:webuntis` partition + token → `{ ok, error? }` |
 | `update:status` | `updateStatus()` | auto-update status (`electron/updater.js`) → `{ ok, state, current, version?, percent?, code?, error? }`; `state` = `idle`/`checking`/`available`/`none`/`downloading`/`ready`/`error`/`unsupported`, `ok` is false only for `error` |
@@ -84,12 +84,12 @@ in this allowlist, each with a reason; every network feature can be switched off
 
 | Host | Purpose | Since |
 |---|---|---|
-| `bbz-dithmarschen.webuntis.com` | WebUntis: timetable + lesson topics (E-013). Session handling (`electron/webuntis-session.js`: token from `/api/token/new`), week fetch (`electron/webuntis.js`: `timetable/entries`, `calendar-entry/detail`) + the probe (`--webuntis-probe`); UI: Settings → "Verbindungen" (step 4.4) | 2026-10 (step 4.1) |
+| the user's WebUntis host — only `<name>.webuntis.com` | WebUntis: timetable + lesson topics (E-013). Entered in Settings → "Verbindungen" (`settings.webuntis.host`, E-019), checked by `isWebuntisHost()` in `electron/net.js` and passed per request (`hosts`), nothing built in. Session handling (`electron/webuntis-session.js`: token from `/api/token/new`), week fetch (`electron/webuntis.js`: `timetable/entries`, `calendar-entry/detail`) + the probe (`--webuntis-probe`, reads the address from daten.json) | 2026-10 (step 4.1; own address since E-019) |
 | `github.com` | Auto-update (E-017): electron-updater reads `/Rexi255/berichtspilot/releases.atom`, `/releases/latest` and `/releases/download/<tag>/latest*.yml` + the installer/AppImage. Public repo, no token. `UPDATE_HOSTS` in `electron/net.js`, enforced on the `electron-updater` partition | 2026-10 (step 5.2) |
 | `release-assets.githubusercontent.com` | Auto-update (E-017): GitHub redirects every release download there (checked 2026-10-10). Only reached via that redirect | 2026-10 (step 5.2) |
 
-`login.bbz-dithmarschen.de` (school SSO) is only *navigated to* inside the
-isolated login window; the main process never sends requests there.
+A school's SSO portal (e.g. a separate login host) is only *navigated to* inside
+the isolated login window; the main process never sends requests there.
 
 The renderer CSP is unchanged: WebUntis runs in its own window, never in the app
 window.
@@ -104,9 +104,13 @@ request). Only main-process code may call `getToken()`; the renderer sees just
 
 **Settings → "Verbindungen" (step 4.4):** the renderer calls
 `webuntisStatus()` only while `settings.webuntis.enabled` is true. The switch
-itself is enforced in main: `src/store.jsx` mirrors it via `webuntisSetEnabled()`,
-and while off every token/status/login call answers `code: 'disabled'` without
-a request; switching off logs out (wipes the local partition). The login does
+and the address are enforced in main: `src/store.jsx` mirrors them via
+`webuntisConfigure()`, and while off (or without a valid address) every
+token/status/login call answers `code: 'disabled'` (`'no-server'`) without a
+request; switching off or changing the address logs out (wipes the local
+partition). The address field parses what the user pastes with
+`parseWebuntisAddress()` (`src/lib/webuntis.js`): host + `school` from the query
+or hash route; the login window opens `https://<host>/WebUntis/?school=<school>`. The login does
 not survive an app restart (session cookie), so "Nicht angemeldet" is the
 normal state after start — and `status()` answers it from memory, without a
 request, until a login succeeds.

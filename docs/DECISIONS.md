@@ -384,3 +384,23 @@ additions. The planned UI overhaul becomes **v2.1** (workflow in `PLAN.md` →
 "Later / to-do"); voice dictation stays parked until the model choice (E-010).
 The release step is done on the branch (README, version 2.0.0, CHANGELOG); what
 remains is merging into `main` and tagging `v2.0.0`.
+
+### E-019 · WebUntis address entered by the user, only `*.webuntis.com` · accepted
+User (2026-10-10, before the v2.0.0 release): the school must not be built into
+the app — everyone enters their own WebUntis address. Settings → "Verbindungen"
+has an address field; the user pastes the address of their school's WebUntis
+login page, `parseWebuntisAddress()` keeps only the host and the `school`
+parameter (schema v9: `settings.webuntis.host` + `school`).
+
+Allowlist (E-007) without a fixed host: the configured host is the only one
+WebUntis requests may reach, and it must match `<name>.webuntis.com` (one label —
+the WebUntis cloud). Checked three times: when parsing in the renderer, in
+`migrateData()`, and — the real boundary — in the main process (`cleanServer()`
+/ `isWebuntisHost()`), which passes it per request to `request({ hosts })`;
+`fetchWeek()` checks it once more before sending the token. Self-hosted
+WebUntis servers outside `webuntis.com` are not supported (would need an
+explicit, reviewed exception). Changing the address logs out (the session
+belongs to the old school). Existing files get an empty address — entered once
+by hand, no school is pre-filled. The probe reads the address from daten.json.
+Considered: searching schools by name via Untis' school search service — nicer,
+but another external host; possible later.

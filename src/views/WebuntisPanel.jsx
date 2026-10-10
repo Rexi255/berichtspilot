@@ -152,7 +152,8 @@ export default function WebuntisPanel({ monday, week, profile, onApply, onClose 
               )}
             </Button>
           ) : (
-            load.code !== 'disabled' && (
+            // switched off / no address: only Settings can fix that — the text says so
+            load.code !== 'disabled' && load.code !== 'no-server' && (
               <Button size="sm" onClick={fetchWeek}>
                 <ArrowClockwiseIcon size={14} /> Erneut versuchen
               </Button>

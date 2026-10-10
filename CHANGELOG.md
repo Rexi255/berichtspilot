@@ -33,12 +33,17 @@ import and in-app updates. Upgrading from 1.x: install this version by hand once
   school's API (no names, notes or passwords) — groundwork for the WebUntis
   import.
 - **Settings → "Verbindungen":** new switch "WebUntis-Import" (off by default —
-  then nothing is ever requested). When on, it shows the school (BBZ
-  Dithmarschen), the login status and "Anmelden"/"Abmelden". The login happens
-  in a separate window on the school's page; the app never sees the password.
-  Switching off also logs out. Schema v5 adds the switch to existing data.
-  The switch is a per-device opt-in: an import with "Ersetzen" keeps it as it
-  is, and opening the settings while logged out sends no request.
+  then nothing is ever requested). When on, you paste the address of your
+  school's WebUntis login page (e.g.
+  `https://schulname.webuntis.com/WebUntis/?school=schulname`) — the app keeps
+  only the server and the school name; only WebUntis cloud addresses
+  (`….webuntis.com`) are accepted. Below it: the login status and
+  "Anmelden"/"Abmelden". The login happens in a separate window on the
+  school's page; the app never sees the password. Switching off or changing
+  the address logs out. Schema v5 adds the switch, schema v9 the (empty)
+  address to existing data. Switch and address are per-device settings: an
+  import with "Ersetzen" keeps them as they are, and opening the settings
+  while logged out sends no request.
 - **Profiles → "WebUntis-Fächer"** (visible while the WebUntis import is on):
   map WebUntis abbreviations to your subjects (e.g. `kom` → Kommunikation) or
   ignore a WebUntis entry (e.g. a support teacher). Identical names like `LF07`

@@ -4,7 +4,13 @@
 import { URL } from 'node:url'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { describe, it, expect, vi } from 'vitest'
-import { fetchWeek, saturdayOf, TIMETABLE_URL, DETAIL_URL, DETAIL_CONCURRENCY } from './webuntis.js'
+import { fetchWeek, saturdayOf, TIMETABLE_PATH, DETAIL_PATH, DETAIL_CONCURRENCY } from './webuntis.js'
+
+// The user's own WebUntis address (E-019) — a made-up school
+const HOST = 'beispiel-bbs.webuntis.com'
+const BASE = `https://${HOST}/WebUntis`
+const TIMETABLE_URL = BASE + TIMETABLE_PATH
+const DETAIL_URL = BASE + DETAIL_PATH
 
 function json(status, body) {
   return {
@@ -15,8 +21,9 @@ function json(status, body) {
   }
 }
 
-const session = (tok = { ok: true, token: 'tok-123', payload: { person_id: 4711, tenant_id: 99 } }) => ({
+const session = (tok = { ok: true, token: 'tok-123', payload: { person_id: 4711, tenant_id: 99 } }, server = { base: BASE, host: HOST }) => ({
   getToken: vi.fn(async () => tok),
+  apiBase: () => server,
 })
 
 const subject = (shortName, longName = `${shortName} lang`) => [
@@ -230,6 +237,27 @@ describe('fetchWeek', () => {
       error: 'WebUntis ist ausgeschaltet.',
     })
     expect(fetchImpl).not.toHaveBeenCalled()
+  })
+
+  it('sends no request without a configured address', async () => {
+    const fetchImpl = server()
+    const noServer = session({ ok: false, code: 'no-server', error: 'Adresse fehlt' }, null)
+    expect((await fetchWeek(noServer, '2026-09-07', { fetchImpl })).code).toBe('no-server')
+    // token cached from before, address removed since: still nothing is sent
+    expect((await fetchWeek(session(undefined, null), '2026-09-07', { fetchImpl })).code).toBe('no-server')
+    expect(fetchImpl).not.toHaveBeenCalled()
+  })
+
+  it('talks only to the configured host', async () => {
+    const fetchImpl = server()
+    await fetchWeek(session(), '2026-09-07', { fetchImpl })
+    const hosts = new Set(fetchImpl.mock.calls.map(([url]) => new URL(url).hostname))
+    expect([...hosts]).toEqual([HOST])
+    // a host outside *.webuntis.com never gets a request (nor the token)
+    const evilFetch = server()
+    const evil = session(undefined, { base: 'https://evil.io/WebUntis', host: 'evil.io' })
+    expect(await fetchWeek(evil, '2026-09-07', { fetchImpl: evilFetch })).toMatchObject({ ok: false, code: 'no-server' })
+    expect(evilFetch).not.toHaveBeenCalled()
   })
 
   it('rejects an invalid week or a token without person id before any request', async () => {

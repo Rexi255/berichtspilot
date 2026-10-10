@@ -97,7 +97,7 @@ describe('migrateData', () => {
   it('migrates a full v2 file to the current version with English names and values', () => {
     const d = migrateData(v2File())
     expect(d.version).toBe(DATA_VERSION)
-    expect(DATA_VERSION).toBe(8)
+    expect(DATA_VERSION).toBe(9)
 
     expect(d.settings).toEqual({
       trainingStart: '2025-08-01',
@@ -106,7 +106,7 @@ describe('migrateData', () => {
       startView: 'profiles',
       snippets: ['Ticket bearbeitet'],
       eigenesFeld: 42,
-      webuntis: { enabled: false },
+      webuntis: { enabled: false, host: '', school: '' },
       autoCreateWeek: true,
       updateCheck: true,
     })
@@ -235,7 +235,7 @@ describe('migrateData', () => {
     const d = migrateData(v4)
     expect(d.version).toBe(DATA_VERSION)
     expect(d.settings).toEqual({
-      theme: 'forest', startView: 'editor', snippets: ['a'], webuntis: { enabled: false }, autoCreateWeek: true,
+      theme: 'forest', startView: 'editor', snippets: ['a'], webuntis: { enabled: false, host: '', school: '' }, autoCreateWeek: true,
       updateCheck: true,
     })
     expect(() => validateData(d)).not.toThrow()
@@ -243,22 +243,22 @@ describe('migrateData', () => {
 
   it('v4 -> v5 keeps an existing WebUntis value and survives missing settings', () => {
     expect(migrateData({ version: 4, settings: { webuntis: { enabled: true } }, profiles: [], weeks: [] })
-      .settings.webuntis).toEqual({ enabled: true })
-    expect(migrateData({ version: 4, profiles: [], weeks: [] }).settings.webuntis).toEqual({ enabled: false })
+      .settings.webuntis).toEqual({ enabled: true, host: '', school: '' })
+    expect(migrateData({ version: 4, profiles: [], weeks: [] }).settings.webuntis).toEqual({ enabled: false, host: '', school: '' })
   })
 
   it('resets a malformed WebUntis value to "off" instead of keeping it', () => {
     const webuntisOf = (value) =>
       migrateData({ version: 5, settings: { webuntis: value }, profiles: [], weeks: [] }).settings.webuntis
-    expect(webuntisOf('on')).toEqual({ enabled: false })
-    expect(webuntisOf(['x'])).toEqual({ enabled: false })
-    expect(webuntisOf(null)).toEqual({ enabled: false })
-    expect(webuntisOf({})).toEqual({ enabled: false })
-    expect(webuntisOf({ enabled: 'ja' })).toEqual({ enabled: false })
-    expect(webuntisOf({ enabled: true })).toEqual({ enabled: true })
+    expect(webuntisOf('on')).toEqual({ enabled: false, host: '', school: '' })
+    expect(webuntisOf(['x'])).toEqual({ enabled: false, host: '', school: '' })
+    expect(webuntisOf(null)).toEqual({ enabled: false, host: '', school: '' })
+    expect(webuntisOf({})).toEqual({ enabled: false, host: '', school: '' })
+    expect(webuntisOf({ enabled: 'ja' })).toEqual({ enabled: false, host: '', school: '' })
+    expect(webuntisOf({ enabled: true })).toEqual({ enabled: true, host: '', school: '' })
     const d = migrateData({ version: 5, settings: 'kaputt', profiles: [], weeks: [] })
     expect(d.settings).toEqual({
-      startView: 'overview', snippets: [], webuntis: { enabled: false }, autoCreateWeek: true, updateCheck: true,
+      startView: 'overview', snippets: [], webuntis: { enabled: false, host: '', school: '' }, autoCreateWeek: true, updateCheck: true,
     })
     expect(() => validateData(d)).not.toThrow()
   })
@@ -273,7 +273,7 @@ describe('migrateData', () => {
     })
     expect(d.version).toBe(DATA_VERSION)
     expect(d.profiles.map((p) => p.webuntisSubjects)).toEqual([{}, { kom: 'Kommunikation', pfk: '' }])
-    expect(d.settings.webuntis).toEqual({ enabled: true })
+    expect(d.settings.webuntis).toEqual({ enabled: true, host: '', school: '' })
     expect(() => validateData(d)).not.toThrow()
   })
 
@@ -290,7 +290,7 @@ describe('migrateData', () => {
     const d = migrateData({ version: 6, settings: { theme: 'forest', webuntis: { enabled: true } }, profiles: [], weeks: [] })
     expect(d.version).toBe(DATA_VERSION)
     expect(d.settings).toEqual({
-      theme: 'forest', startView: 'overview', snippets: [], webuntis: { enabled: true }, autoCreateWeek: true,
+      theme: 'forest', startView: 'overview', snippets: [], webuntis: { enabled: true, host: '', school: '' }, autoCreateWeek: true,
       updateCheck: true,
     })
     expect(() => validateData(d)).not.toThrow()
@@ -309,9 +309,9 @@ describe('migrateData', () => {
 
   it('v7 -> v8 turns the update check on start on and keeps an existing value', () => {
     const d = migrateData({ version: 7, settings: { theme: 'forest', autoCreateWeek: false }, profiles: [], weeks: [] })
-    expect(d.version).toBe(8)
+    expect(d.version).toBe(DATA_VERSION)
     expect(d.settings).toEqual({
-      theme: 'forest', startView: 'overview', snippets: [], webuntis: { enabled: false }, autoCreateWeek: false,
+      theme: 'forest', startView: 'overview', snippets: [], webuntis: { enabled: false, host: '', school: '' }, autoCreateWeek: false,
       updateCheck: true,
     })
     expect(() => validateData(d)).not.toThrow()
@@ -325,6 +325,23 @@ describe('migrateData', () => {
     expect(checkOf('nein')).toBe(true)
     expect(checkOf(null)).toBe(true)
     expect(checkOf(0)).toBe(true)
+  })
+
+  it('v8 -> v9 adds an empty WebUntis address and keeps the switch', () => {
+    const d = migrateData({ version: 8, settings: { webuntis: { enabled: true }, updateCheck: false }, profiles: [], weeks: [] })
+    expect(d.version).toBe(9)
+    expect(d.settings.webuntis).toEqual({ enabled: true, host: '', school: '' })
+    expect(d.settings.updateCheck).toBe(false)
+    expect(() => validateData(d)).not.toThrow()
+  })
+
+  it('keeps a valid WebUntis address and drops a malformed host', () => {
+    const webuntisOf = (value) =>
+      migrateData({ version: 9, settings: { webuntis: value }, profiles: [], weeks: [] }).settings.webuntis
+    expect(webuntisOf({ enabled: true, host: ' Nessa.WebUntis.com ', school: ' BBS ' }))
+      .toEqual({ enabled: true, host: 'nessa.webuntis.com', school: 'BBS' })
+    expect(webuntisOf({ enabled: true, host: 'evil.io', school: 'x' })).toEqual({ enabled: true, host: '', school: 'x' })
+    expect(webuntisOf({ enabled: false, host: 42, school: null })).toEqual({ enabled: false, host: '', school: '' })
   })
 
   it('keeps unknown enum values instead of dropping them', () => {
@@ -376,6 +393,12 @@ describe('validateData', () => {
     ).toThrow(/Tag/)
     expect(() =>
       validateData({ settings: { webuntis: { enabled: 'ja' } }, profiles: [], weeks: [] })
+    ).toThrow(/WebUntis/)
+    expect(() =>
+      validateData({ settings: { webuntis: { enabled: true, host: 42 } }, profiles: [], weeks: [] })
+    ).toThrow(/WebUntis/)
+    expect(() =>
+      validateData({ settings: { webuntis: { enabled: true, host: 'x.webuntis.com', school: ['x'] } }, profiles: [], weeks: [] })
     ).toThrow(/WebUntis/)
     expect(() =>
       validateData({ settings: { autoCreateWeek: 'ja' }, profiles: [], weeks: [] })

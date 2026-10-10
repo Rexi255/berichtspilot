@@ -3,8 +3,16 @@
 // (a redirect could lead off the allowlist), and results instead of exceptions
 // so IPC handlers can pass them straight on. Error texts are German (UI).
 
-// Keep in sync with the allowlist table in docs/ARCHITECTURE.md
-const ALLOWED_HOSTS = ['bbz-dithmarschen.webuntis.com']
+// Keep in sync with the allowlist table in docs/ARCHITECTURE.md. No fixed host:
+// WebUntis requests pass the user's own host (`hosts` option of request()),
+// and only after it passed isWebuntisHost() (E-019)
+const ALLOWED_HOSTS = []
+// WebUntis cloud hosts only: `<name>.webuntis.com` — the boundary for the
+// user-entered address. Same pattern as WEBUNTIS_HOST in src/lib/webuntis.js
+const WEBUNTIS_HOST = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.webuntis\.com$/
+
+/** true for a WebUntis cloud host (already lower-case, no port). */
+const isWebuntisHost = (host) => typeof host === 'string' && WEBUNTIS_HOST.test(host)
 // Auto-update (E-017): electron-updater makes its own requests in its own
 // session; electron/updater.js filters that session against this list.
 // github.com serves the feed + metadata, every release download redirects to
@@ -126,4 +134,4 @@ async function request(
   }
 }
 
-module.exports = { ALLOWED_HOSTS, UPDATE_HOSTS, DEFAULT_TIMEOUT_MS, isAllowedUrl, describeFailure, request }
+module.exports = { ALLOWED_HOSTS, UPDATE_HOSTS, DEFAULT_TIMEOUT_MS, isAllowedUrl, isWebuntisHost, describeFailure, request }

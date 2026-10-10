@@ -87,10 +87,10 @@ describe('anonymizeUrl', () => {
   it('keeps host, API path and enum-like params, hides ids and free values', () => {
     expect(
       anonymizeUrl(
-        'https://bbz-dithmarschen.webuntis.com/WebUntis/api/rest/view/v1/timetable/entries?start=2026-10-12&end=2026-10-16&format=4&resourceType=STUDENT&resources=12345&periodTypes=&timetableType=MY_TIMETABLE'
+        'https://beispiel-bbs.webuntis.com/WebUntis/api/rest/view/v1/timetable/entries?start=2026-10-12&end=2026-10-16&format=4&resourceType=STUDENT&resources=12345&periodTypes=&timetableType=MY_TIMETABLE'
       )
     ).toBe(
-      'bbz-dithmarschen.webuntis.com/WebUntis/api/rest/view/v1/timetable/entries?start=<date>&end=<date>&format=4&resourceType=STUDENT&resources=<n>&periodTypes=&timetableType=MY_TIMETABLE'
+      'beispiel-bbs.webuntis.com/WebUntis/api/rest/view/v1/timetable/entries?start=<date>&end=<date>&format=4&resourceType=STUDENT&resources=<n>&periodTypes=&timetableType=MY_TIMETABLE'
     )
   })
 
@@ -101,8 +101,8 @@ describe('anonymizeUrl', () => {
   })
 
   it('keeps the public school name and flags 8-digit dates', () => {
-    expect(anonymizeUrl('https://x.webuntis.com/WebUntis/jsonrpc.do?school=bbz-dithmarschen&date=20261012')).toBe(
-      'x.webuntis.com/WebUntis/jsonrpc.do?school=bbz-dithmarschen&date=<yyyymmdd?>'
+    expect(anonymizeUrl('https://x.webuntis.com/WebUntis/jsonrpc.do?school=beispiel-bbs&date=20261012')).toBe(
+      'x.webuntis.com/WebUntis/jsonrpc.do?school=beispiel-bbs&date=<yyyymmdd?>'
     )
   })
 

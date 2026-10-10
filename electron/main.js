@@ -4,7 +4,7 @@ const { app, BrowserWindow, ipcMain, dialog, shell, clipboard, Menu, MenuItem, s
 const path = require('path')
 const fs = require('fs')
 const fsp = fs.promises
-const { createWebUntisSession, PARTITION: WEBUNTIS_PARTITION } = require('./webuntis-session')
+const { createWebUntisSession, cleanServer, PARTITION: WEBUNTIS_PARTITION } = require('./webuntis-session')
 const { fetchWeek } = require('./webuntis')
 const { createUpdater } = require('./updater')
 
@@ -318,13 +318,16 @@ ipcMain.handle('dialog:ask', async (_ev, { title, message, detail, buttons, canc
 })
 
 // WebUntis (E-013, path W1). The bearer token stays in main; the renderer only
-// gets status objects and the trimmed week. Renderer input: the on/off flag
-// (coerced to a boolean) and a Monday date (validated in fetchWeek).
+// gets status objects and the trimmed week. Renderer input: switch + address
+// (checked by cleanServer(): only *.webuntis.com hosts, E-019) and a Monday date
+// (validated in fetchWeek).
 const webuntis = createWebUntisSession()
 ipcMain.handle('webuntis:status', () => webuntis.status())
 ipcMain.handle('webuntis:login', () => webuntis.openLogin({ parent: win }))
 ipcMain.handle('webuntis:logout', () => webuntis.logout())
-ipcMain.handle('webuntis:setEnabled', (_e, on) => webuntis.setEnabled(on === true))
+ipcMain.handle('webuntis:configure', (_e, config) =>
+  webuntis.configure({ enabled: config?.enabled === true, host: config?.host, school: config?.school })
+)
 ipcMain.handle('webuntis:week', (_e, mondayISO) =>
   fetchWeek(webuntis, mondayISO, { ses: session.fromPartition(WEBUNTIS_PARTITION) })
 )
@@ -352,9 +355,27 @@ ipcMain.handle('window:maximize', () => {
 ipcMain.handle('window:close', () => win?.close())
 
 // Dev spike: `electron . --webuntis-probe` runs the WebUntis probe instead of
-// the app (DECISIONS E-013). It never touches daten.json, only writes
-// webuntis-probe.json next to it.
+// the app (DECISIONS E-013). It only reads the WebUntis address from
+// daten.json (E-019) and writes webuntis-probe.json next to it.
 const PROBE_MODE = process.argv.includes('--webuntis-probe')
+
+async function startWebUntisProbe() {
+  let server = null
+  try {
+    server = cleanServer(JSON.parse(await fsp.readFile(DATA_PATH, 'utf8'))?.settings?.webuntis)
+  } catch {
+    // no or unreadable daten.json → no address
+  }
+  if (!server) {
+    dialog.showErrorBox(
+      'WebUntis-Probe',
+      'Keine WebUntis-Adresse gefunden. Bitte zuerst in Berichtspilot unter Einstellungen → Verbindungen eintragen.'
+    )
+    return app.quit()
+  }
+  const { runWebUntisProbe } = require('./webuntis-probe')
+  return runWebUntisProbe({ outFile: path.join(path.dirname(DATA_PATH), 'webuntis-probe.json'), server })
+}
 
 // Allow only ONE instance: two instances running in parallel would overwrite
 // each other's daten.json (last save wins). A second start hands focus to the
@@ -373,8 +394,7 @@ if (!app.requestSingleInstanceLock()) {
 
   app.whenReady().then(() => {
     if (PROBE_MODE) {
-      const { runWebUntisProbe } = require('./webuntis-probe')
-      return runWebUntisProbe({ outFile: path.join(path.dirname(DATA_PATH), 'webuntis-probe.json') })
+      return startWebUntisProbe()
     }
     createWindow()
     app.on('activate', () => {

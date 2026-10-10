@@ -51,7 +51,8 @@ internet connection are needed.
   Gemini — free plans work), paste the answer back, review a per-day preview and
   apply it — undoable. Before copying, the app warns about possible customer data
   (e-mail/IP/MAC addresses, ticket and phone numbers).
-- 🏫 **"Aus WebUntis füllen"** — loads the week's timetable incl. lesson topics and
+- 🏫 **"Aus WebUntis füllen"** — for any school on the WebUntis cloud (enter your
+  school's WebUntis address once). Loads the week's timetable incl. lesson topics and
   shows a preview per school day: what gets filled, what's new, cancelled lessons,
   school breaks. Existing text is never overwritten; applying is undoable.
   WebUntis abbreviations can be mapped to your subjects per profile
@@ -154,11 +155,14 @@ features go online — all from the main process, only to fixed hosts:
 
 | Feature | Talks to | What is sent | Off switch |
 |---|---|---|---|
-| WebUntis import | `bbz-dithmarschen.webuntis.com` | your WebUntis login (in a separate window on the school's page — the app never sees the password), then timetable requests | Settings → "Verbindungen" (off by default) |
+| WebUntis import | your school's WebUntis server (`<name>.webuntis.com`) | your WebUntis login (in a separate window on the school's page — the app never sees the password), then timetable requests | Settings → "Verbindungen" (off by default) |
 | Update check | `github.com`, `release-assets.githubusercontent.com` | the request for the latest release (app version, IP address) — no training data | Settings → "Updates" |
 
-- **WebUntis currently works only for the BBZ Dithmarschen** (the school is fixed by
-  the host allowlist). Other schools would need their WebUntis host added.
+- **WebUntis works with any school on the WebUntis cloud:** paste the address of
+  your school's WebUntis login page (e.g.
+  `https://schulname.webuntis.com/WebUntis/?school=schulname`) under Settings →
+  "Verbindungen". Only `….webuntis.com` addresses are accepted, and the app talks
+  to no other WebUntis host.
 - **"Mit KI formulieren"** makes no network request at all: *you* copy the prompt into
   a chat AI and paste the answer back, so you see every word that leaves the app.
 - The app window itself has no network access (strict Content Security Policy).
@@ -257,7 +261,8 @@ CLAUDE.md             # working guide for AI assistants (Claude Code)
   `sandbox: true`. The renderer only gets a narrow API via the preload bridge; file
   I/O and every network request happen exclusively in the main process (IPC).
   Strict CSP in the renderer.
-- **Network allowlist:** requests only over https to the hosts listed above;
+- **Network allowlist:** requests only over https to the hosts listed above (for
+  WebUntis: exactly the one `*.webuntis.com` host you entered);
   redirects are not followed off the list. WebUntis runs in its own isolated window
   and session.
 - **Holidays offline:** computed locally, no external service.

@@ -3,11 +3,11 @@
 // trimmed shape for the renderer — subjects, times, status and topics only;
 // no teacher, class or room names, no notesAll, no ids, never the token.
 // Pure CommonJS apart from the injected session, tested in webuntis.test.mjs.
-const { request } = require('./net')
-const { BASE } = require('./webuntis-session')
+const { request, isWebuntisHost } = require('./net')
 
-const TIMETABLE_URL = `${BASE}/api/rest/view/v1/timetable/entries`
-const DETAIL_URL = `${BASE}/api/rest/view/v2/calendar-entry/detail`
+// Below the configured server's API base (`https://<host>/WebUntis`, E-019)
+const TIMETABLE_PATH = '/api/rest/view/v1/timetable/entries'
+const DETAIL_PATH = '/api/rest/view/v2/calendar-entry/detail'
 const DETAIL_CONCURRENCY = 3 // be gentle with the school's server
 const MAX_TOPIC_LENGTH = 300 // "Lehrstoff" is ~60 chars; anything longer is cut
 
@@ -88,13 +88,22 @@ async function mapLimited(items, limit, fn) {
  * `{ ok: true, days: [{ date, holiday, lessons: [{ start, end, status,
  * subjectShort, subjectLong, topics }] }] }` or `{ ok: false, code, error }`.
  *
- * `session`: from createWebUntisSession() — supplies the bearer token and
- * enforces the on/off switch (`code: 'disabled'`). `ses`/`fetchImpl` go to
+ * `session`: from createWebUntisSession() — supplies the server, the bearer
+ * token and enforces the on/off switch (`code: 'disabled'`, `'no-server'`). `ses`/`fetchImpl` go to
  * request() (Electron session / test stub).
  */
 async function fetchWeek(session, mondayISO, { ses, fetchImpl } = {}) {
   const saturday = saturdayOf(mondayISO)
   if (!saturday) return INVALID
+
+  // Switch, address and login first; the host is then the only one allowed
+  const first = await session.getToken()
+  if (!first.ok) return { ok: false, code: first.code, error: first.error }
+  const server = session.apiBase()
+  // checked again here: only a WebUntis cloud host ever gets the token
+  if (!server || !isWebuntisHost(server.host)) return { ok: false, code: 'no-server', error: 'Bitte zuerst die Adresse deiner WebUntis-Seite eintragen.' }
+  const TIMETABLE_URL = server.base + TIMETABLE_PATH
+  const DETAIL_URL = server.base + DETAIL_PATH
 
   // Asked before every call: cached, renewed by the session when about to expire
   const authorized = async (url) => {
@@ -104,7 +113,7 @@ async function fetchWeek(session, mondayISO, { ses, fetchImpl } = {}) {
     if (!Number.isInteger(personId)) return { ok: false, code: 'auth', error: 'Bitte erneut anmelden.' }
     const headers = { Authorization: `Bearer ${tok.token}`, Accept: 'application/json' }
     if (tok.payload.tenant_id != null) headers['Tenant-Id'] = String(tok.payload.tenant_id)
-    return request(url(personId), { ses, fetchImpl, headers, expect: 'json' })
+    return request(url(personId), { ses, fetchImpl, headers, expect: 'json', hosts: [server.host] })
   }
 
   const week = await authorized(
@@ -181,4 +190,4 @@ async function fetchWeek(session, mondayISO, { ses, fetchImpl } = {}) {
   }
 }
 
-module.exports = { fetchWeek, saturdayOf, TIMETABLE_URL, DETAIL_URL, DETAIL_CONCURRENCY }
+module.exports = { fetchWeek, saturdayOf, TIMETABLE_PATH, DETAIL_PATH, DETAIL_CONCURRENCY }

@@ -13,10 +13,11 @@ const { BrowserWindow, session, dialog, shell, app } = require('electron')
 const fsp = require('fs').promises
 const { createShape, addSample, shapeToJSON, shapeOf, anonymizeUrl } = require('./shape')
 
-const HOST = 'bbz-dithmarschen.webuntis.com'
-const SCHOOL = 'bbz-dithmarschen'
-const BASE = `https://${HOST}`
-const START_URL = `${BASE}/WebUntis/?school=${SCHOOL}`
+// The WebUntis address from daten.json (E-019), set by runWebUntisProbe()
+let HOST = ''
+let SCHOOL = ''
+let BASE = ''
+let START_URL = ''
 const PARTITION = 'persist:webuntis'
 const PROBE_VERSION = 1
 const MAX_CAPTURES = 400
@@ -85,7 +86,12 @@ function describeBody(body, contentType) {
   return { nonJson: true, contentType: contentType || null, length: body.text.length }
 }
 
-async function runWebUntisProbe({ outFile }) {
+/** `server`: `{ host, school }` already checked by cleanServer() (main.js). */
+async function runWebUntisProbe({ outFile, server }) {
+  HOST = server.host
+  SCHOOL = server.school
+  BASE = `https://${HOST}`
+  START_URL = `${BASE}/WebUntis/${SCHOOL ? `?school=${encodeURIComponent(SCHOOL)}` : ''}`
   const intro = await dialog.showMessageBox({
     type: 'info',
     title: 'WebUntis-Probe',
@@ -377,7 +383,7 @@ async function probeCandidates(ses, token) {
 
   const { from, to } = probeRange()
   const rpc = (method, params) =>
-    call(`JSON-RPC ${method}`, `${BASE}/WebUntis/jsonrpc.do?school=${SCHOOL}`, {
+    call(`JSON-RPC ${method}`, `${BASE}/WebUntis/jsonrpc.do?school=${encodeURIComponent(SCHOOL)}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id: 'probe', method, params, jsonrpc: '2.0' }),

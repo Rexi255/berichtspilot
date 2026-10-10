@@ -27,6 +27,7 @@ import { SectionTitle, Button, IconButton, Input, Segment, Panel, Pill, Switch, 
 import { showToast } from '../ui/toast.jsx'
 import { UpdateAction, useUpdateActions } from '../ui/UpdateHint.jsx'
 import { updateHint, updateSummary, canCheckForUpdate } from '../lib/update.js'
+import { parseWebuntisAddress } from '../lib/webuntis.js'
 
 // Order + labels of the themes; the colors live in index.css.
 export const THEMES = [
@@ -161,19 +162,36 @@ function WebuntisStatus({ status }) {
   if (!status) return <Pill color="neutral">Wird geprüft …</Pill>
   if (status.loggedIn) return <Pill color="done">Angemeldet</Pill>
   if (status.ok) return <Pill color="neutral">Nicht angemeldet</Pill>
+  if (status.code === 'no-server') return <Pill color="neutral">Adresse fehlt</Pill>
   return <Pill color="sick">{status.error || 'Status unbekannt'}</Pill>
 }
 
+// Stored host + school → an address the parser reads back the same way
+const addressText = ({ host, school } = {}) =>
+  host ? `https://${host}/WebUntis/${school ? `?school=${encodeURIComponent(school)}` : ''}` : ''
+
 function WebuntisConnection() {
-  const { data, setWebuntisEnabled } = useStore()
+  const { data, setWebuntisEnabled, setWebuntisAddress } = useStore()
   const enabled = data.settings.webuntis?.enabled === true
+  const host = data.settings.webuntis?.host ?? ''
+  const school = data.settings.webuntis?.school ?? ''
   const [status, setStatus] = useState(null)
+  // The address field: free text while typing, parsed on Enter/leaving the field
+  const [draft, setDraft] = useState(() => addressText({ host, school }))
+  const [addressError, setAddressError] = useState('')
   // Login window open or logout running. Which one is clear from the status:
   // the login button only shows while logged out, the logout button while logged in
   const [busy, setBusy] = useState(false)
   const [checks, setChecks] = useState(0) // bump → ask the main process again
-  // School + host come from the main process (fixed there by the allowlist)
-  const school = status?.school
+
+  // The stored address changed (saved here, or by an import): show it as stored
+  const stored = addressText({ host, school })
+  const [shown, setShown] = useState(stored)
+  if (shown !== stored) {
+    setShown(stored)
+    setDraft(stored)
+    setAddressError('')
+  }
 
   // Only ask while enabled. The main process enforces the switch itself (off =
   // no request), and answers "logged out" from memory until a login happened.
@@ -187,7 +205,7 @@ function WebuntisConnection() {
     return () => {
       alive = false
     }
-  }, [enabled, checks])
+  }, [enabled, host, school, checks])
 
   const recheck = () => {
     setStatus(null)
@@ -201,6 +219,26 @@ function WebuntisConnection() {
     setWebuntisEnabled(on)
   }
 
+  // Empty field = remove the address. A changed address logs out (main process)
+  const commitAddress = () => {
+    if (!draft.trim()) {
+      if (host) setWebuntisAddress({ host: '', school: '' })
+      setAddressError('')
+      return
+    }
+    const parsed = parseWebuntisAddress(draft)
+    if (!parsed.ok) {
+      setAddressError(parsed.error)
+      return
+    }
+    setAddressError('')
+    setDraft(addressText(parsed))
+    if (parsed.host !== host || parsed.school !== school) {
+      setStatus(null)
+      setWebuntisAddress({ host: parsed.host, school: parsed.school })
+    }
+  }
+
   const login = async () => {
     setBusy(true)
     try {
@@ -208,7 +246,7 @@ function WebuntisConnection() {
       setStatus(res)
       if (res.loggedIn) showToast('Bei WebUntis angemeldet')
     } catch {
-      setStatus({ ...UNREACHABLE, school, error: 'Anmeldefenster konnte nicht geöffnet werden' })
+      setStatus({ ...UNREACHABLE, error: 'Anmeldefenster konnte nicht geöffnet werden' })
     } finally {
       setBusy(false)
     }
@@ -218,7 +256,7 @@ function WebuntisConnection() {
     setBusy(true)
     try {
       const res = await api.webuntisLogout()
-      if (res.ok) setStatus({ ok: true, loggedIn: false, school })
+      if (res.ok) setStatus({ ok: true, loggedIn: false })
       else showToast(res.error || 'Abmelden fehlgeschlagen', { kind: 'error', duration: 5000 })
     } catch {
       showToast('Abmelden fehlgeschlagen', { kind: 'error', duration: 5000 })
@@ -240,16 +278,29 @@ function WebuntisConnection() {
 
       {enabled && (
         <div className="flex flex-col gap-3 border-t border-white/[0.05] px-4 py-3">
-          <div className="flex items-center gap-3">
-            <div className="w-16 shrink-0 text-[12px] font-medium text-ink-2">Schule</div>
-            <div className="min-w-0 truncate text-[12.5px] text-ink">
-              {school ? (
-                <>
-                  {school.name} <span className="text-ink-3">({school.host})</span>
-                </>
-              ) : (
-                <span className="text-ink-3">—</span>
-              )}
+          <div className="flex items-start gap-3">
+            <label htmlFor="webuntis-address" className="mt-2 w-16 shrink-0 text-[12px] font-medium text-ink-2">
+              Adresse
+            </label>
+            <div className="min-w-0 flex-1">
+              <Input
+                id="webuntis-address"
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                onBlur={commitAddress}
+                onKeyDown={(e) => e.key === 'Enter' && commitAddress()}
+                placeholder="https://schulname.webuntis.com/WebUntis/?school=schulname"
+                spellCheck={false}
+                disabled={busy}
+                aria-invalid={Boolean(addressError)}
+                className={cx('h-8 text-[12.5px]', addressError && 'border-sick/60')}
+              />
+              <p className={cx('mt-1 text-[11.5px]', addressError ? 'text-sick' : 'text-ink-3')}>
+                {addressError ||
+                  (host
+                    ? `Server ${host}${school ? ` · Schule „${school}“` : ''}`
+                    : 'Öffne die WebUntis-Anmeldeseite deiner Schule im Browser und kopiere die Adresse hierher.')}
+              </p>
             </div>
           </div>
 
@@ -257,7 +308,7 @@ function WebuntisConnection() {
             <div className="w-16 shrink-0 text-[12px] font-medium text-ink-2">Status</div>
             <div className="flex min-w-0 flex-1 items-center gap-1">
               <WebuntisStatus status={status} />
-              {status && !status.ok && (
+              {status && !status.ok && status.code !== 'no-server' && (
                 <IconButton label="Erneut prüfen" onClick={recheck} disabled={busy}>
                   <ArrowClockwiseIcon size={13} />
                 </IconButton>
@@ -268,7 +319,7 @@ function WebuntisConnection() {
                 <SignOutIcon size={14} /> Abmelden
               </Button>
             ) : (
-              <Button size="sm" variant="primary" onClick={login} disabled={!status || busy}>
+              <Button size="sm" variant="primary" onClick={login} disabled={!status || busy || !host}>
                 {busy ? (
                   <>
                     <CircleNotchIcon size={14} className="animate-spin" /> Anmeldefenster offen …

@@ -12,6 +12,8 @@ import {
   fillWeekFromWebuntis,
   pickKey,
   dropSubjects,
+  parseWebuntisAddress,
+  webuntisAddressLabel,
 } from './webuntis.js'
 
 const lesson = (start, subjectShort, topics = [], extra = {}) => ({
@@ -487,5 +489,57 @@ describe('pickKey / dropSubjects', () => {
       { label: 'LF08', bullets: [''] },
       { label: 'LF10', bullets: ['Datenbanken'] },
     ])
+  })
+})
+
+describe('parseWebuntisAddress', () => {
+  it('takes host and school from a pasted login address', () => {
+    expect(parseWebuntisAddress('https://beispiel-bbs.webuntis.com/WebUntis/?school=beispiel-bbs#/basic/login'))
+      .toEqual({ ok: true, host: 'beispiel-bbs.webuntis.com', school: 'beispiel-bbs' })
+  })
+
+  it('finds the school in the hash route and decodes it', () => {
+    expect(parseWebuntisAddress('https://nessa.webuntis.com/WebUntis/#/basic/login?school=BBS+Musterstadt'))
+      .toEqual({ ok: true, host: 'nessa.webuntis.com', school: 'BBS Musterstadt' })
+  })
+
+  it('accepts a bare host (school stays empty) and normalises case and spaces', () => {
+    expect(parseWebuntisAddress('  Nessa.WebUntis.com  ')).toEqual({ ok: true, host: 'nessa.webuntis.com', school: '' })
+    expect(parseWebuntisAddress('https://nessa.webuntis.com/')).toEqual({ ok: true, host: 'nessa.webuntis.com', school: '' })
+  })
+
+  it('rejects empty input and garbage', () => {
+    expect(parseWebuntisAddress('')).toMatchObject({ ok: false })
+    expect(parseWebuntisAddress(undefined)).toMatchObject({ ok: false })
+    expect(parseWebuntisAddress('http://[::1')).toMatchObject({ ok: false })
+  })
+
+  it('only allows https to <name>.webuntis.com', () => {
+    for (const bad of [
+      'http://nessa.webuntis.com/WebUntis/',
+      'https://webuntis.com/',
+      'https://a.b.webuntis.com/',
+      'https://nessa.webuntis.com.evil.io/',
+      'https://evil.io/?school=x&host=nessa.webuntis.com',
+      'https://user:pw@nessa.webuntis.com/',
+      'https://nessa.webuntis.com:8443/',
+      'ftp://nessa.webuntis.com/',
+      'javascript:alert(1)',
+    ]) {
+      expect(parseWebuntisAddress(bad), bad).toMatchObject({ ok: false })
+    }
+  })
+
+  it('rejects an overlong school name', () => {
+    expect(parseWebuntisAddress(`https://nessa.webuntis.com/?school=${'x'.repeat(101)}`)).toMatchObject({ ok: false })
+  })
+})
+
+describe('webuntisAddressLabel', () => {
+  it('shows host and school, or nothing without a host', () => {
+    expect(webuntisAddressLabel({ host: 'nessa.webuntis.com', school: 'BBS' })).toBe('nessa.webuntis.com · BBS')
+    expect(webuntisAddressLabel({ host: 'nessa.webuntis.com', school: '' })).toBe('nessa.webuntis.com')
+    expect(webuntisAddressLabel({ host: '', school: 'x' })).toBe('')
+    expect(webuntisAddressLabel()).toBe('')
   })
 })
