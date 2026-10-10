@@ -188,6 +188,15 @@ server: without a session, `/WebUntis/api/token/new` answers 302 → `index.do`;
 Electron's `session.fetch` rejects that under `redirect: 'manual'` with
 "Redirect was cancelled", which `net.js` maps to "Bitte erneut anmelden."
 
+**Session handling (step 4.3, 2026-10-10):** `electron/webuntis-session.js`.
+The bearer token never leaves the main process and is never written to disk —
+it is cheap to re-fetch from the web session, so no `safeStorage` is needed for
+W1 (only the partition's cookies persist, managed by Chromium). Login is
+detected by polling `token/new` every 2 s while the login window is open; the
+window closes itself on success. A 200 answer that is not a JWT counts as "not
+logged in". `logout()` bumps a generation counter so a token request still in
+flight cannot re-populate the cache afterwards.
+
 ### E-014 · Keep the file name `daten.json` · accepted
 Field names became English in schema v3, but the file name stays: existing
 installations, portable copies, backups (`.bak1–3`) and the README all rely on it.

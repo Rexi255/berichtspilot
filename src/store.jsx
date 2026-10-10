@@ -37,6 +37,9 @@ const browserApi = {
   readClipboard: () => navigator.clipboard.readText().catch(() => ''),
   revealDataFile: async () => {},
   askDialog: async () => 0,
+  webuntisStatus: async () => ({ ok: false, loggedIn: false, error: DESKTOP_ONLY }),
+  webuntisLogin: async () => ({ ok: false, loggedIn: false, error: DESKTOP_ONLY }),
+  webuntisLogout: async () => ({ ok: false, error: DESKTOP_ONLY }),
   minimize() {}, maximize() {}, close() {}, onMaximized: () => () => {},
 }
 

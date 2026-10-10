@@ -4,6 +4,7 @@ const { app, BrowserWindow, ipcMain, dialog, shell, clipboard, Menu, MenuItem } 
 const path = require('path')
 const fs = require('fs')
 const fsp = fs.promises
+const { createWebUntisSession } = require('./webuntis-session')
 
 // ---------------------------------------------------------------------------
 // Location of daten.json. Goal: keep the file "portable" next to the
@@ -304,6 +305,13 @@ ipcMain.handle('dialog:ask', async (_ev, { title, message, detail, buttons, canc
   })
   return response
 })
+
+// WebUntis session (E-013, path W1). The bearer token stays in main; the
+// renderer only gets { ok, loggedIn, personId?, error? }. No renderer input.
+const webuntis = createWebUntisSession()
+ipcMain.handle('webuntis:status', () => webuntis.status())
+ipcMain.handle('webuntis:login', () => webuntis.openLogin({ parent: win }))
+ipcMain.handle('webuntis:logout', () => webuntis.logout())
 
 // Window controls for the custom title bar
 ipcMain.handle('window:minimize', () => win?.minimize())

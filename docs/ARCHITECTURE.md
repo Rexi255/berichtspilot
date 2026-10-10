@@ -59,6 +59,9 @@ the bridge with `localStorage` stubs — handy for smoke tests.
 | `dialog:ask` | `askDialog(opts)` | native question dialog → button index |
 | `window:minimize` / `window:maximize` / `window:close` | `minimize()` / `maximize()` / `close()` | custom title bar |
 | `window:maximized` (event main → renderer) | `onMaximized(cb)` | maximized state |
+| `webuntis:status` | `webuntisStatus()` | WebUntis session → `{ ok, loggedIn, personId?, code?, error? }` (never the token) |
+| `webuntis:login` | `webuntisLogin()` | open the isolated login window; resolves on detected login or window close → same shape as status |
+| `webuntis:logout` | `webuntisLogout()` | wipe the `persist:webuntis` partition + token → `{ ok, error? }` |
 
 ## Networking
 
@@ -70,13 +73,21 @@ main process, only to hosts in this allowlist, each with a reason.
 
 | Host | Purpose | Since |
 |---|---|---|
-| `bbz-dithmarschen.webuntis.com` | WebUntis: timetable + lesson topics (E-013). **Probe only so far** (`--webuntis-probe`), not used by the app | 2026-10 (step 4.1) |
+| `bbz-dithmarschen.webuntis.com` | WebUntis: timetable + lesson topics (E-013). Session handling (`electron/webuntis-session.js`: token from `/api/token/new`) + the probe (`--webuntis-probe`); no UI yet | 2026-10 (step 4.1) |
 
 `login.bbz-dithmarschen.de` (school SSO) is only *navigated to* inside the
 isolated login window; the main process never sends requests there.
 
 The renderer CSP is unchanged: WebUntis runs in its own window, never in the app
 window.
+
+**WebUntis session (E-013, W1):** `createWebUntisSession()` in
+`electron/webuntis-session.js` owns the login window (partition
+`persist:webuntis`, sandbox, no preload, https-only navigation, pop-ups stay in
+the partition, all permission requests denied) and the 15-min bearer token
+(cached in memory, renewed 60 s before `exp`, concurrent callers share one
+request). Only main-process code may call `getToken()`; the renderer sees just
+`loggedIn` and `personId`. `logout()` clears the partition's storage.
 
 ### Network layer `electron/net.js` (step 4.2)
 

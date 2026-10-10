@@ -30,33 +30,38 @@ WebUntis "Lehrstoff" ─────────────┘    (daten.json) 
 
 ## Next step
 
-**Step 4.3 — WebUntis session handling (path W1)** (unblocked; E-013 accepted,
-`electron/net.js` exists).
+**Step 4.4 — Settings section "Verbindungen" (WebUntis)** (unblocked; the
+session API from 4.3 exists: `window.api.webuntisStatus()` / `webuntisLogin()` /
+`webuntisLogout()` → `{ ok, loggedIn, personId?, code?, error? }`).
 
-- New CommonJS module `electron/webuntis-session.js`:
-  - `openLogin()`: login window like the probe's (partition `persist:webuntis`,
-    `sandbox: true`, `contextIsolation`, no preload, SSO pop-ups via
-    `setWindowOpenHandler` stay in the same partition; never the app window's
-    session). Resolves when the login is detected (poll `getToken()`) or the
-    window is closed.
-  - `getToken()`: `request()` from `net.js` on
-    `https://bbz-dithmarschen.webuntis.com/WebUntis/api/token/new` with that
-    session → JWT text = logged in; `code: 'auth'` = not logged in. The token
-    lives 15 min — cache it with its `exp` and renew shortly before.
-  - `status()`: `{ loggedIn, personId?, error? }` from the token payload
-    (`person_id`); `logout()`: `session.fromPartition(...).clearStorageData()`.
-- Pure parts in their own module (e.g. `electron/jwt.js`: decode payload,
-  `isJwt(text)`, `expiresSoon(payload, now)`) + `*.test.mjs`.
-- IPC `webuntis:status` / `webuntis:login` / `webuntis:logout` (three places:
-  `main.js`, `preload.js`, `browserApi` fallback in `src/store.jsx` returning
-  `{ ok: false, error: 'Nur in der Desktop-App verfügbar.' }`); add them to the
-  channel table in `docs/ARCHITECTURE.md`. Handlers return `{ ok, … }`.
-- No UI yet (step 4.4). Manual check via the Electron console or a dev flag.
+- Schema v5: `settings.webuntis = { enabled: false }` (only the on/off switch —
+  server and school are fixed by the allowlist in `electron/net.js`, so they are
+  shown read-only, not stored). Bump `DATA_VERSION`, migration step + test in
+  `src/lib/model.test.js`, update `docs/DATA_MODEL.md`. No credentials, no
+  token, no person id in `daten.json` (rule 5).
+- Store mutation `setWebuntisEnabled(bool)` in `src/store.jsx`.
+- New `<section>` in `src/views/Settings.jsx` (same pattern as the existing
+  sections, components from `src/ui/basics.jsx`), German texts:
+  - switch "WebUntis-Import" (off = section collapsed, nothing is ever requested)
+  - read-only "Schule: BBZ Dithmarschen (bbz-dithmarschen.webuntis.com)"
+  - status line: "Angemeldet" / "Nicht angemeldet" / error text from `error`;
+    fetched with `webuntisStatus()` when the section opens (and only if enabled)
+  - buttons "Anmelden" (→ `webuntisLogin()`, button shows a busy state while
+    the login window is open) and "Abmelden" (→ `webuntisLogout()`)
+  - short privacy note: login happens in a separate window on the school's
+    page; the app never sees the password.
+- Browser mode: the fallback returns "Nur in der Desktop-App verfügbar" —
+  show it as the status text, don't crash.
+- Verify: lint/test/build + Electron screenshot `--view=settings`; the user
+  checks the real login once (step 4.3 could not be tested with a real account
+  — see the note in the done log).
 
-**Then 4.4–4.6** (see E-013): settings section "Verbindungen" → week from
-`timetable/entries` → topics per lesson from `calendar-entry/detail`
-(`teachingContent` only — user confirmed "Lehrstoff") → subject mapping →
-"Woche aus WebUntis füllen" (skip cancelled lessons, `HOLIDAY` = school break).
+**Then 4.5–4.6** (see E-013): `electron/webuntis.js` uses `getToken()` from
+`createWebUntisSession()` in `main.js` (headers `Authorization: Bearer …` +
+`Tenant-Id` from the payload's `tenant_id`) → week from `timetable/entries` →
+topics per lesson from `calendar-entry/detail` (`teachingContent` only) →
+subject mapping → "Woche aus WebUntis füllen" (skip cancelled lessons,
+`HOLIDAY` = school break).
 
 ## Open questions (for the user)
 
@@ -101,8 +106,9 @@ decision).
       topics found, W2 (QR code) available → E-013 accepted (2026-10-10)
 - [x] 4.2 Network layer in main: `electron/net.js` — `fetch` wrapper with host
       allowlist, timeout, readable errors; Vitest for the allowlist (2026-10-10)
-- [ ] 4.3 Session handling: login window (partition `persist:webuntis`), "logged
-      in?" check, logout; secret store via safeStorage only if path W2 is used
+- [x] 4.3 Session handling: `electron/webuntis-session.js` (login window in
+      partition `persist:webuntis`, token cache with renewal, status, logout) +
+      `electron/jwt.js`; IPC `webuntis:status|login|logout` (2026-10-10)
 - [ ] 4.4 Settings → new section "Verbindungen" (WebUntis on/off, server, school,
       user, status)
 - [ ] 4.5 `electron/webuntis.js` + mapping WebUntis subject → learning-field label (per profile)
@@ -134,3 +140,4 @@ decision).
 | 2026-10-10 | Step 4.1b: probe evaluated, E-013 accepted | branch `claude/intelligent-curie-yxizss` |
 | 2026-10-10 | Step 2.2: speech spike (model parked) | branch `claude/intelligent-curie-yxizss` |
 | 2026-10-10 | Step 4.2: network layer `electron/net.js` | branch `claude/intelligent-curie-yxizss` |
+| 2026-10-10 | Step 4.3: WebUntis session handling (smoke-tested against the live server: status "not logged in", login window loads, close + logout; a real login is still untested) | branch `claude/intelligent-curie-yxizss` |
