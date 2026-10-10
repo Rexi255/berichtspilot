@@ -9,6 +9,7 @@ import {
   replaceData,
   seedData,
   newWeek,
+  newProfile,
   weekFromTemplate,
   applyPeriod,
   periodFor,
@@ -97,7 +98,7 @@ describe('migrateData', () => {
   it('migrates a full v2 file to the current version with English names and values', () => {
     const d = migrateData(v2File())
     expect(d.version).toBe(DATA_VERSION)
-    expect(DATA_VERSION).toBe(10)
+    expect(DATA_VERSION).toBe(11)
 
     expect(d.settings).toEqual({
       trainingStart: '2025-08-01',
@@ -337,7 +338,7 @@ describe('migrateData', () => {
 
   it('v9 -> v10 marks existing files as set up; a malformed value counts as done', () => {
     const d = migrateData({ version: 9, settings: { theme: 'forest' }, profiles: [], weeks: [] })
-    expect(d.version).toBe(10)
+    expect(d.version).toBe(DATA_VERSION)
     expect(d.settings.setupDone).toBe(true)
     expect(() => validateData(d)).not.toThrow()
     const doneOf = (value) =>
@@ -346,6 +347,28 @@ describe('migrateData', () => {
     expect(doneOf('nein')).toBe(true)
     expect(doneOf(undefined)).toBe(true)
     expect(() => validateData({ settings: { setupDone: 'ja' }, profiles: [], weeks: [] })).toThrow(/Einrichtung/)
+  })
+
+  it('v10 -> v11 lowers the old default of two starter bullets to one, keeps chosen counts', () => {
+    const d = migrateData({
+      version: 10,
+      settings: {},
+      profiles: [
+        profileWith({ id: 'p-old', defaultBulletCount: 2 }),
+        profileWith({ id: 'p-own', defaultBulletCount: 3 }),
+      ],
+      weeks: [],
+    })
+    expect(d.version).toBe(DATA_VERSION)
+    expect(d.profiles.map((p) => p.defaultBulletCount)).toEqual([1, 3])
+    expect(() => validateData(d)).not.toThrow()
+  })
+
+  it('creates one starter bullet per work day by default', () => {
+    expect(seedData().profiles.every((p) => p.defaultBulletCount === 1)).toBe(true)
+    expect(newProfile().defaultBulletCount).toBe(1)
+    const week = newWeek('2026-04-20', [profileWith({ defaultBulletCount: undefined })])
+    expect(week.days.find((d) => d.type === 'work').bullets).toEqual([''])
   })
 
   it('a fresh seed waits for the setup wizard', () => {

@@ -32,26 +32,25 @@ WebUntis "Lehrstoff" ─────────────┘    (daten.json) 
 
 ## Next step
 
-**v2.0.0 is released** (2026-10-10, https://github.com/Rexi255/berichtspilot/releases/tag/v2.0.0).
-Merged into `main` via PR #1, tagged `v2.0.0`, release workflow green, all five
-assets attached. Work continues on branch `claude/intelligent-curie-yxizss`
-(currently `main` + this plan update); deliver via PR into `main` again.
+**v2.0.1 is prepared** on branch `claude/intelligent-curie-yxizss`: setup-wizard
+scroll fix (PR #2, already in `main`) + one starter bullet per work day
+(schema v11, E-021), `package.json` 2.0.1, CHANGELOG section `[2.0.1]`.
+The user wants it shipped to users right away (plain release, no pre-release).
 
-1. The user installs `Berichtspilot-Setup-2.0.0.exe` by hand once (1.x has no
-   updater) and checks: data migrated (schema v10, no setup wizard for existing
-   data), Settings → "Updates" says "neueste Version".
-2. Real in-app update test (open question below): ship a small `v2.0.1` (bump
-   `package.json`, CHANGELOG section, tag) and update from inside the installed
-   2.0.0 — sidebar card → download → install → restart on 2.0.1.
+1. Merge the v2.0.1 PR into `main` (the user merges; Claude Code's auto mode
+   blocks `gh pr merge`), then tag `main` with `v2.0.1` and push the tag →
+   release workflow; check that all assets incl. `latest.yml` are attached and
+   copy the `[2.0.1]` CHANGELOG section into the release notes.
+2. Real in-app update test: in the installed 2.0.0, sidebar card / Settings →
+   "Updates" → download → install → restart on 2.0.1; data migrated to
+   schema v11 (profiles with 2 starter bullets now 1).
 3. Then ask the user what comes first: UI overhaul (v2.1, "Later / to-do"),
    the parked dictation phase, or WebUntis-assisted setup (fill school days +
    subjects from the timetable, see E-020).
 
 ## Open questions (for the user)
 
-- Real update test (after v2.0.0 is out): v2.0.0 is the first release with the
-  updater and has to be installed by hand once. Then publish a small follow-up
-  (`v2.0.1`) and update in-app — or first a pre-release? Ask at release time.
+None right now.
 
 Parked by the user (2026-10-10), not to be asked now: which speech model to
 bundle (E-010 has the measurements; real-voice recordings belong to that
@@ -212,4 +211,5 @@ decision).
 | 2026-10-10 | E-019: own WebUntis address (schema v9, `webuntis:configure`, only `*.webuntis.com`) | PR #1 |
 | 2026-10-10 | E-020: setup wizard on a fresh install (schema v10 `setupDone`) | PR #1 |
 | 2026-10-10 | v2.0.0 released: PR #1 merged, tag pushed, release workflow green, release notes from CHANGELOG | 674cea3, tag `v2.0.0` |
-| 2026-10-10 | Fix: setup wizard scrolls again (`.aurora` overflow beat Tailwind's `overflow-y-auto`; scrolling moved to an inner element) | see git log |
+| 2026-10-10 | Fix: setup wizard scrolls again (`.aurora` overflow beat Tailwind's `overflow-y-auto`; scrolling moved to an inner element) | PR #2 (18e2325) |
+| 2026-10-10 | E-021: one starter bullet per work day (schema v11); v2.0.1 prepared | branch `claude/intelligent-curie-yxizss` |

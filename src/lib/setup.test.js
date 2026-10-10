@@ -144,7 +144,7 @@ describe('applySetup', () => {
       state: 'NI',
       validFrom: '2026-08-01',
       validTo: '2027-01-31',
-      defaultBulletCount: 2,
+      defaultBulletCount: 1,
       webuntisSubjects: {},
     })
     expect(profile.id).toMatch(/^profile-/)

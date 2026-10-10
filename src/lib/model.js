@@ -8,7 +8,7 @@ export const DAY_STATUSES = ['normal', 'holiday', 'sick', 'vacation']
 
 // Current schema version of daten.json. Older files are upgraded on load/import
 // via migrateData(); newer ones are rejected (downgrade protection).
-export const DATA_VERSION = 10
+export const DATA_VERSION = 11
 
 let idCounter = 0
 export const newId = (prefix) =>
@@ -229,6 +229,18 @@ function migrateV9toV10(d) {
   return { ...d, version: 10, settings: { setupDone: true, ...settings } }
 }
 
+/**
+ * Schema v10 -> v11: one starter bullet per work day instead of two. With two
+ * empty bullets, Enter in the first one inserts a third instead of moving on.
+ * Only the old default (2) is lowered; any other count was chosen on purpose.
+ */
+function migrateV10toV11(d) {
+  const profiles = Array.isArray(d.profiles)
+    ? d.profiles.map((p) => (isObject(p) && p.defaultBulletCount === 2 ? { ...p, defaultBulletCount: 1 } : p))
+    : d.profiles
+  return { ...d, version: 11, profiles }
+}
+
 /** Only string → string entries survive (hand-edited or broken files). */
 function cleanSubjectMap(map) {
   if (!isObject(map)) return {}
@@ -260,6 +272,7 @@ export function migrateData(raw) {
   if (d.version < 8) d = migrateV7toV8(d)
   if (d.version < 9) d = migrateV8toV9(d)
   if (d.version < 10) d = migrateV9toV10(d)
+  if (d.version < 11) d = migrateV10toV11(d)
 
   // Defensive defaults in case single fields are missing (e.g. hand-edited file)
   d.periods ??= []
@@ -396,7 +409,7 @@ function midweek(mondayISO) {
 export function newWeek(mondayISO, profiles, periods = []) {
   const profile = profileForDate(profiles, midweek(mondayISO))
   const weekdays = profile?.weekdays ?? FALLBACK_WEEKDAYS
-  const count = Math.max(1, profile?.defaultBulletCount ?? 2)
+  const count = Math.max(1, profile?.defaultBulletCount ?? 1)
   const state = profile?.state ?? 'SH'
 
   const days = []
@@ -446,7 +459,7 @@ export function shouldAutoCreate(data, todayISO) {
 export function weekFromTemplate(mondayISO, template, profiles, periods = []) {
   const profile = profileForDate(profiles, midweek(mondayISO))
   const state = profile?.state ?? 'SH'
-  const count = Math.max(1, profile?.defaultBulletCount ?? 2)
+  const count = Math.max(1, profile?.defaultBulletCount ?? 1)
 
   const days = template.days.map((old) => {
     // Keep the old day's weekday offset (Mon = 0 … Sat = 5)
@@ -493,7 +506,7 @@ export function seedData() {
         state: 'SH',
         validFrom: '2026-02-02',
         validTo: '2026-07-31',
-        defaultBulletCount: 2,
+        defaultBulletCount: 1,
         weekdays: {
           mon: { type: 'school', subjects: ['LF02', 'LF03', 'Englisch', 'WiPo'] },
           tue: { type: 'school', subjects: ['LF04', 'LF05'] },
@@ -510,7 +523,7 @@ export function seedData() {
         state: 'SH',
         validFrom: '2025-08-01',
         validTo: '2026-02-01',
-        defaultBulletCount: 2,
+        defaultBulletCount: 1,
         weekdays: {
           mon: { type: 'school', subjects: ['LF01', 'LF02', 'LF03', 'WiPo'] },
           tue: { type: 'work', subjects: [] },
@@ -587,7 +600,7 @@ export function newProfile() {
     state: 'SH',
     validFrom: '',
     validTo: '',
-    defaultBulletCount: 2,
+    defaultBulletCount: 1,
     weekdays: {
       mon: { type: 'work', subjects: [] },
       tue: { type: 'work', subjects: [] },

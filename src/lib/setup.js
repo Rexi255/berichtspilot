@@ -131,7 +131,7 @@ export function applySetup(data, answers) {
     })
   )
   const profile = {
-    ...(old ?? { id: newId('profile'), defaultBulletCount: 2, webuntisSubjects: {} }),
+    ...(old ?? { id: newId('profile'), defaultBulletCount: 1, webuntisSubjects: {} }),
     name: answers.profile.name.trim(),
     state: answers.state,
     validFrom: answers.profile.validFrom,
