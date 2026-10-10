@@ -41,6 +41,9 @@ names consistently. Add new terms here before using them.
 | Lücke (fehlende Woche) | gap / `missingWeeks` | |
 | Notizen (Rohtext) | `notes` | raw text per day (dictation/AI input), schema v4; never in the output |
 | Diktat / Spracheingabe | dictation / speech input | |
+| Mit KI formulieren | AI phrasing (`phrasing`) | notes → bullets via a chat AI |
+| Kopier-Brücke | clipboard bridge | user copies prompt/answer between app and chat AI (E-011) |
+| Auftrag (an die KI) | prompt | built by `buildPrompt()` |
 | Zeiterfassung | time tracking | |
 
 ## Schema v2 → v3 field mapping (`daten.json`)

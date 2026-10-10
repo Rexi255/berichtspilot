@@ -17,6 +17,7 @@ import {
   ClipboardTextIcon,
   NotePencilIcon,
   ListBulletsIcon,
+  SparkleIcon,
 } from '@phosphor-icons/react'
 import { useStore, api } from '../store.jsx'
 import { Button, IconButton, Input, TextArea, Segment, Panel, Pill, SectionTitle, cx } from '../ui/basics.jsx'
@@ -26,6 +27,7 @@ import { holidayOn } from '../lib/holidays.js'
 import { profileForDate } from '../lib/model.js'
 import { formatAll } from '../lib/format.js'
 import { splitNotes, BULLET_PREFIX } from '../lib/notes.js'
+import PhrasingPanel from './PhrasingPanel.jsx'
 
 const STATUS_OPTIONS = [
   { value: 'normal', label: 'Normal' },
@@ -515,6 +517,9 @@ function OutputBlock({ title, shortName, text, fileName }) {
 export default function WeekEditor({ monday, setMonday }) {
   const { data, createWeek, updateWeek, deleteWeek } = useStore()
   const [confirmDelete, setConfirmDelete] = useState(false)
+  // The AI panel belongs to one week: remembering its Monday closes it on week change
+  const [phrasingFor, setPhrasingFor] = useState(null)
+  const phrasingOpen = phrasingFor === monday
   const columnRef = useRef(null)
   const gridRef = useRef(null)
   const directionRef = useRef(0) // -1 = back, +1 = forward, 0 = jump (date picker)
@@ -630,6 +635,21 @@ export default function WeekEditor({ monday, setMonday }) {
     setConfirmDelete(false)
   }
 
+  // Apply AI bullets ({ date: bullets }) — replaces those days' bullets, undoable
+  const applyPhrasing = (result) => {
+    const snapshot = week
+    updateWeek(monday, (w) => ({
+      ...w,
+      days: w.days.map((d) => (result[d.date] ? { ...d, bullets: result[d.date] } : d)),
+    }))
+    setPhrasingFor(null)
+    const count = Object.keys(result).length
+    showToast(count === 1 ? 'Stichpunkte für 1 Tag übernommen' : `Stichpunkte für ${count} Tage übernommen`, {
+      duration: 6000,
+      action: { label: 'Rückgängig', onClick: () => updateWeek(monday, () => structuredClone(snapshot)) },
+    })
+  }
+
   return (
     <div className="flex h-full flex-col">
       {/* header: week selection + status */}
@@ -671,6 +691,13 @@ export default function WeekEditor({ monday, setMonday }) {
 
         {week && (
           <>
+            <Button
+              variant={phrasingOpen ? 'primary' : 'outline'}
+              onClick={() => setPhrasingFor(phrasingOpen ? null : monday)}
+              title="Notizen per KI (Claude.ai, ChatGPT …) in Stichpunkte formulieren lassen — über die Zwischenablage"
+            >
+              <SparkleIcon size={15} /> Mit KI formulieren
+            </Button>
             <Segment
               options={[
                 { value: 'draft', label: 'Entwurf' },
@@ -721,6 +748,14 @@ export default function WeekEditor({ monday, setMonday }) {
         <div ref={gridRef} className="grid min-h-0 flex-1 grid-cols-[minmax(430px,7fr)_minmax(360px,5fr)] gap-5 px-8 pb-8">
           {/* left column: days + instructions */}
           <div ref={columnRef} className="flex min-h-0 flex-col gap-3 overflow-y-auto pr-1">
+            {phrasingOpen && (
+              <PhrasingPanel
+                week={week}
+                weeks={data.weeks}
+                onApply={applyPhrasing}
+                onClose={() => setPhrasingFor(null)}
+              />
+            )}
             {week.days.map((day) => (
               <DayCard key={day.date} day={day} onChange={(d) => updateDay(day.date, d)} suggestions={suggestions} />
             ))}

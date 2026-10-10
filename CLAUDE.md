@@ -80,8 +80,8 @@ portable .exe + AppImage.
 electron/main.js     window, daten.json location, atomic save + backups, all IPC handlers
 electron/preload.js  contextBridge → window.api (the only bridge to the renderer)
 src/store.jsx        central state (React context), 400 ms autosave, all mutations
-src/lib/             PURE logic, fully tested: dates · holidays · format · model
-src/views/           screens: overview · week editor · profiles · settings
+src/lib/             PURE logic, fully tested: dates · holidays · format · model · notes · phrasing
+src/views/           screens: overview · week editor (+ PhrasingPanel) · profiles · settings
 src/ui/              design system: Titlebar, Sidebar, basics, toast, Logo
 src/index.css        Tailwind v4 + design tokens/themes (data-theme on <html>)
 docs/                knowledge base (see above)

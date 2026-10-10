@@ -15,6 +15,13 @@ versioning follows [Semantic Versioning](https://semver.org/).
 - **"In Stichpunkte übernehmen":** on work days, notes are split into bullets
   with one click — one bullet per line or sentence, bullet characters and
   numbering removed, German abbreviations like "z. B." or "ca." kept intact.
+- **"Mit KI formulieren" (clipboard bridge):** builds a prompt from the week's
+  notes (with your own earlier bullets as style examples), you paste it into any
+  chat AI (Claude.ai, ChatGPT, Gemini — free plans work, no API key) and paste
+  the answer back. The app reads the answer even with intros or formatting,
+  shows a per-day preview and replaces the bullets on confirmation — undoable.
+  Before copying, it warns about possible customer data (e-mail/IP/MAC
+  addresses, ticket and phone numbers). No network access.
 
 ### Changed
 

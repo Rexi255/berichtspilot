@@ -30,34 +30,40 @@ WebUntis lesson notes ────────────┘    (daten.json)   
 
 ## Next step
 
-**Step 2.2 — Spike: choose the local speech engine** (finalizes E-010)
+**Step 4.1 — WebUntis probe (spike for E-013, path W1)**
 
-Goal: a measured decision, not a guess. Model ships with the installer (user
-decision). Candidates (see E-010 for details):
+Step 2.2 (speech spike) waits for the user's sample recordings; WebUntis can be
+explored now — but only on the user's machine (real SSO login). So this step
+builds a small **developer probe** the user runs once locally and sends back the
+(anonymised) result.
 
-| Engine | Integration | Model sizes (German-capable) |
-|---|---|---|
-| whisper.cpp | native binary or Node addon in a utility process | base ~140 MB · small ~470 MB (q5 ~180 MB) · large-v3-turbo q5 ~550 MB |
-| transformers.js (ONNX Whisper) | Web Worker in the renderer, WASM/WebGPU | similar sizes; CSP needs `'wasm-unsafe-eval'` |
-| Vosk | Node binding | small German ~45 MB (noticeably weaker accuracy) |
+- `electron/webuntis-probe.js` (CommonJS, main process), started via
+  `electron . --webuntis-probe` (like `--screenshot`; never exposed to the renderer):
+  1. opens a `BrowserWindow` with `partition: 'persist:webuntis'`, `sandbox: true`,
+     no preload, loading
+     `https://bbz-dithmarschen.webuntis.com/WebUntis/?school=bbz-dithmarschen`;
+  2. waits until the user is logged in via the school portal (detect by polling
+     `GET /WebUntis/api/token/new` with the partition's session until it returns a
+     token, or the URL leaves the login page);
+  3. with that session (`session.fromPartition(...).fetch`), calls candidate
+     endpoints for the current week — JSON-RPC `getTimetable`, the web UI's REST
+     timetable (`/WebUntis/api/rest/view/v1/timetable/entries`) and the lesson
+     detail endpoint the web UI uses for "Notizen" (find it by recording the
+     window's network requests while the user opens one lesson —
+     `webContents.session.webRequest.onCompleted`, URLs only);
+  4. writes `webuntis-probe.json` next to daten.json: per endpoint the HTTP status
+     and the **structure** of the response (keys + value types; strings replaced by
+     their length, except for an allowlist like subject short names) — no names,
+     no tokens, no cookies.
+- Pure helper `src/lib/shape.js` (or inside the probe module, tested): turns any JSON
+  into its anonymised shape; Vitest.
+- Docs: how to run it (`npm run dev`-free: `npm run build:renderer && npx electron .
+  --webuntis-probe`) in `docs/PLAN.md` / CONTRIBUTING; ARCHITECTURE allowlist entry
+  `bbz-dithmarschen.webuntis.com` (probe only for now).
+- The user runs it, sends `webuntis-probe.json`; result → E-013 (which endpoint
+  carries the lesson notes, session lifetime) and the concrete design of 4.2–4.6.
 
-Rejected up front: the browser Web Speech API (doesn't work in Electron without
-a Google key and sends audio to Google anyway).
-
-Tasks:
-1. Prototype each viable engine in `scratch/` (not committed) with 3–4 German
-   test recordings typical for the user (IT jargon: "DHCP", "Switch-Ports",
-   "VLAN", "Active Directory"). Ask the user for 2–3 short sample recordings or
-   use public-domain German speech if none are available.
-2. Measure: word error rate on the jargon, real-time factor on the cloud CPU,
-   RAM, size added to installer / portable .exe / AppImage, cold-start time.
-3. Check packaging: electron-builder `extraResources` / `asarUnpack` for the
-   binary + model on Windows (NSIS + portable) and Linux (AppImage).
-4. Write the result table + recommendation into E-010 (DECISIONS.md), ask the
-   user to confirm (and ideally to run the prototype once on the Windows notebook
-   for speed), then set E-010 to accepted.
-
-Then: steps 2.3–2.5 (mic permission, transcription IPC, dictate button).
+When the recordings arrive: step 2.2 (speech spike) instead.
 
 ## Open questions (for the user)
 
@@ -90,13 +96,12 @@ Then: steps 2.3–2.5 (mic permission, transcription IPC, dictate button).
 
 ### Phase 3 — AI phrasing (E-011)
 - [x] 3.1 User picked option A, the clipboard bridge → E-011 accepted (2026-10-10)
-- [ ] 3.2 Pure lib `src/lib/phrasing.js`: build the prompt (style rules from
-      `OUTPUT_FORMAT.md`, few-shot examples from the user's own finished weeks) and
-      parse a strictly formatted answer back into bullets per day; tests
-- [ ] 3.3 Lightweight safety check before anything leaves the app: warn about
-      patterns like IPs, e-mail addresses, phone and ticket numbers
-- [ ] 3.4 Provider "clipboard bridge" (option A): copy prompt → paste answer →
-      preview → accept/reject per day
+- [x] 3.2 Pure lib `src/lib/phrasing.js`: prompt with style rules + the user's own
+      bullets as examples, tolerant answer parser; tests (2026-10-10)
+- [x] 3.3 Safety check before copying: warns about e-mail/IP/MAC/ticket/phone
+      patterns (2026-10-10)
+- [x] 3.4 Clipboard bridge UI ("Mit KI formulieren"): copy prompt → paste answer →
+      preview per day → apply, undoable (2026-10-10)
 - [ ] 3.5 School days: polish topic keywords per subject (after WebUntis delivers them)
 
 ### Phase 4 — WebUntis import (E-013)
@@ -132,4 +137,5 @@ Then: steps 2.3–2.5 (mic permission, transcription IPC, dictate button).
 | 2026-10-10 | Docs + AI instructions in English | a81b351 |
 | 2026-10-10 | Step 1.1: English identifiers, schema v3 | 33a971f |
 | 2026-10-10 | Step 1.2: notes per day, schema v4 | 446a8f3 |
-| 2026-10-10 | Step 2.1: notes → bullets without AI | branch `claude/intelligent-curie-yxizss` |
+| 2026-10-10 | Step 2.1: notes → bullets without AI | 62a3932 |
+| 2026-10-10 | Steps 3.1–3.4: clipboard bridge | branch `claude/intelligent-curie-yxizss` |

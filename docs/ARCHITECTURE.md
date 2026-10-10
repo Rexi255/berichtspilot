@@ -35,6 +35,12 @@ Keep this file in sync when changing process boundaries, IPC or networking.
    `daten.json.tmp` + fsync → rotates backups → `rename` onto `daten.json`.
 4. Output: `WeekEditor` calls `formatAll(week)` from `src/lib/format.js` → copy via
    `navigator.clipboard.writeText`.
+5. AI phrasing (clipboard bridge, E-011): `PhrasingPanel` builds a prompt from the
+   days' `notes` (`buildPrompt()` in `src/lib/phrasing.js`), the user copies it into
+   a chat AI of their choice and pastes the answer back; `parseResponse()` maps it
+   to bullets per day, the user reviews and applies (undoable). **No network
+   access** — the user moves the text; `findSensitive()` warns about e-mail/IP/
+   ticket/phone patterns before copying.
 
 In a plain browser (`vite` without Electron), `browserApi` in `store.jsx` replaces
 the bridge with `localStorage` stubs — handy for smoke tests.
