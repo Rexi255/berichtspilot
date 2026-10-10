@@ -313,10 +313,16 @@ ipcMain.handle('window:maximize', () => {
 })
 ipcMain.handle('window:close', () => win?.close())
 
+// Dev spike: `electron . --webuntis-probe` runs the WebUntis probe instead of
+// the app (DECISIONS E-013). It never touches daten.json, only writes
+// webuntis-probe.json next to it.
+const PROBE_MODE = process.argv.includes('--webuntis-probe')
+
 // Allow only ONE instance: two instances running in parallel would overwrite
 // each other's daten.json (last save wins). A second start hands focus to the
 // existing window and quits.
 if (!app.requestSingleInstanceLock()) {
+  if (PROBE_MODE) console.error('Berichtspilot läuft bereits — bitte schließen und die Probe erneut starten.')
   app.quit()
 } else {
   app.on('second-instance', () => {
@@ -328,6 +334,10 @@ if (!app.requestSingleInstanceLock()) {
   })
 
   app.whenReady().then(() => {
+    if (PROBE_MODE) {
+      const { runWebUntisProbe } = require('./webuntis-probe')
+      return runWebUntisProbe({ outFile: path.join(path.dirname(DATA_PATH), 'webuntis-probe.json') })
+    }
     createWindow()
     app.on('activate', () => {
       if (BrowserWindow.getAllWindows().length === 0) createWindow()

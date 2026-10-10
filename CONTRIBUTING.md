@@ -52,6 +52,23 @@ A built-in screenshot helper renders the app invisibly and saves a PNG:
 electron . --screenshot=shot.png [--view=editor|profiles|settings]
 ```
 
+## WebUntis probe (developer spike)
+
+For the WebUntis import (DECISIONS E-013) a one-off probe records the
+**structure** of the school's WebUntis API with a real login:
+
+```bash
+npm ci
+npm run probe:webuntis    # = electron . --webuntis-probe (close Berichtspilot first)
+```
+
+A window opens: log in via the school portal, open the timetable (a week with
+lessons), click one or two lessons that have notes, close the window. The probe
+writes `webuntis-probe.json` next to `daten.json` (in dev: the project folder;
+git-ignored) containing only status codes, keys and value types — no names,
+notes, ids, tokens or cookie values (see `electron/shape.js`). Look at it before
+sharing it.
+
 ## Pull requests
 
 - Small, focused PRs with a meaningful description.

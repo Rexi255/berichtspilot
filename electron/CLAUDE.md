@@ -32,6 +32,7 @@ rename) are acceptance criteria. Change them only with a written rationale in
 
 ## Testing
 
-Main-process code has no unit tests yet. Logic that should be testable (parsers,
-mappers, validation) goes into its own CommonJS module under `electron/` with a
-Vitest test, instead of being buried in `main.js`.
+Logic that should be testable (parsers, mappers, validation) goes into its own
+CommonJS module under `electron/` with a Vitest test next to it, instead of being
+buried in `main.js`. Name the test `*.test.mjs` (ESM `import` from vitest; the
+`electron/**/*.js` lint block is CommonJS) — example: `shape.js` / `shape.test.mjs`.

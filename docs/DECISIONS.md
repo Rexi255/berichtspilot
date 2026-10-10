@@ -109,6 +109,15 @@ real account: which endpoint returns the lesson notes for student accounts (the
 web UI's internal REST API is the likely source; JSON-RPC `getTimetable` only has
 short texts).
 
+**Probe (step 4.1, 2026-10-10):** `npm run probe:webuntis` (see CONTRIBUTING)
+records, with the real login, which API calls the web UI makes and what
+structure the responses have — anonymised (`electron/shape.js`). Deviation from
+the plan: instead of `webRequest.onCompleted` (URLs only) the probe attaches the
+DevTools protocol (`webContents.debugger`) to the probe window, because only
+that sees response **bodies** — so we learn which call carries the lesson notes
+without guessing endpoints. Bodies stay in memory; only their shape is written.
+Waiting for the user's `webuntis-probe.json`.
+
 ### E-014 · Keep the file name `daten.json` · accepted
 Field names became English in schema v3, but the file name stays: existing
 installations, portable copies, backups (`.bak1–3`) and the README all rely on it.

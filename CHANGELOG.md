@@ -22,6 +22,10 @@ versioning follows [Semantic Versioning](https://semver.org/).
   shows a per-day preview and replaces the bullets on confirmation — undoable.
   Before copying, it warns about possible customer data (e-mail/IP/MAC
   addresses, ticket and phone numbers). No network access.
+- **WebUntis probe (developer tool):** `npm run probe:webuntis` opens WebUntis
+  in a separate, isolated window and records the anonymised structure of the
+  school's API (no names, notes or passwords) — groundwork for the WebUntis
+  import. The app itself does not use the network yet.
 
 ### Changed
 

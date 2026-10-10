@@ -11,6 +11,8 @@ release/
 daten.json
 daten.json.tmp
 daten.json.bak*
+# Output of the WebUntis probe (electron . --webuntis-probe)
+webuntis-probe.json
 
 # Personal reference material / local files (stay local)
 /Claude Vorgaben/

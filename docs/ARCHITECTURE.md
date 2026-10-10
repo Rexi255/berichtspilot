@@ -70,7 +70,27 @@ main process, only to hosts in this allowlist, each with a reason.
 
 | Host | Purpose | Since |
 |---|---|---|
-| — | — | — |
+| `bbz-dithmarschen.webuntis.com` | WebUntis: timetable + lesson notes (E-013). **Probe only so far** (`--webuntis-probe`), not used by the app | 2026-10 (step 4.1) |
+
+The renderer CSP is unchanged: WebUntis runs in its own window, never in the app
+window.
+
+### WebUntis probe (dev spike, step 4.1)
+
+`electron . --webuntis-probe` runs `electron/webuntis-probe.js` **instead of** the
+app (no app window, no IPC, daten.json untouched):
+
+- a `BrowserWindow` with partition `persist:webuntis`, `sandbox: true`, no preload
+  shows the WebUntis login; SSO pop-ups stay in the same partition;
+- the main process polls `GET /WebUntis/api/token/new` with that session
+  (`ses.fetch`, `credentials: 'include'`) to detect the login;
+- the window's `webContents.debugger` (Chrome DevTools protocol, `Network.*`)
+  records the web UI's XHR/fetch calls to the WebUntis host incl. response
+  bodies — in memory only;
+- on close, a few candidate endpoints are called with the session + bearer
+  token; then `webuntis-probe.json` is written next to daten.json containing only
+  anonymised shapes (`electron/shape.js`: keys, types, string lengths, enum-like
+  values; URLs with ids replaced).
 
 ## Security model
 

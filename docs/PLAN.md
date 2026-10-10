@@ -30,40 +30,41 @@ WebUntis lesson notes ────────────┘    (daten.json)   
 
 ## Next step
 
-**Step 4.1 — WebUntis probe (spike for E-013, path W1)**
+**Waiting for the user:** run the WebUntis probe (step 4.1) and send
+`webuntis-probe.json`. Steps for the user (German in chat):
 
-Step 2.2 (speech spike) waits for the user's sample recordings; WebUntis can be
-explored now — but only on the user's machine (real SSO login). So this step
-builds a small **developer probe** the user runs once locally and sends back the
-(anonymised) result.
+```bash
+git fetch && git checkout claude/intelligent-curie-yxizss   # or main once merged
+npm ci
+npm run probe:webuntis      # close Berichtspilot first
+```
 
-- `electron/webuntis-probe.js` (CommonJS, main process), started via
-  `electron . --webuntis-probe` (like `--screenshot`; never exposed to the renderer):
-  1. opens a `BrowserWindow` with `partition: 'persist:webuntis'`, `sandbox: true`,
-     no preload, loading
-     `https://bbz-dithmarschen.webuntis.com/WebUntis/?school=bbz-dithmarschen`;
-  2. waits until the user is logged in via the school portal (detect by polling
-     `GET /WebUntis/api/token/new` with the partition's session until it returns a
-     token, or the URL leaves the login page);
-  3. with that session (`session.fromPartition(...).fetch`), calls candidate
-     endpoints for the current week — JSON-RPC `getTimetable`, the web UI's REST
-     timetable (`/WebUntis/api/rest/view/v1/timetable/entries`) and the lesson
-     detail endpoint the web UI uses for "Notizen" (find it by recording the
-     window's network requests while the user opens one lesson —
-     `webContents.session.webRequest.onCompleted`, URLs only);
-  4. writes `webuntis-probe.json` next to daten.json: per endpoint the HTTP status
-     and the **structure** of the response (keys + value types; strings replaced by
-     their length, except for an allowlist like subject short names) — no names,
-     no tokens, no cookies.
-- Pure helper `src/lib/shape.js` (or inside the probe module, tested): turns any JSON
-  into its anonymised shape; Vitest.
-- Docs: how to run it (`npm run dev`-free: `npm run build:renderer && npx electron .
-  --webuntis-probe`) in `docs/PLAN.md` / CONTRIBUTING; ARCHITECTURE allowlist entry
-  `bbz-dithmarschen.webuntis.com` (probe only for now).
-- The user runs it, sends `webuntis-probe.json`; result → E-013 (which endpoint
-  carries the lesson notes, session lifetime) and the concrete design of 4.2–4.6.
+Log in via the school portal → open the timetable (a week **with** lessons, e.g.
+before the autumn break) → click one or two lessons that have notes → close the
+window → check the file (only keys/types/lengths) → send it.
 
-When the recordings arrive: step 2.2 (speech spike) instead.
+**When `webuntis-probe.json` arrives → step 4.1b (evaluate):**
+- `captured[]`: find the call whose response shape contains the lesson notes
+  (look for text fields that only appear after clicking a lesson, e.g. in a
+  `calendar-entry/detail`-like call); note its URL pattern and required params.
+- `candidates[]`: which of REST entries / public weekly / JSON-RPC
+  `getTimetable` / homeworks work with the web session (status 200 + JSON).
+- `session`: cookie lifetimes + `token.lifetimeSeconds` → how often the user
+  must log in again.
+- Record all of it in E-013 (set it to "accepted" with the chosen endpoint),
+  add the SSO host from `navigatedHosts` to the ARCHITECTURE notes, and refine
+  steps 4.3–4.6.
+
+**Meanwhile (unblocked): step 4.2 — network layer `electron/net.js`.**
+CommonJS module: `fetch` wrapper around `session.fetch` with a host allowlist
+(only hosts listed in `docs/ARCHITECTURE.md`; start with
+`bbz-dithmarschen.webuntis.com`), timeout (AbortController, ~15 s), readable
+German error texts (offline, timeout, 401/403 → "Bitte erneut anmelden", 5xx);
+pure parts (allowlist check, error mapping) tested with Vitest like
+`electron/shape.test.mjs`. Not wired into any UI yet. The probe may then switch
+to it.
+
+When the speech recordings arrive: step 2.2 (speech spike) takes priority.
 
 ## Open questions (for the user)
 
@@ -108,6 +109,9 @@ When the recordings arrive: step 2.2 (speech spike) instead.
 - [ ] 4.1 Spike with the real account: SSO login in an embedded window (path W1),
       find the endpoint that returns lesson notes; check whether path W2 is available
       → finalize E-013
+  - [x] 4.1a Probe built: `npm run probe:webuntis`, anonymiser `electron/shape.js`
+        + tests (2026-10-10)
+  - [ ] 4.1b User runs the probe → evaluate `webuntis-probe.json` → E-013
 - [ ] 4.2 Network layer in main: `electron/net.js` — `fetch` wrapper with host
       allowlist, timeout, readable errors; Vitest for the allowlist
 - [ ] 4.3 Session handling: login window (partition `persist:webuntis`), "logged
@@ -138,4 +142,5 @@ When the recordings arrive: step 2.2 (speech spike) instead.
 | 2026-10-10 | Step 1.1: English identifiers, schema v3 | 33a971f |
 | 2026-10-10 | Step 1.2: notes per day, schema v4 | 446a8f3 |
 | 2026-10-10 | Step 2.1: notes → bullets without AI | 62a3932 |
-| 2026-10-10 | Steps 3.1–3.4: clipboard bridge | branch `claude/intelligent-curie-yxizss` |
+| 2026-10-10 | Steps 3.1–3.4: clipboard bridge | d83e940 |
+| 2026-10-10 | Step 4.1a: WebUntis probe | branch `claude/intelligent-curie-yxizss` |
