@@ -1,22 +1,23 @@
-// Schlanke, entkoppelte Toast-Bestätigungen (z. B. „… kopiert").
-// zeigeToast() feuert ein Fenster-Event; der ToastHost (einmal in der App
-// gemountet) hört darauf und rendert eine kurzlebige Meldung unten rechts.
+// Lean, decoupled toast confirmations (e.g. "… kopiert").
+// showToast() fires a window event; the ToastHost (mounted once in the app)
+// listens to it and renders a short-lived message in the bottom right.
 import { useEffect, useRef, useState } from 'react'
 import { gsap } from 'gsap'
 import { CheckIcon, WarningIcon } from '@phosphor-icons/react'
 import { cx } from './basics.jsx'
 
-let idZaehler = 0
+let idCounter = 0
 
 /**
- * Toast auslösen — von überall aufrufbar, ohne Context/Props.
- * Optional mit Aktion (z. B. „Rückgängig"): `aktion: { label, onKlick }`.
+ * Show a toast — callable from anywhere, no context/props needed.
+ * kind: 'success' | 'error'. Optional action (e.g. "Rückgängig"):
+ * `action: { label, onClick }`.
  */
-export function zeigeToast(text, { art = 'erfolg', dauer = 2200, aktion = null } = {}) {
-  window.dispatchEvent(new CustomEvent('app:toast', { detail: { text, art, dauer, aktion } }))
+export function showToast(text, { kind = 'success', duration = 2200, action = null } = {}) {
+  window.dispatchEvent(new CustomEvent('app:toast', { detail: { text, kind, duration, action } }))
 }
 
-function ToastZeile({ toast, onWeg }) {
+function ToastRow({ toast, onDone }) {
   const ref = useRef(null)
 
   useEffect(() => {
@@ -28,70 +29,70 @@ function ToastZeile({ toast, onWeg }) {
         { opacity: 1, y: 0, scale: 1, duration: 0.32, ease: 'back.out(2)' }
       )
     }
-    const weg = setTimeout(() => {
+    const timer = setTimeout(() => {
       if (el) {
-        gsap.to(el, { opacity: 0, y: 8, duration: 0.22, ease: 'power2.in', onComplete: onWeg })
+        gsap.to(el, { opacity: 0, y: 8, duration: 0.22, ease: 'power2.in', onComplete: onDone })
       } else {
-        onWeg()
+        onDone()
       }
-    }, toast.dauer)
-    return () => clearTimeout(weg)
-  }, [toast.dauer, onWeg])
+    }, toast.duration)
+    return () => clearTimeout(timer)
+  }, [toast.duration, onDone])
 
-  const fehler = toast.art === 'fehler'
+  const isError = toast.kind === 'error'
   return (
     <div
       ref={ref}
       className={cx(
         'pointer-events-auto flex items-center gap-2.5 rounded-xl border px-3.5 py-2.5 text-[13px] font-medium',
-        'bg-flaeche-2/95 shadow-[inset_0_1px_0_0_oklch(1_0_0/0.06),0_10px_30px_-10px_oklch(0_0_0/0.7)] backdrop-blur',
-        fehler ? 'border-krank/25 text-tinte' : 'border-akzent/25 text-tinte'
+        'bg-surface-2/95 shadow-[inset_0_1px_0_0_oklch(1_0_0/0.06),0_10px_30px_-10px_oklch(0_0_0/0.7)] backdrop-blur',
+        isError ? 'border-sick/25 text-ink' : 'border-accent/25 text-ink'
       )}
     >
       <span
         className={cx(
           'grid h-6 w-6 shrink-0 place-items-center rounded-full',
-          fehler ? 'bg-krank/15 text-krank' : 'bg-akzent/15 text-akzent'
+          isError ? 'bg-sick/15 text-sick' : 'bg-accent/15 text-accent'
         )}
       >
-        {fehler ? <WarningIcon size={14} weight="bold" /> : <CheckIcon size={14} weight="bold" />}
+        {isError ? <WarningIcon size={14} weight="bold" /> : <CheckIcon size={14} weight="bold" />}
       </span>
       {toast.text}
-      {toast.aktion && (
+      {toast.action && (
         <button
           type="button"
           onClick={() => {
-            toast.aktion.onKlick()
-            onWeg()
+            toast.action.onClick()
+            onDone()
           }}
-          className="ml-1 rounded-md border border-akzent/30 bg-akzent/10 px-2 py-1 text-[12px] font-semibold text-akzent transition-colors duration-150 hover:bg-akzent/20"
+          className="ml-1 rounded-md border border-accent/30 bg-accent/10 px-2 py-1 text-[12px] font-semibold text-accent transition-colors duration-150 hover:bg-accent/20"
         >
-          {toast.aktion.label}
+          {toast.action.label}
         </button>
       )}
     </div>
   )
 }
 
-/** Einmal in der App-Shell gemountet; sammelt und stapelt die Toasts. */
+/** Mounted once in the app shell; collects and stacks the toasts. */
 export function ToastHost() {
   const [toasts, setToasts] = useState([])
 
   useEffect(() => {
-    const anZeigen = (e) => {
-      const toast = { id: ++idZaehler, ...e.detail }
-      setToasts((liste) => [...liste, toast])
+    const onToast = (e) => {
+      const toast = { id: ++idCounter, ...e.detail }
+      setToasts((list) => [...list, toast])
     }
-    window.addEventListener('app:toast', anZeigen)
-    return () => window.removeEventListener('app:toast', anZeigen)
+    window.addEventListener('app:toast', onToast)
+    return () => window.removeEventListener('app:toast', onToast)
   }, [])
 
-  const entfernen = (id) => setToasts((liste) => liste.filter((t) => t.id !== id))
+  const remove = (id) => setToasts((list) => list.filter((t) => t.id !== id))
 
   return (
     <div className="pointer-events-none fixed bottom-5 right-5 z-50 flex flex-col items-end gap-2">
       {toasts.map((t) => (
-        <ToastZeile key={t.id} toast={t} onWeg={() => entfernen(t.id)} />
+        <ToastRow key={t.id} toast={t} onDone={() => remove(t.id)} />
       ))}
     </div>
   )

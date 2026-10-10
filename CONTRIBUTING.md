@@ -1,11 +1,11 @@
-# Beitragen
+# Contributing
 
-Danke fürs Interesse! Beiträge sind willkommen — egal ob Bugfix, Idee oder
-Verbesserung an der Feiertags-/Formatlogik.
+Thanks for your interest! Contributions are welcome — bug fixes, ideas or
+improvements to the holiday/format logic.
 
 ## Setup
 
-Voraussetzung: **Node.js ≥ 20.19**.
+Requires **Node.js ≥ 20.19**.
 
 ```bash
 git clone https://github.com/Rexi255/berichtspilot.git
@@ -14,43 +14,71 @@ npm install
 npm run dev
 ```
 
-## Codestil
+## Docs & plan
 
-Der Code hält sich bewusst an ein paar einfache Konventionen:
+- **[docs/PLAN.md](docs/PLAN.md)** — current overhaul, next step, open questions
+- **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** — processes, IPC channels, networking
+- **[docs/DATA_MODEL.md](docs/DATA_MODEL.md)** — structure of `daten.json`, migrations
+- **[docs/OUTPUT_FORMAT.md](docs/OUTPUT_FORMAT.md)** — binding target format
+- **[docs/GLOSSARY.md](docs/GLOSSARY.md)** — German domain terms ↔ English code names
+- **[docs/DECISIONS.md](docs/DECISIONS.md)** — decision log
+- **[CLAUDE.md](CLAUDE.md)** — rules and workflow for AI assistants (apply to humans too)
 
-- **2 Leerzeichen** Einrückung, **keine** Semikolons (Standard-JS-Stil).
-- **Deutschsprachige** Bezeichner und Kommentare — passend zur Domäne.
-- Zentrale Logik (Datum, Feiertage, Ausgabeformat, Ablageort/sicheres Speichern,
-  IPC/preload) ist knapp kommentiert; bitte diesen Ton beibehalten.
-- Kein neuer Renderer-Zugriff auf Node/`fs`. Datei-I/O läuft **nur** im Main-Prozess
-  und wird über die Preload-Bridge (`electron/preload.js`) freigegeben.
+## Code style
 
-## Worauf man achten sollte
+- **2-space** indent, **no** semicolons, single quotes.
+- **English** identifiers, comments, docs and commit messages. **The UI and the IHK
+  output stay German** (see `docs/GLOSSARY.md` for the term mapping).
+- Central logic (dates, holidays, output format, data location/safe saving,
+  IPC/preload) is briefly commented; please keep that tone.
+- No new renderer access to Node/`fs`. File I/O happens **only** in the main process
+  and is exposed through the preload bridge (`electron/preload.js`).
 
-- **Ausgabeformat** (`src/lib/format.js`) muss exakt bleiben — inkl. der
-  Leerzeilen-Regeln (siehe README). Änderungen hier bitte an Beispielen prüfen.
-- **Feiertage** (`src/lib/holidays.js`): Neue/geänderte Feiertage mit dem jeweiligen
-  Bundesland belegen. Bewegliche Feiertage leiten sich vom Ostersonntag ab.
-- **Datum** (`src/lib/dates.js`): ISO-Strings werden bewusst als *lokale* Daten
-  geparst (kein UTC-Versatz). Bitte nicht auf `new Date("YYYY-MM-DD")` umstellen.
+## Things to watch out for
 
-## Schneller UI-Check
+- **Output format** (`src/lib/format.js`) must stay exact — including the blank-line
+  rules (see `docs/OUTPUT_FORMAT.md`). Verify changes against the examples.
+- **Holidays** (`src/lib/holidays.js`): back new/changed holidays with the federal
+  state. Movable holidays derive from Easter Sunday.
+- **Dates** (`src/lib/dates.js`): ISO strings are deliberately parsed as *local*
+  dates (no UTC offset). Don't switch to `new Date("YYYY-MM-DD")`.
+- **Schema changes** need a migration step and a test (see `docs/DATA_MODEL.md`).
 
-Es gibt einen eingebauten Screenshot-Helfer, der die App unsichtbar rendert und ein
-PNG speichert:
+## Quick UI check
+
+A built-in screenshot helper renders the app invisibly and saves a PNG:
 
 ```bash
-electron . --screenshot=shot.png [--view=editor|profile|einstellungen]
+electron . --screenshot=shot.png [--view=editor|profiles|settings]
 ```
 
-## Pull Requests
+## WebUntis probe (developer spike)
 
-- Kleine, fokussierte PRs mit aussagekräftiger Beschreibung.
-- Vor dem PR einmal `npm run build:renderer` laufen lassen (baut ohne Fehler durch?).
-- Bei UI-Änderungen gern einen Screenshot anhängen.
+For the WebUntis import (DECISIONS E-013) a one-off probe records the
+**structure** of the school's WebUntis API with a real login:
 
-## Bug melden
+```bash
+npm ci
+npm run probe:webuntis    # = electron . --webuntis-probe (close Berichtspilot first)
+```
 
-Am hilfreichsten sind: Schritte zum Reproduzieren, erwartetes vs. tatsächliches
-Verhalten, Betriebssystem und App-Version. Bei Formatfehlern bitte den erzeugten
-Text mitschicken.
+The probe uses the WebUntis address saved in Settings → "Verbindungen" (it reads
+it from `daten.json`); enter it there first.
+
+A window opens: log in via the school portal, open the timetable (a week with
+lessons), click one or two lessons that have a topic under **"Lehrstoff"**, close the window. The probe
+writes `webuntis-probe.json` next to `daten.json` (in dev: the project folder;
+git-ignored) containing only status codes, keys and value types — no names,
+notes, ids, tokens or cookie values (see `electron/shape.js`). Look at it before
+sharing it.
+
+## Pull requests
+
+- Small, focused PRs with a meaningful description.
+- Run `npm run lint`, `npm test` and `npm run build:renderer` before opening a PR.
+- For UI changes, a screenshot is appreciated.
+
+## Reporting bugs
+
+Most helpful: steps to reproduce, expected vs. actual behavior, operating system
+and app version. For format errors, please include the generated text.

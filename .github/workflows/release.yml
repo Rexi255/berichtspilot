@@ -1,5 +1,8 @@
-# Baut bei einem Versions-Tag (z. B. v1.1.0) den Windows-Installer (NSIS) samt
-# portabler .exe und das Linux-AppImage und hängt alles an ein GitHub-Release.
+# On a version tag (e.g. v1.1.0): builds the Windows installer (NSIS) and the
+# Linux AppImage and attaches them to a GitHub release — together with the
+# auto-update metadata (latest.yml / latest-linux.yml, NSIS .blockmap) that
+# electron-updater reads (E-017). The AppImage carries its blockmap inside.
+# The tag must match "version" in package.json.
 #
 #   git tag v1.1.0
 #   git push origin v1.1.0
@@ -10,10 +13,10 @@ on:
   push:
     tags:
       - 'v*'
-  workflow_dispatch: {} # manueller Start über die Actions-Oberfläche
+  workflow_dispatch: {} # manual start from the Actions UI
 
 permissions:
-  contents: write # zum Anlegen des Releases nötig
+  contents: write # required to create the release
 
 jobs:
   build:
@@ -23,10 +26,15 @@ jobs:
         include:
           - os: windows-latest
             script: build:win
-            artifact: release/*.exe
+            artifact: |
+              release/*.exe
+              release/*.exe.blockmap
+              release/latest.yml
           - os: ubuntu-latest
             script: build:linux
-            artifact: release/*.AppImage
+            artifact: |
+              release/*.AppImage
+              release/latest-linux.yml
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -35,6 +43,18 @@ jobs:
         with:
           node-version: 20
           cache: npm
+
+      # latest.yml carries package.json's version — a mismatching tag would
+      # announce an update the app can never reach (or hide a real one)
+      - name: Tag matches package.json
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: bash
+        run: |
+          version="v$(node -p "require('./package.json').version")"
+          if [ "$version" != "$GITHUB_REF_NAME" ]; then
+            echo "Tag $GITHUB_REF_NAME does not match package.json ($version)"
+            exit 1
+          fi
 
       - run: npm ci
 

@@ -2,133 +2,214 @@
 
 # 📓 Berichtspilot
 
-**Ausbildungsnachweis-Generator für das digitale IHK-Berichtsheft**
+**Generator for the German IHK apprenticeship training record ("Berichtsheft")**
 
-Erzeugt pro Berichtswoche die drei fertig formatierten Textblöcke, die 1:1 ins
-IHK-Heft kopiert werden — Wochentage, Datum, Überschriften und Feiertage kommen
-automatisch. Man tippt nur noch die eigentlichen Tätigkeiten ein.
-
-<!-- Desktop app that turns weekly notes into the exact three text blocks
-     the German IHK apprenticeship report ("Berichtsheft") expects. UI is in German. -->
+Produces, per training week, the three formatted text blocks that go 1:1 into the
+digital IHK training record. Dates, headings and public holidays are filled in
+automatically, school topics can come straight from WebUntis, and an AI of your
+choice can turn quick notes into clean bullets — you review and copy.
+The app's user interface is German.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-informational.svg)](LICENSE)
-![Platform](https://img.shields.io/badge/Plattform-Windows%20%C2%B7%20Linux-2ea043.svg)
+![Platform](https://img.shields.io/badge/Platform-Windows%20%C2%B7%20Linux-2ea043.svg)
 ![Electron](https://img.shields.io/badge/Electron-43-47848F.svg?logo=electron&logoColor=white)
 ![React](https://img.shields.io/badge/React-19-61DAFB.svg?logo=react&logoColor=black)
-![Offline](https://img.shields.io/badge/100%25-offline-blue.svg)
+![Local first](https://img.shields.io/badge/local--first-online%20optional-blue.svg)
 
-<img src="docs/screenshots/uebersicht.png" alt="Übersicht mit dokumentierten Berichtswochen und Fortschritt" width="820">
+<img src="docs/screenshots/overview.png" alt="Overview with stats, year heatmap and a missing week" width="820">
 
 </div>
 
 ---
 
-## Was ist das?
+## What is it?
 
-Als Azubi muss man wöchentlich ein Berichtsheft führen. Im digitalen IHK-Portal
-gibt es dafür drei Eingabefelder. Diese App nimmt die eigentliche Fleißarbeit ab:
+Apprentices in Germany must keep a weekly training record. The digital IHK portal
+has three input fields for it. This app takes over the tedious part:
 
-- **Datum & Wochentage** werden aus der Kalenderwoche berechnet.
-- **Feiertage** werden komplett offline erkannt (Gaußsche Osterformel, je Bundesland).
-- **Schul- und Betriebstage** kommen aus einem konfigurierbaren **Profil pro Halbjahr**.
-- Die drei **Ausgabeblöcke** entstehen live im exakt geforderten Format — inklusive
-  aller Leerzeilen-Regeln — und liegen per Klick in der Zwischenablage.
+- **Dates & weekdays** are derived from the ISO week.
+- **Public holidays** are detected fully offline (Gauss Easter formula, per federal state).
+- **School and work days** come from a configurable **profile per school half-year**.
+- **School topics** can be imported from **WebUntis** ("Lehrstoff" per lesson).
+- **Raw notes** per day become bullets — split automatically, or phrased by a chat AI
+  via the clipboard (no API key, nothing is sent without your click).
+- The three **output blocks** are generated live in exactly the required format —
+  including every blank-line rule — and copied to the clipboard with one click.
 
-Alles läuft lokal. Keine Cloud, kein Konto, keine Internetverbindung nötig.
+Everything runs locally. The online features (WebUntis import, update check) are
+optional and can be switched off — without them, no cloud, no account and no
+internet connection are needed.
+
+## New in 2.0
+
+- 🧭 **Setup wizard** — a fresh install walks you through training dates, federal
+  state, your current school half-year (school/work days, subjects) and WebUntis
+  in a few steps. Skippable, and available again under Settings → Verhalten.
+- 📝 **Notes per day** — a collapsible raw-text field per day (keywords, dictated
+  text). Never part of the output, but included in the search.
+- ✂️ **"In Stichpunkte übernehmen"** — splits notes into bullets without any AI
+  (one per line or sentence; abbreviations like "z. B." stay intact).
+- 🤖 **"Mit KI formulieren"** — builds a prompt from the week's notes, with your own
+  earlier bullets as style examples. Paste it into any chat AI (Claude.ai, ChatGPT,
+  Gemini — free plans work), paste the answer back, review a per-day preview and
+  apply it — undoable. Before copying, the app warns about possible customer data
+  (e-mail/IP/MAC addresses, ticket and phone numbers).
+- 🏫 **"Aus WebUntis füllen"** — for any school on the WebUntis cloud (enter your
+  school's WebUntis address once). Loads the week's timetable incl. lesson topics and
+  shows a preview per school day: what gets filled, what's new, cancelled lessons,
+  school breaks. Existing text is never overwritten; applying is undoable.
+  WebUntis abbreviations can be mapped to your subjects per profile
+  (Profiles → "WebUntis-Fächer").
+- 🗓️ **Current week created on start** (Monday to Friday, inside the training period).
+- ⬆️ **In-app updates** — the installed app asks GitHub once per start for a new
+  version; download and install only happen when you click.
+- 🛡️ **Unreadable data is never overwritten** — if `daten.json` and all backups are
+  damaged, the app stops with a notice instead of starting empty.
+
+Full list: [CHANGELOG.md](CHANGELOG.md).
 
 ## Features
 
-- 🗂️ **Übersicht** aller Berichtswochen mit Kalenderwoche, Zeitraum, Status
-  (Entwurf/Fertig), Fortschrittsanzeige, **Jahres-Heatmap** und **Lücken-Erkennung**
-  (fehlende Wochen mit Ein-Klick-Anlegen).
-- 🔎 **Volltextsuche & Filter** über alle Stichpunkte, Fächer und Feiertage —
-  praktisch auch als Nachschlagewerk („wann habe ich den Switch konfiguriert?").
-- ✍️ **Wochen-Editor** mit Live-Vorschau der drei Ausgabeblöcke, Kopier-Buttons,
-  **Autocomplete** aus allen bisherigen Stichpunkten + eigenen **Textbausteinen**
-  und **„Aus Zwischenablage einfügen"** (Zeiterfassung/WebUntis).
-- 🧑‍🏫 **Profile pro Halbjahr** — automatische Auswahl anhand des Wochendatums,
-  **Duplizieren** für den Halbjahreswechsel, Warnungen bei Überlappungen/Lücken,
-  Fächerlisten zwischen Tagen/Profilen übernehmbar.
-- 🏖️ **Zeiträume:** Urlaub und Schulferien einmal eintragen — Urlaub markiert die
-  Tage automatisch, in den Ferien werden Schultage zu Betriebstagen.
-- 🎉 **Feiertage offline** für alle 16 Bundesländer, inkl. beweglicher Feiertage.
-- 🏷️ **Tagesstatus** Normal / Feiertag (auto) / Krank / Urlaub.
-- ⌨️ **Tastaturkürzel** (Strg+1–4, Alt+←/→, Strg+Shift+1/2/3 zum Kopieren) und
-  **deutsche Rechtschreibprüfung** in allen Eingabefeldern.
-- 💾 **Robuste Speicherung:** alle Daten in **einer `daten.json`** — bei der
-  installierten App im nutzereigenen Datenordner, in der portablen Version neben der
-  App. **Atomares Schreiben** mit rollierenden **Backups** (`.bak1`–`.bak3`),
-  **Single-Instance-Schutz**, versioniertem Schema mit Migration sowie
-  Export/Import mit **Zusammenführen oder Ersetzen**. Löschen ist per
-  „Rückgängig"-Toast abgesichert.
-- 🎨 Rahmenloses Fenster mit eigener Titlebar, 6 dunkle Farbthemen, weiche
-  GSAP-Übergänge.
+- 🗂️ **Overview** of all training weeks with ISO week, date range, status
+  (draft/done), progress line, **year heatmap** and **gap detection** (missing
+  weeks with one-click creation).
+- 🔎 **Full-text search & filters** across bullets, notes, subjects and holidays —
+  also handy as a lookup ("when did I configure that switch?").
+- ✍️ **Week editor** with live preview of the three output blocks, copy buttons,
+  **autocomplete** from all previous bullets + your own **snippets**, and
+  **paste from clipboard** (time tracking/WebUntis).
+- 🧑‍🏫 **Profiles per school half-year** — picked automatically by date,
+  **duplicate** for the half-year switch, warnings for overlaps/gaps, subject
+  lists copyable between days/profiles.
+- 🏖️ **Periods:** enter vacations and school breaks once — vacation marks the days
+  automatically; during school breaks, school days become work days.
+- 🎉 **Offline holidays** for all 16 federal states, including movable holidays.
+- 🏷️ **Day status** normal / holiday (auto) / sick / vacation.
+- ⌨️ **Keyboard shortcuts** (Ctrl+1–4, Alt+←/→, Ctrl+Shift+1/2/3 to copy, Ctrl+N)
+  and **German spell checking** in all input fields.
+- 💾 **Robust storage:** all data in **one `daten.json`** with **atomic writes**,
+  rolling **backups** (`.bak1`–`.bak3`), **single-instance lock**, versioned schema
+  with automatic migration, and export/import with **merge or replace**.
+  Deleting can be undone via toast.
+- 🎨 Frameless window with custom title bar, 6 dark color themes, smooth GSAP transitions.
 
 ## Screenshots
 
-| Wochen-Editor mit Live-Format | Profile / Halbjahre |
+| Week editor: notes, WebUntis & AI, live output | Profiles / half-years |
 | :---: | :---: |
-| ![Wochen-Editor](docs/screenshots/editor.png) | ![Profile](docs/screenshots/profile.png) |
+| ![Week editor](docs/screenshots/editor.png) | ![Profiles](docs/screenshots/profiles.png) |
 
-Links wird getippt, rechts entsteht sofort das fertige Zielformat mit „Kopieren"-Button.
+Type (or paste notes) on the left; the finished target format appears instantly on
+the right with a copy button. *(Screenshots use fictional demo data.)*
 
-## Installation (fertige App)
+## Installation (prebuilt app)
 
-Fertige Builds gibt es unter **[Releases](https://github.com/Rexi255/berichtspilot/releases)**:
+Builds are available under **[Releases](https://github.com/Rexi255/berichtspilot/releases)**:
 
-- **Windows (empfohlen):** `Berichtspilot-Setup-<version>.exe` — der Installer. Legt
-  Startmenü- und Desktop-Verknüpfung an, der Installationsordner ist frei wählbar
-  und standardmäßig **ohne Adminrechte** (Installation pro Benutzer).
-- **Windows portabel:** `Berichtspilot-<version>-portable.exe` — ohne Installation,
-  einfach doppelklicken (z. B. direkt vom USB-Stick).
-- **Linux:** `Berichtspilot-<version>.AppImage` — ausführbar machen (`chmod +x`) und starten.
+- **Windows (recommended):** `Berichtspilot-Setup-<version>.exe` — the installer.
+  Creates start-menu and desktop shortcuts; the install folder is selectable and the
+  default install is per user, **without admin rights**. The installer isn't
+  code-signed, so Windows SmartScreen may warn on the first run: "Weitere
+  Informationen" → "Trotzdem ausführen".
+- **Linux:** `Berichtspilot-<version>.AppImage` — make it executable (`chmod +x`) and run it.
 
-### Wo liegen meine Daten?
+### Updates
 
-- **Installiert:** im nutzereigenen Datenordner (`%APPDATA%\Berichtspilot` unter
-  Windows, `~/.config/Berichtspilot` unter Linux). Der ist **immer beschreibbar** —
-  auch wenn die App unter `C:\Program Files` bzw. `/usr/bin` liegt. Beim Deinstallieren
-  bleiben die Daten erhalten.
-- **Portabel:** in `daten.json` **neben der Executable** — Datei/Ordner kopieren, und
-  die Daten wandern mit. Liegt die portable Version ausnahmsweise an einem
-  schreibgeschützten Ort, weicht sie automatisch auf den nutzereigenen Datenordner aus,
-  statt abzustürzen.
+From 2.0 on, the installed app (setup `.exe` or AppImage) checks GitHub once per
+start for a newer release. A found update appears as a small card at the bottom of
+the sidebar: **"Herunterladen" → "Jetzt installieren"** — the app saves your data,
+installs and restarts. Nothing is downloaded or installed without a click.
+Settings → "Updates" has "Nach Updates suchen" and the switch to turn the start
+check off.
 
-Den genauen Pfad zeigt die App unten links in der Seitenleiste (Tooltip). Neben der
-`daten.json` liegen automatisch bis zu drei rollierende Sicherungen (`.bak1`–`.bak3`);
-ist die Hauptdatei einmal beschädigt, stellt die App beim Start automatisch den
-jüngsten intakten Stand wieder her. Zum manuellen Sichern/Umziehen gibt es zusätzlich
-**Daten exportieren/importieren**.
+### Upgrading from 1.x
 
-## Entwicklung
+Versions up to 1.2.0 have no updater, so **install 2.0 by hand once**:
 
-Voraussetzung: **Node.js ≥ 20.19**.
+- **Windows installer (1.1 / 1.2):** run the new setup — it replaces the old version
+  and keeps your data.
+- **Portable `.exe` (up to 1.2.0):** there is no portable build any more. Install
+  the setup and either import your export, or copy the `daten.json` from next to the
+  old portable `.exe` into `%APPDATA%\Berichtspilot` (app closed).
+- **Linux:** replace the old AppImage with the new one in the same folder.
+
+Your `daten.json` is migrated automatically on the first start. After that, older
+versions can no longer open it (downgrade protection) — make an export first if you
+want to keep a 1.x copy.
+
+### Where is my data?
+
+- **Windows (installer):** in the user data folder `%APPDATA%\Berichtspilot`. It is
+  **always writable** — even when the app lives under `C:\Program Files`.
+  Uninstalling keeps the data.
+- **Linux (AppImage):** in `daten.json` **next to the AppImage** — move the folder and
+  the data moves with it. If that folder is read-only, the app falls back to
+  `~/.config/Berichtspilot` instead of crashing.
+
+The exact path is shown in the bottom-left of the sidebar (tooltip). Up to three
+rolling backups (`.bak1`–`.bak3`) live next to `daten.json`; if the main file is
+ever corrupted, the app restores the newest intact backup on start. For manual
+backups/moves there is also **export/import**.
+
+## Privacy & network
+
+Your training record never leaves your computer on its own. Only these optional
+features go online — all from the main process, only to fixed hosts:
+
+| Feature | Talks to | What is sent | Off switch |
+|---|---|---|---|
+| WebUntis import | your school's WebUntis server (`<name>.webuntis.com`) | your WebUntis login (in a separate window on the school's page — the app never sees the password), then timetable requests | Settings → "Verbindungen" (off by default) |
+| Update check | `github.com`, `release-assets.githubusercontent.com` | the request for the latest release (app version, IP address) — no training data | Settings → "Updates" |
+
+- **WebUntis works with any school on the WebUntis cloud:** paste the address of
+  your school's WebUntis login page (e.g.
+  `https://schulname.webuntis.com/WebUntis/?school=schulname`) under Settings →
+  "Verbindungen". Only `….webuntis.com` addresses are accepted, and the app talks
+  to no other WebUntis host.
+- **"Mit KI formulieren"** makes no network request at all: *you* copy the prompt into
+  a chat AI and paste the answer back, so you see every word that leaves the app.
+- The app window itself has no network access (strict Content Security Policy).
+
+## Development
+
+Requires **Node.js ≥ 20.19**.
 
 ```bash
 npm install
-npm run dev        # Vite-Devserver + Electron mit Hot-Reload
-npm start          # Renderer bauen + Electron auf dem Build starten
-npm test           # Vitest: Format- (exakte IHK-Beispiele), Feiertags-, Datumslogik
-npm run lint       # ESLint (läuft auch in der CI bei jedem Push/PR)
+npm run dev            # Vite dev server + Electron with hot reload
+npm start              # build renderer + start Electron on the build
+npm test               # Vitest: output format (real IHK examples), holidays, dates,
+                       # data model/migrations, notes, AI prompt, WebUntis, updater
+npm run lint           # ESLint (also runs in CI on every push/PR)
+npm run build:renderer # Vite build — proves the renderer compiles
 ```
 
-## Build
+In dev mode `daten.json` lives in the current working directory.
+Contributor and AI-assistant guidelines: [CONTRIBUTING.md](CONTRIBUTING.md) and
+[CLAUDE.md](CLAUDE.md). Architecture, data model and decisions live in [`docs/`](docs/).
+
+## Build & release
 
 ```bash
-npm run build:win    # Windows: Installer (.exe) + portable .exe  -> release/
-npm run build:linux  # Linux AppImage                             -> release/ (auf Linux ausführen)
-npm run build        # beide Plattformen
+npm run build:win    # Windows: installer (.exe) + latest.yml + .blockmap  -> release/
+npm run build:linux  # Linux AppImage + latest-linux.yml                   -> release/ (run on Linux)
+npm run build        # both platforms
 ```
 
-Wer die [CI](.github/workflows/release.yml) nutzt: Ein Versions-Tag pushen
-(`git tag v1.0.1 && git push --tags`) baut beide Artefakte automatisch und hängt
-sie an ein GitHub-Release.
+With [CI](.github/workflows/release.yml): pushing a version tag builds both
+artifacts and attaches them, together with the update metadata (`latest*.yml`), to
+a GitHub release. The tag must match `version` in `package.json`:
 
-## Ausgabeformat
+```bash
+git tag v2.0.0 && git push origin v2.0.0
+```
 
-Das Format ist Pflicht und entspricht exakt den echten IHK-Berichten.
+## Output format
 
-**Block 1 — Betriebliche Tätigkeiten** (eine Leerzeile zwischen den Tagen):
+The format is mandatory and matches real IHK reports exactly (the output is
+German). Full specification: [docs/OUTPUT_FORMAT.md](docs/OUTPUT_FORMAT.md).
+
+**Block 1 — Betriebliche Tätigkeiten** (one blank line between days):
 
 ```
 Mittwoch, den 08.07.2026:
@@ -136,13 +217,13 @@ Mittwoch, den 08.07.2026:
 - Verwaltung von WLAN-Zugangsdaten für Gäste sowie Bearbeitung von Support-Tickets
 ```
 
-Feiertag/Krank/Urlaub ersetzen die Stichpunkte durch eine Statuszeile
+Holiday/sick/vacation replace the bullets with a status line
 (`- Feiertag: Tag der Arbeit`, `- Krankheitstag`, `- Urlaub`).
 
-**Block 2 — Unterweisungen:** freier Text, meist leer.
+**Block 2 — Unterweisungen:** free text, usually empty.
 
-**Block 3 — Berufsschule** (Header, Leerzeile, Fächer mit Bullets; eine Leerzeile
-zwischen Fächern, **zwei** zwischen den Tagen):
+**Block 3 — Berufsschule** (header, blank line, subjects with bullets; one blank
+line between subjects, **two** between days):
 
 ```
 Montag, den 06.07.2026:
@@ -154,52 +235,58 @@ Englisch:
 - Explaining a network diagram in English
 ```
 
-## Projektstruktur
+## Project structure
 
 ```
 electron/
-  main.js        # Fenster, Ablageort + sicheres Speichern, Datei-I/O per IPC
-  preload.js     # schmale contextBridge-API für den Renderer
+  main.js             # window, data location + safe saving, all IPC handlers
+  preload.js          # narrow contextBridge API for the renderer
+  net.js              # network layer: host allowlist, timeout, German error texts
+  webuntis-session.js # WebUntis login window + token handling
+  webuntis.js         # WebUntis week fetch (timetable + lesson topics)
+  updater.js          # auto-update via electron-updater
 src/
-  lib/dates.js   # Wochentag/Datum, ISO-Kalenderwoche
-  lib/holidays.js# Feiertage je Bundesland (Osterformel, offline)
-  lib/format.js  # exaktes Ausgabeformat der drei Blöcke
-  lib/model.js   # Profile, Wochen, Seed-Daten
-  views/         # Übersicht · WochenEditor · Profile · Einstellungen
-  ui/            # Titlebar, Sidebar, Design-System-Bausteine
+  store.jsx           # central state, autosave, all mutations
+  lib/                # pure, tested logic: dates · holidays · format · model ·
+                      # notes · phrasing · webuntis · update
+  views/              # Overview · WeekEditor (+ PhrasingPanel, WebuntisPanel) ·
+                      # Profiles · Settings
+  ui/                 # title bar, sidebar, update hint, design-system components
+docs/                 # architecture, data model, output format, glossary, decisions, plan
+CLAUDE.md             # working guide for AI assistants (Claude Code)
 ```
 
-## Technik & Sicherheit
+## Technology & security
 
-- **Electron + Vite + React + Tailwind CSS**, Animationen mit GSAP & Lenis.
-- **Electron-Härtung:** `contextIsolation: true`, `nodeIntegration: false`,
-  `sandbox: true`. Der Renderer bekommt über die Preload-Bridge nur eine schmale API;
-  Datei-I/O passiert ausschließlich im Main-Prozess (IPC). Strikte CSP im Renderer.
-- **Offline by design:** Feiertage werden lokal berechnet, keine externen Requests.
+- **Electron + Vite + React + Tailwind CSS**, animations with GSAP & Lenis,
+  updates via electron-updater.
+- **Electron hardening:** `contextIsolation: true`, `nodeIntegration: false`,
+  `sandbox: true`. The renderer only gets a narrow API via the preload bridge; file
+  I/O and every network request happen exclusively in the main process (IPC).
+  Strict CSP in the renderer.
+- **Network allowlist:** requests only over https to the hosts listed above (for
+  WebUntis: exactly the one `*.webuntis.com` host you entered);
+  redirects are not followed off the list. WebUntis runs in its own isolated window
+  and session.
+- **Holidays offline:** computed locally, no external service.
 
 ## Roadmap
 
-Ideen, die bewusst noch offen sind:
+Next on the list: local voice dictation into the notes (model choice still open)
+and a UI overhaul (planned for 2.1). Status, order and open questions:
+**[docs/PLAN.md](docs/PLAN.md)**.
 
-- **Auto-Update** über GitHub Releases (electron-updater) für den NSIS-Installer.
-- **Light-Theme** + automatischer Wechsel nach Systemeinstellung.
-- **„Alle 3 Blöcke kopieren"** als Sammelaktion mit Kopier-Häkchen je Block.
-- **Gesamtexport** einer Woche bzw. des ganzen Berichtshefts als eine Datei/PDF.
-- **Einzelnen Tag aus der Vorwoche kopieren** (nicht nur die ganze Struktur).
-- **Zeichenzähler** in der Block-Vorschau (falls die IHK-Felder Limits haben).
-- **Erinnerung** am Freitag, wenn die aktuelle Woche noch Entwurf ist.
+## Contributing
 
-## Beitragen
+Pull requests and issues are welcome — see **[CONTRIBUTING.md](CONTRIBUTING.md)**.
 
-Pull Requests und Issues sind willkommen — siehe **[CONTRIBUTING.md](CONTRIBUTING.md)**.
+## Disclaimer
 
-## Haftungsausschluss
+Unofficial, private helper tool. **Not** affiliated with or endorsed by any IHK,
+the IHK portal or Untis GmbH. Always review the generated texts before
+submitting — every apprentice is responsible for the correctness and completeness
+of their training records. Use at your own risk, without warranty.
 
-Inoffizielles, privates Hilfswerkzeug. **Nicht** mit einer IHK oder dem IHK-Portal
-verbunden oder von diesen unterstützt. Die erzeugten Texte vor dem Absenden immer
-selbst prüfen — für Richtigkeit und Vollständigkeit der Ausbildungsnachweise ist
-jede*r selbst verantwortlich. Nutzung auf eigene Verantwortung, ohne Gewähr.
-
-## Lizenz
+## License
 
 [MIT](LICENSE)

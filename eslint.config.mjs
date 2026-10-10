@@ -1,5 +1,5 @@
-// ESLint-Flat-Config: Renderer (Browser/JSX) und Electron-Main (Node/CommonJS)
-// werden getrennt behandelt. `npm run lint` läuft auch in der CI.
+// ESLint flat config: renderer (browser/JSX) and Electron main (Node/CommonJS)
+// are handled separately. `npm run lint` also runs in CI.
 import js from '@eslint/js'
 import globals from 'globals'
 import react from 'eslint-plugin-react'
@@ -10,7 +10,7 @@ export default [
 
   js.configs.recommended,
 
-  // Renderer: React im Browser-Kontext (Vite)
+  // Renderer: React in a browser context (Vite)
   {
     files: ['src/**/*.{js,jsx}', 'vite.config.js'],
     languageOptions: {
@@ -21,14 +21,14 @@ export default [
     },
     plugins: { react, 'react-hooks': reactHooks },
     rules: {
-      // markiert in JSX benutzte Komponenten/Variablen als „verwendet"
+      // marks components/variables used in JSX as "used"
       'react/jsx-uses-vars': 'error',
       ...reactHooks.configs.recommended.rules,
       'no-unused-vars': ['error', { varsIgnorePattern: '^_', argsIgnorePattern: '^_' }],
     },
   },
 
-  // Node-Kontext: Electron-Main/Preload (CommonJS) + Vite-Config
+  // Node context: Electron main/preload (CommonJS)
   {
     files: ['electron/**/*.js'],
     languageOptions: {

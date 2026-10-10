@@ -1,90 +1,90 @@
-// Erzeugung der drei Ausgabeblöcke — das Format ist Pflicht und muss exakt
-// den echten IHK-Berichten entsprechen (siehe CLAUDE.md / Beispieldaten).
-import { formatDE, wochentagName } from './dates.js'
+// Builds the three output blocks — the format is mandatory and must match the
+// real IHK reports exactly (spec: docs/OUTPUT_FORMAT.md). Output text is German.
+import { formatDE, weekdayName } from './dates.js'
 
 /** "Mittwoch, den 21.01.2026:" */
-export function tagesHeader(iso) {
-  return `${wochentagName(iso)}, den ${formatDE(iso)}:`
+export function dayHeader(iso) {
+  return `${weekdayName(iso)}, den ${formatDE(iso)}:`
 }
 
-// Statuszeile für Nicht-Normal-Tage (ersetzt sämtliche Stichpunkte)
-function statusZeile(tag) {
-  if (tag.status === 'feiertag') return `- Feiertag: ${tag.feiertagName || 'Feiertag'}`
-  if (tag.status === 'krank') return '- Krankheitstag'
-  if (tag.status === 'urlaub') return '- Urlaub'
+// Status line for non-normal days (replaces all bullets)
+function statusLine(day) {
+  if (day.status === 'holiday') return `- Feiertag: ${day.holidayName || 'Feiertag'}`
+  if (day.status === 'sick') return '- Krankheitstag'
+  if (day.status === 'vacation') return '- Urlaub'
   return null
 }
 
-const nichtLeer = (s) => s.trim().length > 0
+const notEmpty = (s) => s.trim().length > 0
 
 /**
- * Block 1 — Betriebliche Tätigkeiten.
- * Pro Betriebstag: Header + "- "-Bullets, EINE Leerzeile zwischen den Tagen.
- * Feiertag/Krank/Urlaub: nur die Statuszeile statt der Bullets.
+ * Block 1 — Betriebliche Tätigkeiten (work).
+ * Per work day: header + "- " bullets, ONE blank line between days.
+ * Holiday/sick/vacation: only the status line instead of the bullets.
  */
-export function formatBetrieb(woche) {
-  const bloecke = []
-  for (const tag of woche.tage) {
-    if (tag.typ !== 'betrieb') continue
-    const status = statusZeile(tag)
-    const zeilen = status
+export function formatWork(week) {
+  const blocks = []
+  for (const day of week.days) {
+    if (day.type !== 'work') continue
+    const status = statusLine(day)
+    const lines = status
       ? [status]
-      : tag.stichpunkte.filter(nichtLeer).map((s) => `- ${s.trim()}`)
-    bloecke.push([tagesHeader(tag.datum), ...zeilen].join('\n'))
+      : day.bullets.filter(notEmpty).map((s) => `- ${s.trim()}`)
+    blocks.push([dayHeader(day.date), ...lines].join('\n'))
   }
-  return bloecke.join('\n\n')
+  return blocks.join('\n\n')
 }
 
-/** Block 2 — Unterweisungen: freier Text, unverändert übernommen. */
-export function formatUnterweisungen(woche) {
-  return (woche.unterweisungen || '').trim()
+/** Block 2 — Unterweisungen (instructions): free text, taken as is. */
+export function formatInstructions(week) {
+  return (week.instructions || '').trim()
 }
 
 /**
- * Block 3 — Berufsschule.
- * Pro Schultag: Header, Leerzeile, dann je Fach "Label:" + Bullets.
- * EINE Leerzeile zwischen Fächern, ZWEI Leerzeilen zwischen den Tagen.
- * Feiertag/Krank/Urlaub-Tage sind kompakt (Header + Statuszeile) und werden
- * nur mit EINER Leerzeile abgetrennt — wie in den echten Berichten.
+ * Block 3 — Berufsschule (school).
+ * Per school day: header, blank line, then per subject "Label:" + bullets.
+ * ONE blank line between subjects, TWO blank lines between days.
+ * Holiday/sick/vacation days are compact (header + status line) and are
+ * separated by only ONE blank line — as in the real reports.
  */
-export function formatBerufsschule(woche) {
-  const bloecke = [] // { text, kompakt }
-  for (const tag of woche.tage) {
-    if (tag.typ !== 'schule') continue
-    const status = statusZeile(tag)
+export function formatSchool(week) {
+  const blocks = [] // { text, compact }
+  for (const day of week.days) {
+    if (day.type !== 'school') continue
+    const status = statusLine(day)
     if (status) {
-      bloecke.push({ text: `${tagesHeader(tag.datum)}\n${status}`, kompakt: true })
+      blocks.push({ text: `${dayHeader(day.date)}\n${status}`, compact: true })
       continue
     }
-    const faecher = tag.faecher
-      .map((f) => ({ label: f.label.trim(), punkte: f.punkte.filter(nichtLeer) }))
-      .filter((f) => f.label && f.punkte.length > 0)
-      .map((f) => [`${f.label}:`, ...f.punkte.map((p) => `- ${p.trim()}`)].join('\n'))
-    const inhalt = faecher.join('\n\n')
-    bloecke.push({
-      text: inhalt ? `${tagesHeader(tag.datum)}\n\n${inhalt}` : tagesHeader(tag.datum),
-      kompakt: !inhalt,
+    const subjects = day.subjects
+      .map((s) => ({ label: s.label.trim(), bullets: s.bullets.filter(notEmpty) }))
+      .filter((s) => s.label && s.bullets.length > 0)
+      .map((s) => [`${s.label}:`, ...s.bullets.map((b) => `- ${b.trim()}`)].join('\n'))
+    const content = subjects.join('\n\n')
+    blocks.push({
+      text: content ? `${dayHeader(day.date)}\n\n${content}` : dayHeader(day.date),
+      compact: !content,
     })
   }
 
-  // Trennregel: zwei Leerzeilen zwischen vollen Schultagen, eine wenn ein
-  // kompakter Statustag beteiligt ist.
+  // Separator rule: two blank lines between full school days, one if a
+  // compact status day is involved.
   let out = ''
-  bloecke.forEach((b, i) => {
+  blocks.forEach((b, i) => {
     if (i > 0) {
-      const vorher = bloecke[i - 1]
-      out += vorher.kompakt || b.kompakt ? '\n\n' : '\n\n\n'
+      const previous = blocks[i - 1]
+      out += previous.compact || b.compact ? '\n\n' : '\n\n\n'
     }
     out += b.text
   })
   return out
 }
 
-/** Alle drei Blöcke auf einmal (für Vorschau + Export) */
-export function formatAlle(woche) {
+/** All three blocks at once (preview + export) */
+export function formatAll(week) {
   return {
-    betrieb: formatBetrieb(woche),
-    unterweisungen: formatUnterweisungen(woche),
-    berufsschule: formatBerufsschule(woche),
+    work: formatWork(week),
+    instructions: formatInstructions(week),
+    school: formatSchool(week),
   }
 }

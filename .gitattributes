@@ -1,7 +1,7 @@
-# Einheitliche Zeilenenden im Repo (LF), plattformunabhängig
+# Consistent line endings in the repo (LF), platform independent
 * text=auto eol=lf
 
-# Binärdateien nicht anfassen
+# Leave binary files alone
 *.png binary
 *.ico binary
 *.woff2 binary

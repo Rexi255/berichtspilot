@@ -1,29 +1,37 @@
-# Abhängigkeiten
+# Dependencies
 node_modules/
 
-# Build-Artefakte (werden bei Bedarf neu erzeugt)
+# Build artifacts (regenerated on demand)
 dist/
 release/
 *.tmp
 
-# App-Daten: daten.json ist nutzerspezifisch — nie einchecken
-# (inkl. Temp-Datei beim atomaren Schreiben und rollierende Sicherungen)
+# App data: daten.json is user-specific — never commit it
+# (incl. the temp file used for atomic writes and the rolling backups)
 daten.json
 daten.json.tmp
 daten.json.bak*
+# Output of the WebUntis probe (electron . --webuntis-probe)
+webuntis-probe.json
 
-# Persönliches Referenzmaterial / lokale Dateien (bleiben nur lokal)
+# Personal reference material / local files (stay local)
 /Claude Vorgaben/
 Berichtsheft.lnk
+
+# Claude Code: personal local settings
+.claude/settings.local.json
 
 # Logs
 *.log
 npm-debug.log*
 yarn-error.log*
 
-# Editor / Betriebssystem
+# Editor / operating system
 .vscode/
 .idea/
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# Spike prototypes (never committed)
+/scratch/

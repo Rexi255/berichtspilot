@@ -1,10 +1,11 @@
-## Was ändert dieser PR?
+## What does this PR change?
 
-Kurze Beschreibung der Änderung und des Grunds.
+Short description of the change and the reason for it.
 
-## Checkliste
+## Checklist
 
-- [ ] `npm run build:renderer` läuft ohne Fehler durch
-- [ ] Bei UI-Änderungen: Screenshot angehängt
-- [ ] Bei Änderungen an Datum/Feiertagen/Ausgabeformat: an Beispielen geprüft
-- [ ] Codestil beibehalten (2 Leerzeichen, keine Semikolons, deutsche Bezeichner)
+- [ ] `npm run lint`, `npm test` and `npm run build:renderer` pass
+- [ ] For UI changes: screenshot attached
+- [ ] For changes to dates/holidays/output format: verified against examples
+- [ ] `docs/PLAN.md` updated (done / next step), plus `CHANGELOG.md` and `docs/` where relevant
+- [ ] Code style kept (2 spaces, no semicolons, English code — German UI text only)

@@ -1,22 +1,22 @@
 ---
-name: Fehler melden
-about: Etwas funktioniert nicht wie erwartet
+name: Bug report
+about: Something doesn't work as expected
 labels: bug
 ---
 
-**Beschreibung**
-Was ist passiert?
+**Description**
+What happened?
 
-**Schritte zum Reproduzieren**
+**Steps to reproduce**
 1. …
 2. …
 
-**Erwartetes Verhalten**
-Was hätte passieren sollen?
+**Expected behavior**
+What should have happened?
 
-**Umgebung**
-- Betriebssystem: (z. B. Windows 10 / Arch Linux)
-- App-Version: (siehe Release / `package.json`)
+**Environment**
+- Operating system: (e.g. Windows 10 / Arch Linux)
+- App version: (see release / `package.json`)
 
-**Bei Formatfehlern**
-Bitte den erzeugten Text (oder den relevanten Ausschnitt) mit einfügen.
+**For format errors**
+Please paste the generated text (or the relevant excerpt).
