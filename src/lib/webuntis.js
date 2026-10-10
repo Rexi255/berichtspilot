@@ -152,3 +152,93 @@ export function unmappedSubjects(mappedDays) {
   }
   return [...seen.values()]
 }
+
+// ---------------------------------------------------------------------------
+// Fill a week from WebUntis (step 4.6)
+// ---------------------------------------------------------------------------
+
+const isBlank = (bullets) => (Array.isArray(bullets) ? bullets : []).every((b) => !clean(b))
+const hasLessons = (m) =>
+  [m.subjects, m.unmapped, m.ignored, m.cancelledSubjects].some((l) => Array.isArray(l) && l.length > 0)
+
+/**
+ * Put the mapped WebUntis subjects (mapSubjects()) into a week — conservatively:
+ *
+ * - Only days that are school days with status `normal` in the week are
+ *   touched. WebUntis never turns a work day into a school day (work days come
+ *   back as days without lessons) and never overrides holiday/vacation/sick.
+ * - Per subject: an existing entry with the same label (subjectKey) gets the
+ *   topics as bullets only if *all* its bullets are empty; a subject the day
+ *   doesn't list yet is appended. Written text is never overwritten.
+ * - A WebUntis school break (`schoolBreak`) is only reported.
+ *
+ * The UI unticks subjects by filtering `mappedDays` before calling this.
+ *
+ * → `{ week, count, changes: [{ date, skipped, subjects: [{ label, topics, from, result }],
+ *      cancelledSubjects, ignored, unmapped }] }`
+ *   `skipped`: null | 'notSchoolDay' | 'status' | 'schoolBreak';
+ *   `result`: 'filled' | 'added' | 'kept' (has text) | 'noTopics' (nothing to fill);
+ *   `count`: subjects filled or added. Unchanged week ⇒ the same `week` object.
+ */
+export function fillWeekFromWebuntis(week, mappedDays) {
+  const byDate = new Map((Array.isArray(mappedDays) ? mappedDays : []).map((m) => [m?.date, m]))
+  const changes = []
+  let count = 0
+
+  const days = (week?.days ?? []).map((day) => {
+    const m = byDate.get(day.date)
+    if (!m) return day
+    const report = {
+      date: day.date,
+      skipped: null,
+      subjects: [],
+      cancelledSubjects: m.cancelledSubjects ?? [],
+      ignored: m.ignored ?? [],
+      unmapped: m.unmapped ?? [],
+    }
+    const mapped = (Array.isArray(m.subjects) ? m.subjects : []).filter((s) => s && clean(s.label))
+    const preview = (result) => mapped.map((s) => ({ label: s.label, topics: s.topics ?? [], from: s.from ?? [], result }))
+
+    if (day.type !== 'school') {
+      // A work day without lessons is the normal case — nothing to report
+      if (hasLessons(m)) changes.push({ ...report, skipped: 'notSchoolDay', subjects: preview(null) })
+      return day
+    }
+    if (day.status !== 'normal') {
+      changes.push({ ...report, skipped: 'status', subjects: preview(null) })
+      return day
+    }
+    if (m.schoolBreak) {
+      changes.push({ ...report, skipped: 'schoolBreak' })
+      return day
+    }
+
+    let subjects = Array.isArray(day.subjects) ? day.subjects : []
+    let changed = false
+    for (const s of mapped) {
+      const topics = (Array.isArray(s.topics) ? s.topics : []).map(clean).filter(Boolean)
+      const entry = { label: s.label, topics, from: s.from ?? [], result: null }
+      const i = subjects.findIndex((x) => subjectKey(x?.label) === subjectKey(s.label))
+      if (i === -1) {
+        subjects = [...subjects, { label: s.label, bullets: topics.length ? topics : [''] }]
+        entry.result = 'added'
+      } else if (!isBlank(subjects[i].bullets)) {
+        entry.result = 'kept'
+      } else if (!topics.length) {
+        entry.result = 'noTopics'
+      } else {
+        subjects = subjects.map((x, j) => (j === i ? { ...x, bullets: topics } : x))
+        entry.result = 'filled'
+      }
+      if (entry.result === 'added' || entry.result === 'filled') {
+        changed = true
+        count++
+      }
+      report.subjects.push(entry)
+    }
+    changes.push(report)
+    return changed ? { ...day, subjects } : day
+  })
+
+  return { week: count ? { ...week, days } : week, count, changes }
+}

@@ -30,35 +30,40 @@ WebUntis "Lehrstoff" ─────────────┘    (daten.json) 
 
 ## Next step
 
-**Step 4.6 — "Woche aus WebUntis füllen" in the week editor** (unblocked; 4.5a
-fetch + 4.5b mapping are done). Split; do **4.6a** first:
+**Step 4.6b — "Aus WebUntis füllen" UI in the week editor** (unblocked; 4.6a
+pure merge logic `fillWeekFromWebuntis()` is done — read its JSDoc in
+`src/lib/webuntis.js` and the fill rules in `DECISIONS.md` E-013).
 
-**4.6a — pure merge logic** in `src/lib/webuntis.js` + tests:
-`fillWeekFromWebuntis(week, mappedDays)` → `{ week, changes }`:
-- only days with `day.type === 'school'` and `status === 'normal'` in the
-  week are touched — never turn a WebUntis day into a school day (work days
-  come back from WebUntis as days without lessons, user confirmed Mon/Thu/Fri
-  are work days);
-- per mapped subject: find `day.subjects[]` entry with the same label
-  (`subjectKey`), fill its bullets with the topics **only if all its bullets are
-  empty**; a mapped subject missing in the day is appended; existing content is
-  never overwritten;
-- `schoolBreak` days are only reported (`changes`), not changed;
-- `changes` per date lists what would be filled, for the preview.
-
-**4.6b — UI** in `src/views/WeekEditor.jsx` (pattern: `PhrasingPanel.jsx` +
-the undo toast at `WeekEditor.jsx` ~L638): button "Aus WebUntis füllen" (only
-when `settings.webuntis.enabled`); calls `api.webuntisWeek(monday)` →
-`schoolDaysFromWebuntis` → `mapSubjects(…, profileForDate(wednesday))`.
-Preview panel per day: subjects with topics as bullets, each subject can be
-unticked (user, 2026-10-10: the school's timetable sometimes shows a wrong
-parallel lesson — e.g. Wed 11:15 `LF08` + `LF10`, really only `LF10`);
-cancelled/ignored subjects and school breaks shown greyed. Unmapped subjects:
-inline "zuordnen" select (profile labels + ignorieren) that saves via
-`setWebuntisSubject()` and re-maps. Not logged in → button "Anmelden" (reuse
-`api.webuntisLogin()`). Apply = one `updateWeek`, toast with "Rückgängig".
-Smoke test: Electron screenshot with a stubbed week is not possible (needs
-login) → test the panel with the pure functions + a manual run by the user.
+New component `src/views/WebuntisPanel.jsx`, wired into
+`src/views/WeekEditor.jsx` like `PhrasingPanel.jsx` (~L752) and its undo toast
+(~L638):
+- Button "Aus WebUntis füllen" in the week editor, only when
+  `settings.webuntis.enabled`. Click → `api.webuntisWeek(monday)` →
+  `schoolDaysFromWebuntis(res.days)` → `mapSubjects(…, profileForDate(profiles,
+  wednesday))` → `fillWeekFromWebuntis(week, mapped)` for the preview
+  (`changes`). Loading state while fetching (detail calls take a moment).
+- Errors: `code: 'auth'` → message + button "Anmelden" (`api.webuntisLogin()`,
+  then retry); other errors → German `res.error` text in the panel.
+- Preview per date from `changes`: weekday + date; per subject a checkbox
+  (default on for `result` `filled`/`added`, disabled for `kept` "hat schon
+  Text" / `noTopics` "kein Lehrstoff") with the topics as bullets — user,
+  2026-10-10: the school's timetable sometimes shows a wrong parallel lesson
+  (Wed 11:15 `LF08` + `LF10`, really only `LF10`) → untick. Greyed hints:
+  `cancelledSubjects` ("entfallen"), `ignored`, `skipped` = `schoolBreak`
+  ("Ferien laut WebUntis"), `status` ("Feiertag/Urlaub/krank — nicht
+  geändert"), `notSchoolDay` ("Arbeitstag laut Profil — nicht geändert").
+- Unmapped subjects: inline select "zuordnen" (profile labels from
+  `profileSubjectLabels()` + "ignorieren") → `setWebuntisSubject(profileId,
+  short, label)`, then re-run `mapSubjects` on the cached school days (no
+  new fetch).
+- Apply: filter `mapped[].subjects` to the ticked labels, call
+  `fillWeekFromWebuntis` again, one `updateWeek(monday, () => result.week)`,
+  toast "n Fächer übernommen" with "Rückgängig" (snapshot like ~L638).
+  Disabled when nothing is ticked.
+- Verify: lint/test/build; browser-mode smoke test only shows the button +
+  the desktop-only error (`browserApi.webuntisWeek`); the real flow needs the
+  user's login → ask the user for a manual run and record it in the Done log.
+- CHANGELOG: "Woche aus WebUntis füllen" under Added.
 
 ## Open questions (for the user)
 
@@ -115,6 +120,9 @@ decision).
       Profiles → "WebUntis-Fächer" (2026-10-10)
 - [ ] 4.6 "Woche aus WebUntis füllen": school days + subjects + topics from lesson
       topics ("Lehrstoff" = `teachingContent`); detect breaks/cancelled lessons
+  - [x] 4.6a pure merge logic `fillWeekFromWebuntis()` (only fills empty subjects of
+        normal school days, appends missing ones, reports the rest) (2026-10-10)
+  - [ ] 4.6b UI: preview panel with untick/assign, apply + undo
 
 ### Phase 5 — Comfort
 - [ ] Auto-update (electron-updater, GitHub Releases)
@@ -146,3 +154,4 @@ decision).
 | 2026-10-10 | Step 4.4 review fixes: switch enforced in main, import keeps it | 3fb95f7 |
 | 2026-10-10 | Step 4.5a: WebUntis week fetch + normaliser (real account checked by the user) | f9c4b79 |
 | 2026-10-10 | Step 4.5b: WebUntis subject mapping, schema v6 | branch `claude/intelligent-curie-yxizss` |
+| 2026-10-10 | Step 4.6a: `fillWeekFromWebuntis()` merge logic | branch `claude/intelligent-curie-yxizss` |

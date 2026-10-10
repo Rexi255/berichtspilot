@@ -250,6 +250,16 @@ zeros ignored, so `kom`/"Kommunikation" and `LF7`/`LF07` match without an
 entry) → otherwise reported as unmapped. The map lives in the profile (schema
 v6) because subject labels are per half-year; it is shared data, not a secret.
 
+**Fill rules (step 4.6a, 2026-10-10):** `fillWeekFromWebuntis()` only ever
+*adds*: it touches only days that are `school` + `normal` in the week (WebUntis
+shows work days as days without lessons, so it must never create a school day,
+and it never overrides holiday/vacation/sick); a subject gets the topics only if
+all its bullets are empty, a missing subject is appended, written text is never
+replaced. A WebUntis school break (`HOLIDAY`) is only reported, not applied —
+the profile/period data stays the source of truth for the day type. Unticking in
+the preview is done by filtering the mapped days before the call, so the same
+function produces the preview (`changes`) and the applied week.
+
 ### E-014 · Keep the file name `daten.json` · accepted
 Field names became English in schema v3, but the file name stays: existing
 installations, portable copies, backups (`.bak1–3`) and the README all rely on it.

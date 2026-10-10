@@ -9,6 +9,7 @@ import {
   setMapping,
   mapSubjects,
   unmappedSubjects,
+  fillWeekFromWebuntis,
 } from './webuntis.js'
 
 const lesson = (start, subjectShort, topics = [], extra = {}) => ({
@@ -238,6 +239,182 @@ describe('unmappedSubjects', () => {
     expect(unmappedSubjects(mapped)).toEqual([
       { short: 'Sport', long: 'Sport lang' },
       { short: 'Reli', long: 'Religion' },
+    ])
+  })
+})
+
+describe('fillWeekFromWebuntis', () => {
+  // Week day as newWeek() builds it (school day with two subjects)
+  const weekDay = (date, extra = {}) => ({
+    date,
+    type: 'school',
+    status: 'normal',
+    holidayName: null,
+    notes: '',
+    bullets: ['', ''],
+    subjects: [
+      { label: 'LF08', bullets: [''] },
+      { label: 'LF10', bullets: [''] },
+    ],
+    ...extra,
+  })
+  const week = (days) => ({ id: '2026-10-05', status: 'draft', instructions: '', days })
+  const mappedDay = (date, subjects, extra = {}) => ({
+    date,
+    schoolBreak: false,
+    cancelledSubjects: [],
+    ignored: [],
+    unmapped: [],
+    subjects: subjects.map(([label, topics = [], from = [label]]) => ({ label, topics, from })),
+    ...extra,
+  })
+
+  it('fills empty subjects with the topics as bullets', () => {
+    const w = week([weekDay('2026-10-07')])
+    const { week: out, count, changes } = fillWeekFromWebuntis(w, [
+      mappedDay('2026-10-07', [['LF08', ['Übungsaufgaben', 'Fehlersuche']], ['LF10', ['Datenbanken']]]),
+    ])
+    expect(out.days[0].subjects).toEqual([
+      { label: 'LF08', bullets: ['Übungsaufgaben', 'Fehlersuche'] },
+      { label: 'LF10', bullets: ['Datenbanken'] },
+    ])
+    expect(count).toBe(2)
+    expect(changes).toEqual([
+      {
+        date: '2026-10-07',
+        skipped: null,
+        cancelledSubjects: [],
+        ignored: [],
+        unmapped: [],
+        subjects: [
+          { label: 'LF08', topics: ['Übungsaufgaben', 'Fehlersuche'], from: ['LF08'], result: 'filled' },
+          { label: 'LF10', topics: ['Datenbanken'], from: ['LF10'], result: 'filled' },
+        ],
+      },
+    ])
+    // Immutable: the input week is untouched
+    expect(w.days[0].subjects[0].bullets).toEqual([''])
+  })
+
+  it('never overwrites a subject that already has text', () => {
+    const w = week([
+      weekDay('2026-10-07', {
+        subjects: [
+          { label: 'LF08', bullets: ['Eigener Text', ''] },
+          { label: 'LF10', bullets: ['  '] },
+        ],
+      }),
+    ])
+    const { week: out, changes } = fillWeekFromWebuntis(w, [
+      mappedDay('2026-10-07', [['LF08', ['Übungsaufgaben']], ['LF10', ['Datenbanken']]]),
+    ])
+    expect(out.days[0].subjects).toEqual([
+      { label: 'LF08', bullets: ['Eigener Text', ''] },
+      { label: 'LF10', bullets: ['Datenbanken'] },
+    ])
+    expect(changes[0].subjects.map((s) => s.result)).toEqual(['kept', 'filled'])
+  })
+
+  it('matches labels via subjectKey and appends subjects the day lacks', () => {
+    const w = week([weekDay('2026-10-07', { subjects: [{ label: 'LF 8', bullets: [''] }] })])
+    const { week: out, changes } = fillWeekFromWebuntis(w, [
+      mappedDay('2026-10-07', [['LF08', ['Übungsaufgaben']], ['WiPo', ['Wahlen']], ['Englisch']]),
+    ])
+    expect(out.days[0].subjects).toEqual([
+      { label: 'LF 8', bullets: ['Übungsaufgaben'] },
+      { label: 'WiPo', bullets: ['Wahlen'] },
+      { label: 'Englisch', bullets: [''] },
+    ])
+    expect(changes[0].subjects.map((s) => s.result)).toEqual(['filled', 'added', 'added'])
+  })
+
+  it('reports a subject without topics but leaves it empty', () => {
+    const w = week([weekDay('2026-10-07')])
+    const res = fillWeekFromWebuntis(w, [mappedDay('2026-10-07', [['LF08', []]])])
+    expect(res.week).toBe(w)
+    expect(res.count).toBe(0)
+    expect(res.changes[0].subjects[0].result).toBe('noTopics')
+  })
+
+  it('never turns a work day into a school day', () => {
+    const w = week([
+      weekDay('2026-10-08', { type: 'work', subjects: [] }),
+      weekDay('2026-10-09', { type: 'work', subjects: [] }),
+    ])
+    const res = fillWeekFromWebuntis(w, [
+      mappedDay('2026-10-08', [['LF08', ['Übungsaufgaben']]]),
+      mappedDay('2026-10-09', []), // work day without lessons: not reported
+    ])
+    expect(res.week).toBe(w)
+    expect(res.changes).toEqual([
+      {
+        date: '2026-10-08',
+        skipped: 'notSchoolDay',
+        cancelledSubjects: [],
+        ignored: [],
+        unmapped: [],
+        subjects: [{ label: 'LF08', topics: ['Übungsaufgaben'], from: ['LF08'], result: null }],
+      },
+    ])
+  })
+
+  it('leaves holiday, vacation and sick days alone', () => {
+    const w = week([
+      weekDay('2026-10-05', { status: 'holiday', holidayName: 'Testfeiertag' }),
+      weekDay('2026-10-06', { status: 'sick' }),
+    ])
+    const res = fillWeekFromWebuntis(w, [
+      mappedDay('2026-10-05', [['LF08', ['A']]]),
+      mappedDay('2026-10-06', [['LF08', ['B']]]),
+    ])
+    expect(res.week).toBe(w)
+    expect(res.changes.map((c) => c.skipped)).toEqual(['status', 'status'])
+  })
+
+  it('only reports a WebUntis school break', () => {
+    const w = week([weekDay('2026-10-07')])
+    const res = fillWeekFromWebuntis(w, [mappedDay('2026-10-07', [], { schoolBreak: true })])
+    expect(res.week).toBe(w)
+    expect(res.changes).toEqual([
+      { date: '2026-10-07', skipped: 'schoolBreak', cancelledSubjects: [], ignored: [], unmapped: [], subjects: [] },
+    ])
+  })
+
+  it('passes cancelled, ignored and unmapped subjects through for the preview', () => {
+    const w = week([weekDay('2026-10-07')])
+    const unmapped = [{ short: 'Sport', long: 'Sport lang', topics: [] }]
+    const res = fillWeekFromWebuntis(w, [
+      mappedDay('2026-10-07', [['LF10', ['Datenbanken']]], { cancelledSubjects: ['pfk'], ignored: ['FÖ'], unmapped }),
+    ])
+    expect(res.changes[0]).toMatchObject({ cancelledSubjects: ['pfk'], ignored: ['FÖ'], unmapped })
+  })
+
+  it('ignores WebUntis days outside the week and bad input', () => {
+    const w = week([weekDay('2026-10-07')])
+    expect(fillWeekFromWebuntis(w, [mappedDay('2026-10-14', [['LF08', ['X']]])])).toEqual({
+      week: w,
+      count: 0,
+      changes: [],
+    })
+    expect(fillWeekFromWebuntis(w, null).week).toBe(w)
+    expect(fillWeekFromWebuntis(w, [null, mappedDay('2026-10-07', [['', ['X']]])]).count).toBe(0)
+  })
+
+  it('works end to end on mapSubjects() output; unticking = filtering', () => {
+    const days = schoolDaysFromWebuntis([
+      {
+        date: '2026-10-07',
+        holiday: false,
+        lessons: [lesson('11:15', 'LF08', ['Falsche Parallelstunde']), lesson('11:15', 'LF10', ['Normalisierung'])],
+      },
+    ])
+    const mapped = mapSubjects(days, profile())
+    // The user unticks LF08 (wrong parallel lesson in the school's timetable)
+    const picked = mapped.map((d) => ({ ...d, subjects: d.subjects.filter((s) => s.label !== 'LF08') }))
+    const { week: out } = fillWeekFromWebuntis(week([weekDay('2026-10-07')]), picked)
+    expect(out.days[0].subjects).toEqual([
+      { label: 'LF08', bullets: [''] },
+      { label: 'LF10', bullets: ['Normalisierung'] },
     ])
   })
 })
