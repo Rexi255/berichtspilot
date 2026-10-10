@@ -63,7 +63,7 @@ npm run probe:webuntis    # = electron . --webuntis-probe (close Berichtspilot f
 ```
 
 A window opens: log in via the school portal, open the timetable (a week with
-lessons), click one or two lessons that have notes, close the window. The probe
+lessons), click one or two lessons that have a topic under **"Lehrstoff"**, close the window. The probe
 writes `webuntis-probe.json` next to `daten.json` (in dev: the project folder;
 git-ignored) containing only status codes, keys and value types — no names,
 notes, ids, tokens or cookie values (see `electron/shape.js`). Look at it before

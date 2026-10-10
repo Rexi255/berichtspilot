@@ -53,7 +53,7 @@ their activities per day and leave out customer-specific details while talking.
 Dictation → raw `notes` per day → AI turns them into clean bullets. **No
 time-tracking import** is planned.
 
-### E-010 · Local speech recognition, model bundled in the installer · accepted (variant open)
+### E-010 · Local speech recognition, model bundled in the installer · deferred (spike done)
 Audio never leaves the machine. User (2026-10): the model ships **with the
 installer** (no download on first use). Engine still to be chosen in a spike:
 whisper.cpp binary vs. ONNX/transformers.js in a worker/utility process. Criteria:
@@ -66,6 +66,34 @@ User (2026-10): installer growth of 150–500 MB is acceptable. **Reopened:** th
 user asked whether the OS dictation (Windows: Win+H voice typing, works in any
 text field incl. the "Notizen" field) is enough — that would make step 2.2–2.5
 unnecessary. Waiting for the user to try it (see PLAN open questions).
+**Answer (user, 2026-10-10):** Win+H is buggy on their home PC — the OS tool is
+no substitute; other speech-to-text tools should be considered.
+
+**Spike (step 2.2, 2026-10-10)** — whisper.cpp nightly `b5454` CLI (prebuilt
+`whisper-bin-x64.zip`, 9 MB; `whisper-bin-ubuntu-x64.tar.gz` exists for Linux),
+3 German clips (56 s total, synthetic voice "Hedda", IT jargon: Active
+Directory, VLAN, Veeam, WSUS, PowerShell …), i9-9900K limited to 4 threads.
+WER = word error rate after lower-casing and stripping punctuation/hyphens.
+
+| Model (ggml) | Size | Time for 56 s | WER | Notes |
+|---|---|---|---|---|
+| whisper base q5_1 | 60 MB | 8 s | 18.6 % | "Hektiv-Direktary", "Pauers-Hells-Kript" |
+| whisper small q5_1 | 190 MB | 22 s | 7.7 % | |
+| whisper small q5_1 + vocabulary prompt | 190 MB | 17 s (greedy) | 4.2 % | `--prompt` with IT terms fixes most jargon |
+| whisper large-v3-turbo q5_0 (± prompt) | 574 MB | 62–75 s | 1.8 % | slower than real time even on the i9 |
+| parakeet-tdt-0.6b-v3 q4_0 (`parakeet-cli`) | 356 MB | 8 s | 9.4 % | very fast, no prompt support; CC-BY-4.0 |
+
+Findings: the engine question is settled independently of the model — the
+**whisper.cpp CLI as a child process of main** (prebuilt binary per platform,
+no native Node addon, no WASM, no CSP change; whisper and parakeet models run
+on the same binaries). Input: WAV/FLAC/MP3/OGG, so the renderer would capture
+16 kHz PCM and encode WAV. A vocabulary prompt (could be built from the user's
+own earlier bullets) is the cheapest accuracy gain. Synthetic speech is easier
+than a real voice — re-check with real recordings before choosing.
+Recommendation was whisper small (+~200 MB installer).
+
+**Decision (user, 2026-10-10): leave the speech model out for now** and decide
+later. Phase 2 (steps 2.3–2.5) is on hold; notes are typed for the time being.
 
 ### E-011 · AI phrasing without an own API key · accepted (option A)
 User (2026-10): preferably cloud quality, but **not via an API** (no key/billing).
@@ -144,12 +172,21 @@ without guessing endpoints. Bodies stay in memory; only their shape is written.
   (a whole-week range returns nothing) → `calendarEntries[].teachingContent`
   ("Lehrstoff", up to ~60 chars, also per period in `singleEntries[]`) and
   `notesAll` ("Notizen", short). This is the source for the school block.
+  **User (2026-10-10): the lesson topic is in "Lehrstoff"** → import
+  `teachingContent` only; `notesAll` is not used for topics.
 - Also working but not needed: JSON-RPC `getTimetable` with the web session (no
   topic texts), `/api/public/timetable/weekly/data` (`periodText`),
   `/api/homeworks/lessons`.
 - **W2** (Untis Mobile QR code) is available for the user's account (2026-10) —
   kept as an optional comfort upgrade if logging in again turns out to be
   annoying; not planned now.
+
+**Network layer (step 4.2, 2026-10-10):** `electron/net.js` — `request()` with
+host allowlist (https only, no credentials/odd ports), 15 s timeout, no redirects
+followed, `{ ok, … }` results with German error texts. Checked against the real
+server: without a session, `/WebUntis/api/token/new` answers 302 → `index.do`;
+Electron's `session.fetch` rejects that under `redirect: 'manual'` with
+"Redirect was cancelled", which `net.js` maps to "Bitte erneut anmelden."
 
 ### E-014 · Keep the file name `daten.json` · accepted
 Field names became English in schema v3, but the file name stays: existing

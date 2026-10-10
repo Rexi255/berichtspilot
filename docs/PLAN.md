@@ -16,7 +16,7 @@ into clean bullets** — the user only reviews and copies.
 ```
 dictation (local, bundled model) ─┐
                                    ├─► raw notes per day ─► AI phrasing ─► week (as today) ─► copy to IHK
-WebUntis lesson notes ────────────┘    (daten.json)         (E-011)        editable, exact     (portal automation
+WebUntis "Lehrstoff" ─────────────┘    (daten.json)         (E-011)        editable, exact     (portal automation
                                                                             output format        deferred, E-012)
 ```
 
@@ -30,42 +30,41 @@ WebUntis lesson notes ────────────┘    (daten.json)   
 
 ## Next step
 
-**Step 4.2 — network layer `electron/net.js`** (unblocked; E-013 is accepted).
+**Step 4.3 — WebUntis session handling (path W1)** (unblocked; E-013 accepted,
+`electron/net.js` exists).
 
-- `electron/net.js` (CommonJS): `request(ses, url, { method, headers, body, timeoutMs })`
-  around `session.fetch` with `credentials: 'include'`:
-  - **host allowlist**: only `bbz-dithmarschen.webuntis.com` (keep in sync with
-    the table in `docs/ARCHITECTURE.md`); anything else → `{ ok: false }` without
-    a request; only `https:`;
-  - timeout via `AbortController` (default 15 s);
-  - result `{ ok: true, status, json }` or `{ ok: false, code, error }` with German
-    texts: offline/DNS → "Keine Verbindung zu WebUntis", timeout → "WebUntis
-    antwortet nicht", 401/403 or HTML instead of JSON → "Bitte erneut bei
-    WebUntis anmelden" (`code: 'login'`), 5xx → "WebUntis hat einen Fehler
-    gemeldet (5xx)".
-- Pure parts (`isAllowedUrl(url)`, `describeFailure({ status, contentType, error })`)
-  exported and tested in `electron/net.test.mjs`.
-- Switch `electron/webuntis-probe.js` to use it only if trivial; otherwise leave the probe.
-- Not wired into any UI yet; no new IPC channel.
+- New CommonJS module `electron/webuntis-session.js`:
+  - `openLogin()`: login window like the probe's (partition `persist:webuntis`,
+    `sandbox: true`, `contextIsolation`, no preload, SSO pop-ups via
+    `setWindowOpenHandler` stay in the same partition; never the app window's
+    session). Resolves when the login is detected (poll `getToken()`) or the
+    window is closed.
+  - `getToken()`: `request()` from `net.js` on
+    `https://bbz-dithmarschen.webuntis.com/WebUntis/api/token/new` with that
+    session → JWT text = logged in; `code: 'auth'` = not logged in. The token
+    lives 15 min — cache it with its `exp` and renew shortly before.
+  - `status()`: `{ loggedIn, personId?, error? }` from the token payload
+    (`person_id`); `logout()`: `session.fromPartition(...).clearStorageData()`.
+- Pure parts in their own module (e.g. `electron/jwt.js`: decode payload,
+  `isJwt(text)`, `expiresSoon(payload, now)`) + `*.test.mjs`.
+- IPC `webuntis:status` / `webuntis:login` / `webuntis:logout` (three places:
+  `main.js`, `preload.js`, `browserApi` fallback in `src/store.jsx` returning
+  `{ ok: false, error: 'Nur in der Desktop-App verfügbar.' }`); add them to the
+  channel table in `docs/ARCHITECTURE.md`. Handlers return `{ ok, … }`.
+- No UI yet (step 4.4). Manual check via the Electron console or a dev flag.
 
-**Then 4.3–4.6** (concrete thanks to the probe, see E-013): login window +
-"angemeldet?" check via `token/new` → week from `timetable/entries` → topics per
-lesson from `calendar-entry/detail` (`teachingContent`, fallback `notesAll`) →
-mapping WebUntis subject (`shortName`/`lessonInfo`) → learning-field label per
-profile → "Woche aus WebUntis füllen" (skip cancelled lessons, `HOLIDAY` back
-entries = school break).
+**Then 4.4–4.6** (see E-013): settings section "Verbindungen" → week from
+`timetable/entries` → topics per lesson from `calendar-entry/detail`
+(`teachingContent` only — user confirmed "Lehrstoff") → subject mapping →
+"Woche aus WebUntis füllen" (skip cancelled lessons, `HOLIDAY` = school break).
 
 ## Open questions (for the user)
 
-1. **Dictation (E-010 reopened):** please try Windows dictation (**Win+H**) in
-   the "Notizen" field of a day, speaking a typical work day with IT terms. Good
-   enough? → then Phase 2 (own speech model) is dropped/deferred and installers
-   stay small. Not good enough (or needed on Arch) → step 2.2 with the user's
-   sample recordings as test material.
-2. **Lehrstoff vs. Notizen:** in WebUntis, the lesson detail shows "Lehrstoff"
-   (`teachingContent`, up to ~60 chars) and "Notizen" (`notesAll`, short). Which
-   of the two holds the topics for the Berichtsheft? (Plan: import Lehrstoff,
-   fall back to Notizen.)
+None right now.
+
+Parked by the user (2026-10-10), not to be asked now: which speech model to
+bundle (E-010 has the measurements; real-voice recordings belong to that
+decision).
 
 ## Roadmap
 
@@ -78,10 +77,10 @@ entries = school break).
 - [x] 1.1 English identifiers + `daten.json` fields, schema v3 with migration + tests (2026-10-10)
 - [x] 1.2 Schema v4: `notes` (raw text) per day + collapsible "Notizen" field, searchable (2026-10-10)
 
-### Phase 2 — Dictation (offline, model bundled — E-010; on hold: Win+H test, open question 1)
+### Phase 2 — Dictation (offline, model bundled — E-010) · on hold (model choice parked by the user)
 - [x] 2.1 Notes → bullets without AI (pure `splitNotes()` + button) (2026-10-10)
-- [ ] 2.2 Spike: choose the Whisper variant (German accuracy, size, speed,
-      packaging for NSIS/portable/AppImage, CSP) → finalize E-010
+- [x] 2.2 Spike: whisper.cpp CLI with whisper base/small/large-v3-turbo and
+      parakeet v3 measured → E-010 (2026-10-10); model choice parked
 - [ ] 2.3 Microphone: `setPermissionRequestHandler` grants only `media` to the app window
 - [ ] 2.4 Transcription in a utility process/worker, IPC `speech:transcribe`
 - [ ] 2.5 UI: dictate button in the notes area (recording state, level meter, cancel) → `notes`
@@ -100,15 +99,15 @@ entries = school break).
 - [x] 4.1 Spike with the real account: probe `npm run probe:webuntis` +
       anonymiser `electron/shape.js`; W1 works, endpoints for week + lesson
       topics found, W2 (QR code) available → E-013 accepted (2026-10-10)
-- [ ] 4.2 Network layer in main: `electron/net.js` — `fetch` wrapper with host
-      allowlist, timeout, readable errors; Vitest for the allowlist
+- [x] 4.2 Network layer in main: `electron/net.js` — `fetch` wrapper with host
+      allowlist, timeout, readable errors; Vitest for the allowlist (2026-10-10)
 - [ ] 4.3 Session handling: login window (partition `persist:webuntis`), "logged
       in?" check, logout; secret store via safeStorage only if path W2 is used
 - [ ] 4.4 Settings → new section "Verbindungen" (WebUntis on/off, server, school,
       user, status)
 - [ ] 4.5 `electron/webuntis.js` + mapping WebUntis subject → learning-field label (per profile)
 - [ ] 4.6 "Woche aus WebUntis füllen": school days + subjects + topics from lesson
-      notes; detect breaks/cancelled lessons
+      topics ("Lehrstoff" = `teachingContent`); detect breaks/cancelled lessons
 
 ### Phase 5 — Comfort
 - [ ] Auto-update (electron-updater, GitHub Releases)
@@ -133,3 +132,5 @@ entries = school break).
 | 2026-10-10 | Steps 3.1–3.4: clipboard bridge | d83e940 |
 | 2026-10-10 | Step 4.1a: WebUntis probe | 49967e2, 6200d15 |
 | 2026-10-10 | Step 4.1b: probe evaluated, E-013 accepted | branch `claude/intelligent-curie-yxizss` |
+| 2026-10-10 | Step 2.2: speech spike (model parked) | branch `claude/intelligent-curie-yxizss` |
+| 2026-10-10 | Step 4.2: network layer `electron/net.js` | branch `claude/intelligent-curie-yxizss` |
