@@ -78,6 +78,25 @@ isolated login window; the main process never sends requests there.
 The renderer CSP is unchanged: WebUntis runs in its own window, never in the app
 window.
 
+### Network layer `electron/net.js` (step 4.2)
+
+All app requests go through `request(url, { ses, method, headers, body, expect, timeoutMs })`:
+
+- refuses anything that is not `https://` to a host in `ALLOWED_HOSTS` (kept in
+  sync with the table above) — no credentials in the URL, default port only;
+- uses the given Electron session's `fetch` (cookies of e.g. `persist:webuntis`,
+  `credentials: 'include'`), aborts after 15 s;
+- `redirect: 'manual'` — redirects are never followed (they could leave the
+  allowlist); Electron rejects them with "Redirect was cancelled", which counts
+  as "session expired" because WebUntis redirects to its login page. With
+  `expect: 'json'`, an HTML answer counts the same way;
+- never throws: `{ ok: true, status, data }` (JSON parsed, otherwise text) or
+  `{ ok: false, code, error, status? }` with codes `blocked · timeout · offline ·
+  tls · network · auth · not-found · rate-limit · server · http · parse` and a
+  German `error` text ready for the UI.
+
+Not wired to IPC or UI yet; the probe still uses `ses.fetch` directly.
+
 ### WebUntis probe (dev spike, step 4.1)
 
 `electron . --webuntis-probe` runs `electron/webuntis-probe.js` **instead of** the
