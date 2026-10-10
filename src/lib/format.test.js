@@ -1,48 +1,49 @@
-// Absicherung des EXAKTEN Ausgabeformats (Abnahmekriterium): die Beispiele
-// stammen 1:1 aus der Spezifikation (docs/AUSGABEFORMAT.md) bzw. echten IHK-Berichten.
+// Guards the EXACT output format (acceptance criterion): the examples come 1:1
+// from the spec (docs/OUTPUT_FORMAT.md) and real IHK reports. Never edit the
+// expected strings to make a test pass — fix the code instead.
 import { describe, it, expect } from 'vitest'
-import { formatBetrieb, formatBerufsschule, formatUnterweisungen, tagesHeader } from './format.js'
+import { formatWork, formatSchool, formatInstructions, dayHeader } from './format.js'
 
-const betriebsTag = (datum, stichpunkte, status = 'normal', feiertagName = null) => ({
-  datum,
-  typ: 'betrieb',
+const workDay = (date, bullets, status = 'normal', holidayName = null) => ({
+  date,
+  type: 'work',
   status,
-  feiertagName,
-  stichpunkte,
-  faecher: [],
+  holidayName,
+  bullets,
+  subjects: [],
 })
 
-const schulTag = (datum, faecher, status = 'normal', feiertagName = null) => ({
-  datum,
-  typ: 'schule',
+const schoolDay = (date, subjects, status = 'normal', holidayName = null) => ({
+  date,
+  type: 'school',
   status,
-  feiertagName,
-  stichpunkte: [],
-  faecher,
+  holidayName,
+  bullets: [],
+  subjects,
 })
 
-describe('tagesHeader', () => {
-  it('erzeugt "<Wochentag>, den TT.MM.JJJJ:"', () => {
-    expect(tagesHeader('2026-01-21')).toBe('Mittwoch, den 21.01.2026:')
-    expect(tagesHeader('2026-05-01')).toBe('Freitag, den 01.05.2026:')
+describe('dayHeader', () => {
+  it('produces "<Wochentag>, den TT.MM.JJJJ:"', () => {
+    expect(dayHeader('2026-01-21')).toBe('Mittwoch, den 21.01.2026:')
+    expect(dayHeader('2026-05-01')).toBe('Freitag, den 01.05.2026:')
   })
 })
 
-describe('formatBetrieb (Block 1)', () => {
-  it('entspricht exakt dem Beispiel aus der Spezifikation', () => {
-    const woche = {
-      tage: [
-        betriebsTag('2026-01-20', [
+describe('formatWork (block 1)', () => {
+  it('matches the spec example exactly', () => {
+    const week = {
+      days: [
+        workDay('2026-01-20', [
           'Fehlerdiagnose bei DHCP-Zuweisungsproblemen und Behebung von lokalen Netzwerkstörungen an mobilen Endgeräten.',
           'Verwaltung von WLAN-Zugangsdaten für Gäste sowie Bearbeitung von Support-Tickets im Bereich Telefonie',
         ]),
-        betriebsTag('2026-01-21', [
+        workDay('2026-01-21', [
           'Aufbau und Inbetriebnahme eines neuen Mitarbeiter-Arbeitsplatzes inklusive Monitor-Setup und abschließendem Funktionstest der gesamten Peripherie',
           'Durchführung von Patch-Arbeiten an der Netzwerkdose sowie Konfiguration der zugehörigen Switch-Ports',
         ]),
       ],
     }
-    expect(formatBetrieb(woche)).toBe(
+    expect(formatWork(week)).toBe(
       'Dienstag, den 20.01.2026:\n' +
         '- Fehlerdiagnose bei DHCP-Zuweisungsproblemen und Behebung von lokalen Netzwerkstörungen an mobilen Endgeräten.\n' +
         '- Verwaltung von WLAN-Zugangsdaten für Gäste sowie Bearbeitung von Support-Tickets im Bereich Telefonie\n' +
@@ -53,15 +54,15 @@ describe('formatBetrieb (Block 1)', () => {
     )
   })
 
-  it('ersetzt Stichpunkte bei Feiertag/Krank/Urlaub durch die Statuszeile', () => {
-    const woche = {
-      tage: [
-        betriebsTag('2026-05-01', ['wird ignoriert'], 'feiertag', 'Tag der Arbeit'),
-        betriebsTag('2026-05-04', [''], 'krank'),
-        betriebsTag('2026-05-05', [''], 'urlaub'),
+  it('replaces bullets with the status line for holiday/sick/vacation', () => {
+    const week = {
+      days: [
+        workDay('2026-05-01', ['is ignored'], 'holiday', 'Tag der Arbeit'),
+        workDay('2026-05-04', [''], 'sick'),
+        workDay('2026-05-05', [''], 'vacation'),
       ],
     }
-    expect(formatBetrieb(woche)).toBe(
+    expect(formatWork(week)).toBe(
       'Freitag, den 01.05.2026:\n- Feiertag: Tag der Arbeit\n' +
         '\n' +
         'Montag, den 04.05.2026:\n- Krankheitstag\n' +
@@ -70,34 +71,34 @@ describe('formatBetrieb (Block 1)', () => {
     )
   })
 
-  it('filtert leere Stichpunkte und trimmt Whitespace', () => {
-    const woche = { tage: [betriebsTag('2026-01-20', ['  Ticket bearbeitet  ', '', '   '])] }
-    expect(formatBetrieb(woche)).toBe('Dienstag, den 20.01.2026:\n- Ticket bearbeitet')
+  it('drops empty bullets and trims whitespace', () => {
+    const week = { days: [workDay('2026-01-20', ['  Ticket bearbeitet  ', '', '   '])] }
+    expect(formatWork(week)).toBe('Dienstag, den 20.01.2026:\n- Ticket bearbeitet')
   })
 
-  it('ignoriert Schultage', () => {
-    const woche = { tage: [schulTag('2026-01-19', [{ label: 'LF02', punkte: ['x'] }])] }
-    expect(formatBetrieb(woche)).toBe('')
+  it('ignores school days', () => {
+    const week = { days: [schoolDay('2026-01-19', [{ label: 'LF02', bullets: ['x'] }])] }
+    expect(formatWork(week)).toBe('')
   })
 })
 
-describe('formatBerufsschule (Block 3)', () => {
-  it('entspricht exakt dem Beispiel aus der Spezifikation (2 Leerzeilen zwischen Tagen)', () => {
-    const woche = {
-      tage: [
-        schulTag('2026-04-20', [
-          { label: 'LF02', punkte: ['Wirtschaftssektoren', 'Tarifverträge', 'Betriebsrat'] },
-          { label: 'LF03', punkte: ['Server und Clients: Arbeiten mit Cisco PacketTracer'] },
-          { label: 'Englisch', punkte: ['Installing GUI components, explaining smartphone functions'] },
-          { label: 'WiPo', punkte: ['Nutzwertanalyse', 'Übungsaufgabe'] },
+describe('formatSchool (block 3)', () => {
+  it('matches the spec example exactly (2 blank lines between days)', () => {
+    const week = {
+      days: [
+        schoolDay('2026-04-20', [
+          { label: 'LF02', bullets: ['Wirtschaftssektoren', 'Tarifverträge', 'Betriebsrat'] },
+          { label: 'LF03', bullets: ['Server und Clients: Arbeiten mit Cisco PacketTracer'] },
+          { label: 'Englisch', bullets: ['Installing GUI components, explaining smartphone functions'] },
+          { label: 'WiPo', bullets: ['Nutzwertanalyse', 'Übungsaufgabe'] },
         ]),
-        schulTag('2026-04-21', [
-          { label: 'LF04', punkte: ['Klassenarbeit LF4'] },
-          { label: 'LF05', punkte: ['Weiterarbeit an Projekt (automatisierte Datenextraktion)'] },
+        schoolDay('2026-04-21', [
+          { label: 'LF04', bullets: ['Klassenarbeit LF4'] },
+          { label: 'LF05', bullets: ['Weiterarbeit an Projekt (automatisierte Datenextraktion)'] },
         ]),
       ],
     }
-    expect(formatBerufsschule(woche)).toBe(
+    expect(formatSchool(week)).toBe(
       'Montag, den 20.04.2026:\n' +
         '\n' +
         'LF02:\n- Wirtschaftssektoren\n- Tarifverträge\n- Betriebsrat\n' +
@@ -117,26 +118,26 @@ describe('formatBerufsschule (Block 3)', () => {
     )
   })
 
-  it('lässt Fächer ohne Stichpunkte weg', () => {
-    const woche = {
-      tage: [
-        schulTag('2026-04-20', [
-          { label: 'LF02', punkte: ['Inhalt'] },
-          { label: 'Leer', punkte: ['', '  '] },
+  it('drops subjects without bullets', () => {
+    const week = {
+      days: [
+        schoolDay('2026-04-20', [
+          { label: 'LF02', bullets: ['Inhalt'] },
+          { label: 'Leer', bullets: ['', '  '] },
         ]),
       ],
     }
-    expect(formatBerufsschule(woche)).toBe('Montag, den 20.04.2026:\n\nLF02:\n- Inhalt')
+    expect(formatSchool(week)).toBe('Montag, den 20.04.2026:\n\nLF02:\n- Inhalt')
   })
 
-  it('trennt kompakte Statustage nur mit EINER Leerzeile', () => {
-    const woche = {
-      tage: [
-        schulTag('2026-04-20', [{ label: 'LF02', punkte: ['Inhalt'] }]),
-        schulTag('2026-04-21', [], 'krank'),
+  it('separates compact status days with only ONE blank line', () => {
+    const week = {
+      days: [
+        schoolDay('2026-04-20', [{ label: 'LF02', bullets: ['Inhalt'] }]),
+        schoolDay('2026-04-21', [], 'sick'),
       ],
     }
-    expect(formatBerufsschule(woche)).toBe(
+    expect(formatSchool(week)).toBe(
       'Montag, den 20.04.2026:\n\nLF02:\n- Inhalt\n' +
         '\n' +
         'Dienstag, den 21.04.2026:\n- Krankheitstag'
@@ -144,12 +145,12 @@ describe('formatBerufsschule (Block 3)', () => {
   })
 })
 
-describe('formatUnterweisungen (Block 2)', () => {
-  it('übernimmt freien Text getrimmt, leer bleibt leer', () => {
-    expect(formatUnterweisungen({ unterweisungen: '  Brandschutzunterweisung  ' })).toBe(
+describe('formatInstructions (block 2)', () => {
+  it('takes free text trimmed, empty stays empty', () => {
+    expect(formatInstructions({ instructions: '  Brandschutzunterweisung  ' })).toBe(
       'Brandschutzunterweisung'
     )
-    expect(formatUnterweisungen({ unterweisungen: '' })).toBe('')
-    expect(formatUnterweisungen({})).toBe('')
+    expect(formatInstructions({ instructions: '' })).toBe('')
+    expect(formatInstructions({})).toBe('')
   })
 })

@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
-  // Relative Pfade, damit der Build per file:// in Electron lädt
+  // Relative paths so the build loads via file:// in Electron
   base: './',
   plugins: [react(), tailwindcss()],
   server: {

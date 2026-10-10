@@ -1,30 +1,32 @@
-// App-Shell: Titlebar + Sidebar + Viewwechsel mit GSAP-Übergang.
+// App shell: title bar + sidebar + view switching with a GSAP transition.
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { gsap } from 'gsap'
 import { StoreProvider, useStore } from './store.jsx'
 import Titlebar from './ui/Titlebar.jsx'
 import Sidebar from './ui/Sidebar.jsx'
 import { ToastHost } from './ui/toast.jsx'
-import Uebersicht from './views/Uebersicht.jsx'
-import WochenEditor from './views/WochenEditor.jsx'
-import Profile from './views/Profile.jsx'
-import Einstellungen from './views/Einstellungen.jsx'
-import { montagVon } from './lib/dates.js'
+import Overview from './views/Overview.jsx'
+import WeekEditor from './views/WeekEditor.jsx'
+import Profiles from './views/Profiles.jsx'
+import Settings from './views/Settings.jsx'
+import { mondayOf } from './lib/dates.js'
 
-// Gate vor der eigentlichen Shell: erst rendern, wenn die Daten geladen sind —
-// so kann die Shell ihre Start-Ansicht direkt aus den Einstellungen beziehen.
-function Inhalt() {
-  const { daten, ladefehler } = useStore()
+const VIEWS = ['overview', 'editor', 'profiles', 'settings']
 
-  // Daten stammen aus einer neueren App-Version: nicht anfassen, klar melden —
-  // sonst würde das nächste Autosave den Bestand stillschweigend beschädigen.
-  if (ladefehler) {
+// Gate in front of the actual shell: render only once the data is loaded —
+// so the shell can take its start view straight from the settings.
+function Content() {
+  const { data, loadError } = useStore()
+
+  // Data comes from a newer app version: don't touch it, say so clearly —
+  // otherwise the next autosave would silently damage the file.
+  if (loadError) {
     return (
       <div className="grid h-full place-items-center px-8 text-center">
         <div className="max-w-md">
-          <div className="text-[15px] font-semibold text-krank">Daten können nicht geladen werden</div>
-          <p className="mt-2 text-[13px] leading-relaxed text-tinte-2">{ladefehler}</p>
-          <p className="mt-2 text-[12px] text-tinte-3">
+          <div className="text-[15px] font-semibold text-sick">Daten können nicht geladen werden</div>
+          <p className="mt-2 text-[13px] leading-relaxed text-ink-2">{loadError}</p>
+          <p className="mt-2 text-[12px] text-ink-3">
             Bitte aktualisiere Berichtspilot auf die neueste Version — deine daten.json bleibt unverändert.
           </p>
         </div>
@@ -32,9 +34,9 @@ function Inhalt() {
     )
   }
 
-  if (!daten) {
+  if (!data) {
     return (
-      <div className="grid h-full place-items-center text-[13px] text-tinte-3">Lade Daten …</div>
+      <div className="grid h-full place-items-center text-[13px] text-ink-3">Lade Daten …</div>
     )
   }
 
@@ -42,32 +44,29 @@ function Inhalt() {
 }
 
 function Shell() {
-  const { daten } = useStore()
-  // Start-Ansicht aus den Einstellungen (nur beim ersten Rendern gelesen)
-  const [ansicht, setAnsicht] = useState(() =>
-    ['uebersicht', 'editor', 'profile', 'einstellungen'].includes(daten.einstellungen.startAnsicht)
-      ? daten.einstellungen.startAnsicht
-      : 'uebersicht'
+  const { data } = useStore()
+  // Start view from the settings (read only on the first render)
+  const [view, setView] = useState(() =>
+    VIEWS.includes(data.settings.startView) ? data.settings.startView : 'overview'
   )
-  // Im Editor ausgewählte Woche (Montag als ISO-Datum), Default: aktuelle Woche
-  const [montag, setMontag] = useState(() => montagVon(new Date()))
+  // Week selected in the editor (Monday as ISO date), default: current week
+  const [monday, setMonday] = useState(() => mondayOf(new Date()))
   const viewRef = useRef(null)
 
-  // Globale Kürzel: Strg+1–4 wechseln die Ansicht (per e.code, layoutunabhängig)
+  // Global shortcuts: Ctrl+1–4 switch views (via e.code, layout independent)
   useEffect(() => {
-    const reihenfolge = ['uebersicht', 'editor', 'profile', 'einstellungen']
     const handler = (e) => {
       if (!e.ctrlKey || e.shiftKey || e.altKey) return
       const index = ['Digit1', 'Digit2', 'Digit3', 'Digit4'].indexOf(e.code)
       if (index === -1) return
       e.preventDefault()
-      setAnsicht(reihenfolge[index])
+      setView(VIEWS[index])
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
   }, [])
 
-  // Weicher Übergang beim Viewwechsel
+  // Soft transition on view change
   useLayoutEffect(() => {
     if (!viewRef.current) return
     const anim = gsap.fromTo(
@@ -76,27 +75,27 @@ function Shell() {
       { opacity: 1, y: 0, duration: 0.28, ease: 'power3.out', clearProps: 'transform' }
     )
     return () => anim.kill()
-  }, [ansicht])
+  }, [view])
 
-  // Gewähltes Farbthema am <html> setzen; die CSS-Tokens (data-theme) ziehen nach.
+  // Apply the selected color theme on <html>; the CSS tokens (data-theme) follow.
   useEffect(() => {
-    document.documentElement.dataset.theme = daten?.einstellungen?.theme || 'nordlicht'
-  }, [daten?.einstellungen?.theme])
+    document.documentElement.dataset.theme = data?.settings?.theme || 'northern-lights'
+  }, [data?.settings?.theme])
 
-  const oeffneWoche = (id) => {
-    setMontag(id)
-    setAnsicht('editor')
+  const openWeek = (id) => {
+    setMonday(id)
+    setView('editor')
   }
 
   return (
     <div className="flex min-h-0 flex-1">
-      <Sidebar ansicht={ansicht} onAnsicht={setAnsicht} />
+      <Sidebar view={view} onView={setView} />
       <main className="aurora min-w-0 flex-1">
-        <div ref={viewRef} className="h-full" key={ansicht}>
-          {ansicht === 'uebersicht' && <Uebersicht oeffneWoche={oeffneWoche} />}
-          {ansicht === 'editor' && <WochenEditor montag={montag} setMontag={setMontag} />}
-          {ansicht === 'profile' && <Profile />}
-          {ansicht === 'einstellungen' && <Einstellungen />}
+        <div ref={viewRef} className="h-full" key={view}>
+          {view === 'overview' && <Overview openWeek={openWeek} />}
+          {view === 'editor' && <WeekEditor monday={monday} setMonday={setMonday} />}
+          {view === 'profiles' && <Profiles />}
+          {view === 'settings' && <Settings />}
         </div>
       </main>
     </div>
@@ -108,7 +107,7 @@ export default function App() {
     <StoreProvider>
       <div className="flex h-full flex-col">
         <Titlebar />
-        <Inhalt />
+        <Content />
       </div>
       <ToastHost />
     </StoreProvider>

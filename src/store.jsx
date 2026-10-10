@@ -1,271 +1,273 @@
-// Zentraler Zustand: lädt daten.json beim Start, speichert Änderungen
-// automatisch (entprellt) über die preload-Brücke in den Main-Prozess.
+// Central state: loads daten.json on start and saves changes automatically
+// (debounced) through the preload bridge to the main process.
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
 import {
-  seedDaten,
-  neueWoche,
-  wocheAusVorlage,
-  neuesProfil,
-  profilDupliziert,
-  neuerZeitraum,
-  wendeZeitraumAn,
-  migriereDaten,
-  validiereDaten,
-  mergeDaten,
+  seedData,
+  newWeek,
+  weekFromTemplate,
+  newProfile,
+  duplicateProfile as copyOfProfile,
+  newPeriod,
+  applyPeriod,
+  migrateData,
+  validateData,
+  mergeData,
 } from './lib/model.js'
-import { kalenderwoche } from './lib/dates.js'
-import { zeigeToast } from './ui/toast.jsx'
+import { isoWeek } from './lib/dates.js'
+import { showToast } from './ui/toast.jsx'
 
 const StoreContext = createContext(null)
 
-// Fallback für den reinen Browser-Betrieb (vite dev ohne Electron)
+const DESKTOP_ONLY = 'Nur in der Desktop-App verfügbar'
+
+// Fallback for plain browser mode (vite without Electron, smoke tests)
 const browserApi = {
-  datenLaden: async () => ({
+  loadData: async () => ({
     ok: true,
-    daten: JSON.parse(localStorage.getItem('daten') ?? 'null'),
-    pfad: 'localStorage (Browser-Modus)',
+    data: JSON.parse(localStorage.getItem('daten') ?? 'null'),
+    path: 'localStorage (Browser-Modus)',
   }),
-  datenSpeichern: async (d) => {
+  saveData: async (d) => {
     localStorage.setItem('daten', JSON.stringify(d))
     return { ok: true }
   },
-  datenExportieren: async () => ({ ok: false, fehler: 'Nur in der Desktop-App verfügbar' }),
-  datenImportieren: async () => ({ ok: false, fehler: 'Nur in der Desktop-App verfügbar' }),
-  textExportieren: async () => ({ ok: false, fehler: 'Nur in der Desktop-App verfügbar' }),
-  zwischenablageLesen: () => navigator.clipboard.readText().catch(() => ''),
-  pfadOeffnen: async () => {},
-  frageDialog: async () => 0,
-  minimieren() {}, maximieren() {}, schliessen() {}, onMaximiert: () => () => {},
+  exportData: async () => ({ ok: false, error: DESKTOP_ONLY }),
+  importData: async () => ({ ok: false, error: DESKTOP_ONLY }),
+  exportText: async () => ({ ok: false, error: DESKTOP_ONLY }),
+  readClipboard: () => navigator.clipboard.readText().catch(() => ''),
+  revealDataFile: async () => {},
+  askDialog: async () => 0,
+  minimize() {}, maximize() {}, close() {}, onMaximized: () => () => {},
 }
 
 export const api = typeof window !== 'undefined' && window.api ? window.api : browserApi
 
-export function StoreProvider({ children }) {
-  const [daten, setDaten] = useState(null)
-  const [ladefehler, setLadefehler] = useState(null)
-  const [speicherPfad, setSpeicherPfad] = useState('')
-  const [speicherStatus, setSpeicherStatus] = useState('bereit') // bereit | speichert | gespeichert | fehler
-  const timerRef = useRef(null)
-  const geladenRef = useRef(false)
-  // Aktueller Stand für Mutationen, die VOR dem setDaten lesen müssen (Undo)
-  const datenRef = useRef(null)
-  useEffect(() => {
-    datenRef.current = daten
-  }, [daten])
+const byId = (a, b) => (a.id < b.id ? -1 : 1)
 
-  // Beim Start laden; fehlt die Datei, werden Seed-Daten angelegt.
-  // Ältere Stände werden migriert; Stände aus NEUEREN App-Versionen blockieren
-  // das Laden (statt sie beim nächsten Autosave stillschweigend zu zerstören).
+export function StoreProvider({ children }) {
+  const [data, setData] = useState(null)
+  const [loadError, setLoadError] = useState(null)
+  const [dataPath, setDataPath] = useState('')
+  const [saveStatus, setSaveStatus] = useState('idle') // idle | saving | saved | error
+  const timerRef = useRef(null)
+  const loadedRef = useRef(false)
+  // Current state for mutations that must read it BEFORE setData (undo)
+  const dataRef = useRef(null)
   useEffect(() => {
-    api.datenLaden().then((res) => {
-      setSpeicherPfad(res.pfad ?? '')
+    dataRef.current = data
+  }, [data])
+
+  // Load on start; if the file is missing, seed data is created.
+  // Older files are migrated; files from NEWER app versions block loading
+  // (instead of being silently destroyed by the next autosave).
+  useEffect(() => {
+    api.loadData().then((res) => {
+      setDataPath(res.path ?? '')
       let d
-      if (res.ok && res.daten) {
+      if (res.ok && res.data) {
         try {
-          d = migriereDaten(res.daten)
-        } catch (fehler) {
-          setLadefehler(String(fehler.message ?? fehler))
+          d = migrateData(res.data)
+        } catch (error) {
+          setLoadError(String(error.message ?? error))
           return
         }
       } else {
-        d = seedDaten()
+        d = seedData()
       }
-      geladenRef.current = true
-      setDaten(d)
-      // Hauptdatei war kaputt und wurde aus einer Sicherung wiederhergestellt
-      if (res.ausBackup) {
-        zeigeToast('Daten aus Sicherung wiederhergestellt', { art: 'fehler', dauer: 5000 })
+      loadedRef.current = true
+      setData(d)
+      // Main file was corrupted and restored from a backup
+      if (res.fromBackup) {
+        showToast('Daten aus Sicherung wiederhergestellt', { kind: 'error', duration: 5000 })
       } else if (!res.ok) {
-        zeigeToast('Daten konnten nicht geladen werden', { art: 'fehler', dauer: 5000 })
+        showToast('Daten konnten nicht geladen werden', { kind: 'error', duration: 5000 })
       }
     })
   }, [])
 
-  const sofortSpeichern = useCallback(async (d) => {
-    setSpeicherStatus('speichert')
-    const res = await api.datenSpeichern(d)
-    setSpeicherStatus(res.ok ? 'gespeichert' : 'fehler')
+  const saveNow = useCallback(async (d) => {
+    setSaveStatus('saving')
+    const res = await api.saveData(d)
+    setSaveStatus(res.ok ? 'saved' : 'error')
   }, [])
 
-  // Jede Änderung entprellt auf die Platte schreiben (400 ms)
+  // Write every change to disk, debounced (400 ms)
   useEffect(() => {
-    if (!daten || !geladenRef.current) return
+    if (!data || !loadedRef.current) return
     clearTimeout(timerRef.current)
-    timerRef.current = setTimeout(() => sofortSpeichern(daten), 400)
+    timerRef.current = setTimeout(() => saveNow(data), 400)
     return () => clearTimeout(timerRef.current)
-  }, [daten, sofortSpeichern])
+  }, [data, saveNow])
 
-  // ---------------- Mutationen (immer immutabel) ----------------
+  // ---------------- Mutations (always immutable) ----------------
 
-  const wocheAnlegen = useCallback((montagISO, { ausVorlage = false } = {}) => {
-    let angelegt = null
-    setDaten((d) => {
-      if (d.wochen.some((w) => w.id === montagISO)) return d
-      const fruehere = d.wochen.filter((w) => w.id < montagISO).sort((a, b) => (a.id < b.id ? 1 : -1))
-      angelegt =
-        ausVorlage && fruehere[0]
-          ? wocheAusVorlage(montagISO, fruehere[0], d.profile, d.zeitraeume)
-          : neueWoche(montagISO, d.profile, d.zeitraeume)
-      return { ...d, wochen: [...d.wochen, angelegt].sort((a, b) => (a.id < b.id ? -1 : 1)) }
+  const createWeek = useCallback((mondayISO, { fromTemplate = false } = {}) => {
+    let created = null
+    setData((d) => {
+      if (d.weeks.some((w) => w.id === mondayISO)) return d
+      const earlier = d.weeks.filter((w) => w.id < mondayISO).sort((a, b) => (a.id < b.id ? 1 : -1))
+      created =
+        fromTemplate && earlier[0]
+          ? weekFromTemplate(mondayISO, earlier[0], d.profiles, d.periods)
+          : newWeek(mondayISO, d.profiles, d.periods)
+      return { ...d, weeks: [...d.weeks, created].sort(byId) }
     })
-    return angelegt
+    return created
   }, [])
 
-  const wocheAendern = useCallback((id, aendern) => {
-    setDaten((d) => ({
+  const updateWeek = useCallback((id, change) => {
+    setData((d) => ({
       ...d,
-      wochen: d.wochen.map((w) => (w.id === id ? aendern(structuredClone(w)) : w)),
+      weeks: d.weeks.map((w) => (w.id === id ? change(structuredClone(w)) : w)),
     }))
   }, [])
 
-  // Löschen mit Undo: das Objekt wird nur aus dem Zustand entfernt und über
-  // einen „Rückgängig"-Toast wieder einsetzbar gehalten (6 s Zeitfenster).
-  const wocheLoeschen = useCallback((id) => {
-    const woche = datenRef.current?.wochen.find((w) => w.id === id)
-    setDaten((d) => ({ ...d, wochen: d.wochen.filter((w) => w.id !== id) }))
-    if (!woche) return
-    const { kw, jahr } = kalenderwoche(id)
-    zeigeToast(`Woche KW ${kw}/${jahr} gelöscht`, {
-      dauer: 6000,
-      aktion: {
+  // Delete with undo: the object is only removed from state and kept
+  // restorable via an "Rückgängig" toast (6 s window).
+  const deleteWeek = useCallback((id) => {
+    const week = dataRef.current?.weeks.find((w) => w.id === id)
+    setData((d) => ({ ...d, weeks: d.weeks.filter((w) => w.id !== id) }))
+    if (!week) return
+    const { week: weekNo, year } = isoWeek(id)
+    showToast(`Woche KW ${weekNo}/${year} gelöscht`, {
+      duration: 6000,
+      action: {
         label: 'Rückgängig',
-        onKlick: () =>
-          setDaten((d) =>
-            d.wochen.some((w) => w.id === id)
-              ? d
-              : { ...d, wochen: [...d.wochen, woche].sort((a, b) => (a.id < b.id ? -1 : 1)) }
+        onClick: () =>
+          setData((d) =>
+            d.weeks.some((w) => w.id === id) ? d : { ...d, weeks: [...d.weeks, week].sort(byId) }
           ),
       },
     })
   }, [])
 
-  const profilAendern = useCallback((id, aendern) => {
-    setDaten((d) => ({
+  const updateProfile = useCallback((id, change) => {
+    setData((d) => ({
       ...d,
-      profile: d.profile.map((p) => (p.id === id ? aendern(structuredClone(p)) : p)),
+      profiles: d.profiles.map((p) => (p.id === id ? change(structuredClone(p)) : p)),
     }))
   }, [])
 
-  const profilAnlegen = useCallback(() => {
-    const p = neuesProfil()
-    setDaten((d) => ({ ...d, profile: [p, ...d.profile] }))
+  const createProfile = useCallback(() => {
+    const p = newProfile()
+    setData((d) => ({ ...d, profiles: [p, ...d.profiles] }))
     return p
   }, [])
 
-  const profilLoeschen = useCallback((id) => {
-    const index = datenRef.current?.profile.findIndex((p) => p.id === id) ?? -1
-    const profil = index >= 0 ? datenRef.current.profile[index] : null
-    setDaten((d) => ({ ...d, profile: d.profile.filter((p) => p.id !== id) }))
-    if (!profil) return
-    zeigeToast(`Profil „${profil.name}" gelöscht`, {
-      dauer: 6000,
-      aktion: {
+  const deleteProfile = useCallback((id) => {
+    const index = dataRef.current?.profiles.findIndex((p) => p.id === id) ?? -1
+    const profile = index >= 0 ? dataRef.current.profiles[index] : null
+    setData((d) => ({ ...d, profiles: d.profiles.filter((p) => p.id !== id) }))
+    if (!profile) return
+    showToast(`Profil „${profile.name}" gelöscht`, {
+      duration: 6000,
+      action: {
         label: 'Rückgängig',
-        onKlick: () =>
-          setDaten((d) => {
-            if (d.profile.some((p) => p.id === id)) return d
-            const profile = [...d.profile]
-            profile.splice(Math.min(index, profile.length), 0, profil)
-            return { ...d, profile }
+        onClick: () =>
+          setData((d) => {
+            if (d.profiles.some((p) => p.id === id)) return d
+            const profiles = [...d.profiles]
+            profiles.splice(Math.min(index, profiles.length), 0, profile)
+            return { ...d, profiles }
           }),
       },
     })
   }, [])
 
-  /** Profil kopieren (Halbjahreswechsel) — liefert die neue Kopie. */
-  const profilDuplizieren = useCallback((id) => {
-    const original = datenRef.current?.profile.find((p) => p.id === id)
+  /** Copy a profile (half-year switch) — returns the new copy. */
+  const duplicateProfile = useCallback((id) => {
+    const original = dataRef.current?.profiles.find((p) => p.id === id)
     if (!original) return null
-    const kopie = profilDupliziert(original)
-    setDaten((d) => {
-      const index = d.profile.findIndex((p) => p.id === id)
-      const profile = [...d.profile]
-      profile.splice(index + 1, 0, kopie)
-      return { ...d, profile }
+    const copy = copyOfProfile(original)
+    setData((d) => {
+      const index = d.profiles.findIndex((p) => p.id === id)
+      const profiles = [...d.profiles]
+      profiles.splice(index + 1, 0, copy)
+      return { ...d, profiles }
     })
-    return kopie
+    return copy
   }, [])
 
-  // ---------------- Zeiträume (Urlaub / Schulferien) ----------------
+  // ---------------- Periods (vacation / school breaks) ----------------
 
-  const zeitraumAnlegen = useCallback(() => {
-    const z = neuerZeitraum()
-    setDaten((d) => ({ ...d, zeitraeume: [...d.zeitraeume, z] }))
-    return z
+  const createPeriod = useCallback(() => {
+    const p = newPeriod()
+    setData((d) => ({ ...d, periods: [...d.periods, p] }))
+    return p
   }, [])
 
-  const zeitraumAendern = useCallback((id, patch) => {
-    setDaten((d) => {
-      const zeitraeume = d.zeitraeume.map((z) => (z.id === id ? { ...z, ...patch } : z))
-      const geaendert = zeitraeume.find((z) => z.id === id)
-      // Urlaub wirkt sofort auch auf bestehende Wochen (nur leere Normal-Tage)
-      return { ...d, zeitraeume, wochen: wendeZeitraumAn(d.wochen, geaendert) }
+  const updatePeriod = useCallback((id, patch) => {
+    setData((d) => {
+      const periods = d.periods.map((p) => (p.id === id ? { ...p, ...patch } : p))
+      const changed = periods.find((p) => p.id === id)
+      // Vacation applies to existing weeks right away (only empty normal days)
+      return { ...d, periods, weeks: applyPeriod(d.weeks, changed) }
     })
   }, [])
 
-  const zeitraumLoeschen = useCallback((id) => {
-    setDaten((d) => ({ ...d, zeitraeume: d.zeitraeume.filter((z) => z.id !== id) }))
+  const deletePeriod = useCallback((id) => {
+    setData((d) => ({ ...d, periods: d.periods.filter((p) => p.id !== id) }))
   }, [])
 
-  const einstellungenAendern = useCallback((patch) => {
-    setDaten((d) => ({ ...d, einstellungen: { ...d.einstellungen, ...patch } }))
+  const updateSettings = useCallback((patch) => {
+    setData((d) => ({ ...d, settings: { ...d.settings, ...patch } }))
   }, [])
 
-  const exportieren = useCallback(() => api.datenExportieren(daten), [daten])
+  const exportData = useCallback(() => api.exportData(data), [data])
 
-  // Import: Datei prüfen + migrieren, dann nativ fragen, ob zusammengeführt
-  // (nur Fehlendes ergänzen) oder komplett ersetzt werden soll.
-  const importieren = useCallback(async () => {
-    const res = await api.datenImportieren()
-    if (res.abgebrochen) return { ok: false, abgebrochen: true }
-    if (!res.ok || !res.daten) return { ok: false, fehler: res.fehler ?? 'Datei konnte nicht gelesen werden' }
+  // Import: migrate + validate the file, then ask natively whether to merge
+  // (add only what's missing) or replace everything.
+  const importData = useCallback(async () => {
+    const res = await api.importData()
+    if (res.canceled) return { ok: false, canceled: true }
+    if (!res.ok || !res.data) return { ok: false, error: res.error ?? 'Datei konnte nicht gelesen werden' }
 
-    let importiert
+    let imported
     try {
-      importiert = migriereDaten(validiereDaten(res.daten))
-    } catch (fehler) {
-      return { ok: false, fehler: String(fehler.message ?? fehler) }
+      imported = validateData(migrateData(res.data))
+    } catch (error) {
+      return { ok: false, error: String(error.message ?? error) }
     }
 
-    const wahl = await api.frageDialog({
-      titel: 'Daten importieren',
-      nachricht: 'Wie sollen die importierten Daten übernommen werden?',
+    const choice = await api.askDialog({
+      title: 'Daten importieren',
+      message: 'Wie sollen die importierten Daten übernommen werden?',
       detail:
         'Zusammenführen ergänzt nur Wochen, Profile und Zeiträume, die noch nicht existieren — Bestehendes bleibt unverändert. Ersetzen überschreibt den kompletten aktuellen Datenbestand.',
       buttons: ['Zusammenführen', 'Ersetzen', 'Abbrechen'],
       cancelId: 2,
     })
-    if (wahl !== 0 && wahl !== 1) return { ok: false, abgebrochen: true }
-    setDaten((d) => (wahl === 0 ? mergeDaten(d, importiert) : importiert))
-    return { ok: true, zusammengefuehrt: wahl === 0 }
+    if (choice !== 0 && choice !== 1) return { ok: false, canceled: true }
+    setData((d) => (choice === 0 ? mergeData(d, imported) : imported))
+    return { ok: true, merged: choice === 0 }
   }, [])
 
-  const wert = {
-    daten,
-    ladefehler,
-    speicherPfad,
-    speicherStatus,
-    wocheAnlegen,
-    wocheAendern,
-    wocheLoeschen,
-    profilAendern,
-    profilAnlegen,
-    profilLoeschen,
-    profilDuplizieren,
-    zeitraumAnlegen,
-    zeitraumAendern,
-    zeitraumLoeschen,
-    einstellungenAendern,
-    exportieren,
-    importieren,
-    sofortSpeichern: () => daten && sofortSpeichern(daten),
+  const value = {
+    data,
+    loadError,
+    dataPath,
+    saveStatus,
+    createWeek,
+    updateWeek,
+    deleteWeek,
+    updateProfile,
+    createProfile,
+    deleteProfile,
+    duplicateProfile,
+    createPeriod,
+    updatePeriod,
+    deletePeriod,
+    updateSettings,
+    exportData,
+    importData,
+    saveNow: () => data && saveNow(data),
   }
 
-  return <StoreContext.Provider value={wert}>{children}</StoreContext.Provider>
+  return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>
 }
 
 export function useStore() {
   const ctx = useContext(StoreContext)
-  if (!ctx) throw new Error('useStore außerhalb des StoreProvider')
+  if (!ctx) throw new Error('useStore used outside of StoreProvider')
   return ctx
 }

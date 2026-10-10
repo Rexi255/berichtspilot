@@ -30,27 +30,29 @@ WebUntis lesson notes ────────────┘    (daten.json)   
 
 ## Next step
 
-**Step 1.1 — English identifiers + schema v3** (requested by the user, E-015)
+**Step 1.2 — Schema v4: raw `notes` per day**
 
-Goal: all code names and `daten.json` fields in English, existing user data migrates
-losslessly. UI texts and IHK output stay German.
+Goal: a place where dictation (phase 2) and the AI (phase 3) can put raw text
+without touching the finished bullets. Nothing in the output changes.
 
-- Rename identifiers in `src/lib/*`, `src/store.jsx`, `src/App.jsx`, `src/views/*`,
-  `src/ui/*`, `electron/*` per `docs/GLOSSARY.md`; view files become
-  `Overview.jsx`, `WeekEditor.jsx`, `Profiles.jsx`, `Settings.jsx`.
-- IPC channels + preload API per the table in `docs/ARCHITECTURE.md`
-  (`data:load` / `loadData()` …); IPC result fields `{ ok, data, path, fromBackup, error, canceled }`.
-- CSS design tokens and theme ids in English (`--color-ink`, `northern-lights` …).
-- `model.js`: `DATA_VERSION = 3`, migration step 2 → 3 maps every field/enum per the
-  GLOSSARY table; `validateData()` and `mergeData()` work on v3; imports of v1/v2
-  files keep working (migrate first, then validate).
-- Tests: migration v1 → v3 and v2 → v3 (full fixture incl. periods, profiles,
-  weeks, all enum values), unknown extra fields survive, newer version rejected.
-  Format tests unchanged and green.
-- Smoke test in browser mode (vite preview + Playwright): all four views render
-  without console errors; a v2 dataset in localStorage is migrated and displayed.
+- `src/lib/model.js`: `DATA_VERSION = 4`; every day gets `notes: ''`. Migration
+  step 3 → 4 in `migrateData()` adds the field to all existing days (keep any
+  existing value). `newWeek()` / `weekFromTemplate()` create it (template copies
+  start with empty notes). `validateData()` accepts a missing or string `notes`.
+- Tests in `model.test.js`: v3 → v4 adds `notes` everywhere; v2 → v4 still works
+  end to end (reuse the `v2File()` fixture); new weeks have `notes: ''`.
+- `format.js` ignores `notes` — add one test in `format.test.js` proving notes
+  never appear in any block (new test only; existing expectations untouched).
+- UI (`src/views/WeekEditor.jsx`, `DayCard`): collapsible "Notizen" area per day
+  (button "Notizen" with a small indicator when non-empty; `TextArea`, 3 rows,
+  placeholder "Rohnotizen, z. B. diktiert — landen nicht in der Ausgabe").
+  Collapsed by default when empty, expanded when it has content.
+- Search in `Overview.jsx` (`searchMatch`) also finds text in `notes`.
+- Update `docs/DATA_MODEL.md` (structure + migration table), `docs/GLOSSARY.md`
+  (`notes` no longer "planned"), CHANGELOG.
+- Verify: lint, tests, build, browser smoke test (see CLAUDE.md "Commands").
 
-Then: step 1.2.
+Then: step 1.3.
 
 ## Open questions (for the user)
 
@@ -72,7 +74,7 @@ Then: step 1.2.
 - [x] Docs, AI instructions and skills switched to English; glossary (2026-10-10)
 
 ### Phase 1 — Foundation for automation (not blocked)
-- [ ] 1.1 English identifiers + `daten.json` fields, schema v3 with migration + tests
+- [x] 1.1 English identifiers + `daten.json` fields, schema v3 with migration + tests (2026-10-10)
 - [ ] 1.2 Schema v4: `notes` (raw text) per day + collapsible "Notizen" field in the
       week editor; `format.js` ignores notes
 - [ ] 1.3 Network layer in main: `electron/net.js` — `fetch` wrapper with host
@@ -126,4 +128,5 @@ Then: step 1.2.
 | Date | Step | Commit/PR |
 |---|---|---|
 | 2026-10-09 | Phase 0: AI groundwork | b32a115 |
-| 2026-10-10 | Docs + AI instructions in English | branch `claude/intelligent-curie-yxizss` |
+| 2026-10-10 | Docs + AI instructions in English | a81b351 |
+| 2026-10-10 | Step 1.1: English identifiers, schema v3 | branch `claude/intelligent-curie-yxizss` |

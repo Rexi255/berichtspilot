@@ -13,8 +13,13 @@ versioning follows [Semantic Versioning](https://semver.org/).
   new knowledge base in `docs/` (architecture, data model, output format,
   glossary, decisions, overhaul plan), Claude Code skills `/next` and `/wrap-up`,
   and a SessionStart hook for cloud sessions.
-- **English codebase:** documentation, AI instructions, changelog and templates are
-  English now; the UI and the IHK output stay German.
+- **English codebase:** code, identifiers, comments, documentation, AI
+  instructions, changelog and templates are English now; the UI and the IHK
+  output stay German.
+- **Schema migration v2 → v3:** all `daten.json` field names and values are
+  English now (e.g. `wochen` → `weeks`, `stichpunkte` → `bullets`). Existing files
+  and imports of older exports are migrated automatically and losslessly on
+  load; the file name stays `daten.json`.
 
 ## [1.2.0] - 2026-07-09
 

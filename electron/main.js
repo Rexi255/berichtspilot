@@ -1,29 +1,30 @@
-// Electron-Hauptprozess: Fenster, Ablageort + sicheres Speichern, Datei-I/O über IPC.
+// Electron main process: window, data location + safe saving, file I/O via IPC.
+// User-facing strings (dialogs, menus) are German.
 const { app, BrowserWindow, ipcMain, dialog, shell, clipboard, Menu, MenuItem } = require('electron')
 const path = require('path')
 const fs = require('fs')
 const fsp = fs.promises
 
 // ---------------------------------------------------------------------------
-// Ablageort für daten.json. Ziel: die Datei liegt möglichst „portabel" neben
-// der Executable (Daten wandern mit, z. B. auf dem USB-Stick), aber die App
-// darf NIE abstürzen, wenn dieser Ort schreibgeschützt ist (Installation unter
-// C:\Program Files bzw. /usr/bin — dort blockt das OS Schreiben ohne Admin).
+// Location of daten.json. Goal: keep the file "portable" next to the
+// executable whenever possible (data travels along, e.g. on a USB stick), but
+// the app must NEVER crash when that location is read-only (installed under
+// C:\Program Files or /usr/bin — the OS blocks writes there without admin).
 //
-// Reihenfolge:
-//  1. Dev-Modus                     -> Projektordner (CWD), daten.json direkt sichtbar
-//  2. Portabler Ort neben der Exe   -> nur wenn wirklich beschreibbar
-//       - Windows portable .exe: electron-builder setzt PORTABLE_EXECUTABLE_DIR
-//       - Linux AppImage:        APPIMAGE zeigt auf die .AppImage-Datei
-//  3. Installiert / Ort nicht beschreibbar -> app.getPath('userData')
+// Order:
+//  1. Dev mode                         -> project folder (CWD), daten.json directly visible
+//  2. Portable location next to the exe -> only if actually writable
+//       - Windows portable .exe: electron-builder sets PORTABLE_EXECUTABLE_DIR
+//       - Linux AppImage:        APPIMAGE points to the .AppImage file
+//  3. Installed / location not writable -> app.getPath('userData')
 //       (Windows: %APPDATA%\Berichtspilot, Linux: ~/.config/Berichtspilot) —
-//       immer nutzerspezifisch beschreibbar, kein Admin nötig.
+//       always writable per user, no admin needed.
 // ---------------------------------------------------------------------------
 
-// Echter Schreibtest statt fs.access(W_OK): Letzteres ist unter Windows wegen
-// ACLs/Virtualisierung unzuverlässig. Wir legen kurz eine Probedatei an.
-function istBeschreibbar(verzeichnis) {
-  const probe = path.join(verzeichnis, `.schreibtest-${process.pid}`)
+// A real write test instead of fs.access(W_OK): the latter is unreliable on
+// Windows because of ACLs/virtualization. We briefly create a probe file.
+function isWritable(dir) {
+  const probe = path.join(dir, `.write-test-${process.pid}`)
   try {
     fs.writeFileSync(probe, '')
     fs.unlinkSync(probe)
@@ -33,76 +34,77 @@ function istBeschreibbar(verzeichnis) {
   }
 }
 
-function ermittleDatenVerzeichnis() {
+function resolveDataDir() {
   if (!app.isPackaged) return process.cwd()
 
-  const portabel =
+  const portable =
     process.env.PORTABLE_EXECUTABLE_DIR ||
     (process.env.APPIMAGE && path.dirname(process.env.APPIMAGE)) ||
     null
-  if (portabel && istBeschreibbar(portabel)) return portabel
+  if (portable && isWritable(portable)) return portable
 
   return app.getPath('userData')
 }
 
-const DATEN_PFAD = path.join(ermittleDatenVerzeichnis(), 'daten.json')
+// The file name stays German for compatibility with existing installs (DECISIONS E-014)
+const DATA_PATH = path.join(resolveDataDir(), 'daten.json')
 
-// Wie viele rollierende Sicherungen (daten.json.bak1 … .bakN) wir vorhalten.
+// How many rolling backups (daten.json.bak1 … .bakN) we keep.
 const MAX_BACKUPS = 3
 
 /**
- * Vorherigen Speicherstand rollierend sichern, BEVOR daten.json überschrieben
- * wird: .bak2 -> .bak3, .bak1 -> .bak2, daten.json -> .bak1 (Kopie). Es wird
- * kopiert, nicht verschoben, damit daten.json bis zum finalen atomaren rename
- * durchgehend existiert. So bleiben die letzten MAX_BACKUPS Stände erhalten;
- * eine kaputte daten.json kann daraus wiederhergestellt werden.
+ * Back up the previous state, rolling, BEFORE daten.json is overwritten:
+ * .bak2 -> .bak3, .bak1 -> .bak2, daten.json -> .bak1 (copy). We copy instead
+ * of moving so daten.json keeps existing until the final atomic rename. That
+ * way the last MAX_BACKUPS states survive and a corrupted daten.json can be
+ * restored from them.
  */
-async function rotiereBackups() {
+async function rotateBackups() {
   try {
-    await fsp.access(DATEN_PFAD) // noch keine daten.json -> nichts zu sichern
+    await fsp.access(DATA_PATH) // no daten.json yet -> nothing to back up
   } catch {
     return
   }
-  await fsp.rm(`${DATEN_PFAD}.bak${MAX_BACKUPS}`, { force: true }).catch(() => {})
+  await fsp.rm(`${DATA_PATH}.bak${MAX_BACKUPS}`, { force: true }).catch(() => {})
   for (let i = MAX_BACKUPS - 1; i >= 1; i--) {
-    await fsp.rename(`${DATEN_PFAD}.bak${i}`, `${DATEN_PFAD}.bak${i + 1}`).catch(() => {})
+    await fsp.rename(`${DATA_PATH}.bak${i}`, `${DATA_PATH}.bak${i + 1}`).catch(() => {})
   }
-  await fsp.copyFile(DATEN_PFAD, `${DATEN_PFAD}.bak1`).catch(() => {})
+  await fsp.copyFile(DATA_PATH, `${DATA_PATH}.bak1`).catch(() => {})
 }
 
 /**
- * Atomar + abgesichert schreiben. Ein Absturz/Stromausfall darf das über Jahre
- * gewachsene Berichtsheft nie zerstören:
- *  1. Neue Daten vollständig in eine Temp-Datei schreiben und per fsync auf den
- *     Datenträger zwingen — die alte daten.json bleibt dabei unberührt.
- *  2. Bisherigen Stand rollierend sichern (.bak1 … .bakN).
- *  3. Temp-Datei atomar an ihren Platz umbenennen (rename ist auf einer
- *     Partition atomar — daten.json existiert nie halb geschrieben).
+ * Write atomically and safely. A crash/power failure must never destroy a
+ * training record that grew over years:
+ *  1. Write the new data completely into a temp file and force it to disk
+ *     via fsync — the old daten.json stays untouched meanwhile.
+ *  2. Back up the previous state, rolling (.bak1 … .bakN).
+ *  3. Atomically rename the temp file into place (rename is atomic within one
+ *     partition — daten.json never exists half-written).
  */
-async function schreibeDaten(json) {
-  const tmp = DATEN_PFAD + '.tmp'
+async function writeData(json) {
+  const tmp = DATA_PATH + '.tmp'
   const fh = await fsp.open(tmp, 'w')
   try {
     await fh.writeFile(json, 'utf8')
-    await fh.sync() // Puffer garantiert auf die Platte
+    await fh.sync() // buffers guaranteed on disk
   } finally {
     await fh.close()
   }
-  await rotiereBackups()
-  await fsp.rename(tmp, DATEN_PFAD)
+  await rotateBackups()
+  await fsp.rename(tmp, DATA_PATH)
 }
 
-let fenster = null
+let win = null
 
-function erstelleFenster() {
-  fenster = new BrowserWindow({
+function createWindow() {
+  win = new BrowserWindow({
     width: 1280,
     height: 840,
     minWidth: 940,
     minHeight: 600,
-    frame: false, // eigene Titlebar im Renderer
+    frame: false, // custom title bar in the renderer
     backgroundColor: '#0a0c10',
-    icon: path.join(__dirname, 'icon.ico'), // Fenster-/Taskbar-Icon (in dist gebündelt)
+    icon: path.join(__dirname, 'icon.ico'), // window/taskbar icon (bundled)
     show: false,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -113,24 +115,24 @@ function erstelleFenster() {
     },
   })
 
-  fenster.once('ready-to-show', () => fenster.show())
+  win.once('ready-to-show', () => win.show())
 
-  // Deutsche Rechtschreibprüfung in den Eingabefeldern. Kann fehlschlagen,
-  // wenn das OS kein deutsches Wörterbuch anbietet — dann einfach ohne.
+  // German spell checking in input fields. May fail if the OS offers no German
+  // dictionary — then we simply go without.
   try {
-    fenster.webContents.session.setSpellCheckerLanguages(['de-DE', 'de'])
+    win.webContents.session.setSpellCheckerLanguages(['de-DE', 'de'])
   } catch {
-    /* Sprache nicht verfügbar -> Spellcheck bleibt aus */
+    /* language not available -> spell check stays off */
   }
 
-  // Kontextmenü: Korrekturvorschläge des Spellcheckers + Standard-Bearbeiten
-  fenster.webContents.on('context-menu', (_ev, params) => {
+  // Context menu: spell checker suggestions + standard edit actions
+  win.webContents.on('context-menu', (_ev, params) => {
     const menu = new Menu()
-    for (const vorschlag of params.dictionarySuggestions.slice(0, 5)) {
+    for (const suggestion of params.dictionarySuggestions.slice(0, 5)) {
       menu.append(
         new MenuItem({
-          label: vorschlag,
-          click: () => fenster.webContents.replaceMisspelling(vorschlag),
+          label: suggestion,
+          click: () => win.webContents.replaceMisspelling(suggestion),
         })
       )
     }
@@ -139,7 +141,7 @@ function erstelleFenster() {
         new MenuItem({
           label: 'Zum Wörterbuch hinzufügen',
           click: () =>
-            fenster.webContents.session.addWordToSpellCheckerDictionary(params.misspelledWord),
+            win.webContents.session.addWordToSpellCheckerDictionary(params.misspelledWord),
         })
       )
       menu.append(new MenuItem({ type: 'separator' }))
@@ -154,44 +156,44 @@ function erstelleFenster() {
     if (menu.items.length > 0) menu.popup()
   })
 
-  // Maximieren-Status an den Renderer melden (für das Titlebar-Icon)
-  const meldeMax = () => {
-    if (!fenster.isDestroyed()) {
-      fenster.webContents.send('fenster:maximiert', fenster.isMaximized())
+  // Report the maximized state to the renderer (for the title bar icon)
+  const reportMaximized = () => {
+    if (!win.isDestroyed()) {
+      win.webContents.send('window:maximized', win.isMaximized())
     }
   }
-  fenster.on('maximize', meldeMax)
-  fenster.on('unmaximize', meldeMax)
+  win.on('maximize', reportMaximized)
+  win.on('unmaximize', reportMaximized)
 
-  // Externe Links im Systembrowser öffnen, nie im App-Fenster
-  fenster.webContents.setWindowOpenHandler(({ url }) => {
+  // Open external links in the system browser, never in the app window
+  win.webContents.setWindowOpenHandler(({ url }) => {
     if (url.startsWith('https://')) shell.openExternal(url)
     return { action: 'deny' }
   })
 
   if (process.env.VITE_DEV_SERVER_URL) {
-    fenster.loadURL(process.env.VITE_DEV_SERVER_URL)
+    win.loadURL(process.env.VITE_DEV_SERVER_URL)
   } else {
-    fenster.loadFile(path.join(__dirname, '..', 'dist', 'index.html'))
+    win.loadFile(path.join(__dirname, '..', 'dist', 'index.html'))
   }
 
-  // Dev-Helfer: `electron . --screenshot=pfad.png [--view=editor]` rendert die
-  // App, speichert einen Screenshot und beendet sich (für UI-Checks ohne Anzeige).
+  // Dev helper: `electron . --screenshot=path.png [--view=editor]` renders the
+  // app, saves a screenshot and quits (for UI checks without a display).
   const shotArg = process.argv.find((a) => a.startsWith('--screenshot='))
   if (shotArg) {
-    const zielPfad = shotArg.split('=')[1]
+    const targetPath = shotArg.split('=')[1]
     const viewArg = process.argv.find((a) => a.startsWith('--view='))
-    fenster.webContents.once('did-finish-load', () => {
+    win.webContents.once('did-finish-load', () => {
       setTimeout(async () => {
         if (viewArg) {
           const view = viewArg.split('=')[1]
-          await fenster.webContents.executeJavaScript(
+          await win.webContents.executeJavaScript(
             `document.querySelector('[data-nav="${view}"]')?.click()`
           )
           await new Promise((r) => setTimeout(r, 900))
         }
-        const bild = await fenster.webContents.capturePage()
-        await fsp.writeFile(zielPfad, bild.toPNG())
+        const image = await win.webContents.capturePage()
+        await fsp.writeFile(targetPath, image.toPNG())
         app.quit()
       }, 1500)
     })
@@ -199,102 +201,101 @@ function erstelleFenster() {
 }
 
 // ---------------------------------------------------------------------------
-// IPC: Persistenz (Laden/Speichern) + Export/Import über native Dialoge
+// IPC: persistence (load/save) + export/import via native dialogs
 // ---------------------------------------------------------------------------
-ipcMain.handle('daten:laden', async () => {
-  // daten.json zuerst, dann die Sicherungen der Reihe nach. Ist die Hauptdatei
-  // kaputt (JSON-Fehler nach abgebrochenem Schreiben), wird automatisch der
-  // jüngste noch lesbare Backup-Stand genommen.
-  const kandidaten = [DATEN_PFAD]
-  for (let i = 1; i <= MAX_BACKUPS; i++) kandidaten.push(`${DATEN_PFAD}.bak${i}`)
+ipcMain.handle('data:load', async () => {
+  // daten.json first, then the backups in order. If the main file is corrupt
+  // (JSON error after an aborted write), the newest readable backup is used.
+  const candidates = [DATA_PATH]
+  for (let i = 1; i <= MAX_BACKUPS; i++) candidates.push(`${DATA_PATH}.bak${i}`)
 
-  let letzterFehler = null
-  for (const pfad of kandidaten) {
+  let lastError = null
+  for (const file of candidates) {
     try {
-      const inhalt = await fsp.readFile(pfad, 'utf8')
-      const daten = JSON.parse(inhalt) // wirft bei korrupter Datei
-      return { ok: true, daten, pfad: DATEN_PFAD, ausBackup: pfad !== DATEN_PFAD }
-    } catch (fehler) {
-      if (fehler.code === 'ENOENT') continue // Datei existiert nicht -> nächste
-      letzterFehler = fehler // vorhanden, aber kaputt -> Backup versuchen
+      const content = await fsp.readFile(file, 'utf8')
+      const data = JSON.parse(content) // throws for a corrupt file
+      return { ok: true, data, path: DATA_PATH, fromBackup: file !== DATA_PATH }
+    } catch (error) {
+      if (error.code === 'ENOENT') continue // file doesn't exist -> next one
+      lastError = error // exists but is broken -> try a backup
     }
   }
-  // Keine der Dateien existierte -> echter Erststart (kein Fehler)
-  if (!letzterFehler) return { ok: true, daten: null, pfad: DATEN_PFAD }
-  // Vorhandene Dateien alle unlesbar/korrupt
-  return { ok: false, fehler: String(letzterFehler), pfad: DATEN_PFAD }
+  // None of the files existed -> genuine first start (not an error)
+  if (!lastError) return { ok: true, data: null, path: DATA_PATH }
+  // Existing files are all unreadable/corrupt
+  return { ok: false, error: String(lastError), path: DATA_PATH }
 })
 
-ipcMain.handle('daten:speichern', async (_ev, daten) => {
+ipcMain.handle('data:save', async (_ev, data) => {
   try {
-    await schreibeDaten(JSON.stringify(daten, null, 2))
+    await writeData(JSON.stringify(data, null, 2))
     return { ok: true }
-  } catch (fehler) {
-    return { ok: false, fehler: String(fehler) }
+  } catch (error) {
+    return { ok: false, error: String(error) }
   }
 })
 
-ipcMain.handle('daten:exportieren', async (_ev, daten) => {
-  const { canceled, filePath } = await dialog.showSaveDialog(fenster, {
+ipcMain.handle('data:export', async (_ev, data) => {
+  const { canceled, filePath } = await dialog.showSaveDialog(win, {
     title: 'Daten exportieren',
     defaultPath: `berichtspilot-backup-${new Date().toISOString().slice(0, 10)}.json`,
     filters: [{ name: 'JSON', extensions: ['json'] }],
   })
-  if (canceled || !filePath) return { ok: false, abgebrochen: true }
+  if (canceled || !filePath) return { ok: false, canceled: true }
   try {
-    await fsp.writeFile(filePath, JSON.stringify(daten, null, 2), 'utf8')
-    return { ok: true, pfad: filePath }
-  } catch (fehler) {
-    return { ok: false, fehler: String(fehler) }
+    await fsp.writeFile(filePath, JSON.stringify(data, null, 2), 'utf8')
+    return { ok: true, path: filePath }
+  } catch (error) {
+    return { ok: false, error: String(error) }
   }
 })
 
-ipcMain.handle('daten:importieren', async () => {
-  const { canceled, filePaths } = await dialog.showOpenDialog(fenster, {
+ipcMain.handle('data:import', async () => {
+  const { canceled, filePaths } = await dialog.showOpenDialog(win, {
     title: 'Daten importieren',
     filters: [{ name: 'JSON', extensions: ['json'] }],
     properties: ['openFile'],
   })
-  if (canceled || !filePaths.length) return { ok: false, abgebrochen: true }
+  if (canceled || !filePaths.length) return { ok: false, canceled: true }
   try {
-    const inhalt = await fsp.readFile(filePaths[0], 'utf8')
-    const daten = JSON.parse(inhalt)
-    return { ok: true, daten }
-  } catch (fehler) {
-    return { ok: false, fehler: String(fehler) }
+    const content = await fsp.readFile(filePaths[0], 'utf8')
+    const data = JSON.parse(content)
+    return { ok: true, data }
+  } catch (error) {
+    return { ok: false, error: String(error) }
   }
 })
 
-// Einzelnen Textblock als .txt exportieren
-ipcMain.handle('text:exportieren', async (_ev, { dateiname, inhalt }) => {
-  const { canceled, filePath } = await dialog.showSaveDialog(fenster, {
+// Export a single text block as .txt
+ipcMain.handle('text:export', async (_ev, { fileName, content }) => {
+  const { canceled, filePath } = await dialog.showSaveDialog(win, {
     title: 'Als .txt exportieren',
-    defaultPath: dateiname,
+    defaultPath: fileName,
     filters: [{ name: 'Text', extensions: ['txt'] }],
   })
-  if (canceled || !filePath) return { ok: false, abgebrochen: true }
+  if (canceled || !filePath) return { ok: false, canceled: true }
   try {
-    await fsp.writeFile(filePath, inhalt, 'utf8')
-    return { ok: true, pfad: filePath }
-  } catch (fehler) {
-    return { ok: false, fehler: String(fehler) }
+    await fsp.writeFile(filePath, content, 'utf8')
+    return { ok: true, path: filePath }
+  } catch (error) {
+    return { ok: false, error: String(error) }
   }
 })
 
-// Zwischenablage lesen (für „Aus Zwischenablage einfügen" im Editor) —
-// der sandboxte Renderer hat keinen verlässlichen Clipboard-Lesezugriff.
-ipcMain.handle('zwischenablage:lesen', () => clipboard.readText())
+// Read the clipboard (for "Aus Zwischenablage" in the editor) — the sandboxed
+// renderer has no reliable clipboard read access.
+ipcMain.handle('clipboard:read', () => clipboard.readText())
 
-// Ordner der daten.json im Dateimanager anzeigen (Einstellungen -> Daten)
-ipcMain.handle('pfad:oeffnen', () => shell.showItemInFolder(DATEN_PFAD))
+// Show daten.json in the file manager (Settings -> Daten)
+ipcMain.handle('path:reveal', () => shell.showItemInFolder(DATA_PATH))
 
-// Generischer nativer Frage-Dialog (z. B. Import: Zusammenführen/Ersetzen).
-// Liefert den Index des geklickten Buttons.
-ipcMain.handle('dialog:frage', async (_ev, { titel, nachricht, detail, buttons, cancelId }) => {
-  const { response } = await dialog.showMessageBox(fenster, {
+// Generic native question dialog (e.g. import: merge/replace).
+// Returns the index of the clicked button.
+ipcMain.handle('dialog:ask', async (_ev, { title, message, detail, buttons, cancelId }) => {
+  const { response } = await dialog.showMessageBox(win, {
     type: 'question',
-    title: titel,
-    message: nachricht,
+    title,
+    message,
     detail,
     buttons,
     cancelId: cancelId ?? buttons.length - 1,
@@ -304,32 +305,32 @@ ipcMain.handle('dialog:frage', async (_ev, { titel, nachricht, detail, buttons, 
   return response
 })
 
-// Fenstersteuerung für die eigene Titlebar
-ipcMain.handle('fenster:minimieren', () => fenster?.minimize())
-ipcMain.handle('fenster:maximieren', () => {
-  if (!fenster) return
-  fenster.isMaximized() ? fenster.unmaximize() : fenster.maximize()
+// Window controls for the custom title bar
+ipcMain.handle('window:minimize', () => win?.minimize())
+ipcMain.handle('window:maximize', () => {
+  if (!win) return
+  win.isMaximized() ? win.unmaximize() : win.maximize()
 })
-ipcMain.handle('fenster:schliessen', () => fenster?.close())
+ipcMain.handle('window:close', () => win?.close())
 
-// Nur EINE Instanz zulassen: zwei parallel laufende Instanzen würden sich
-// gegenseitig die daten.json überschreiben (letzter Speichervorgang gewinnt).
-// Ein zweiter Start gibt den Fokus an das bestehende Fenster ab und beendet sich.
+// Allow only ONE instance: two instances running in parallel would overwrite
+// each other's daten.json (last save wins). A second start hands focus to the
+// existing window and quits.
 if (!app.requestSingleInstanceLock()) {
   app.quit()
 } else {
   app.on('second-instance', () => {
-    if (fenster && !fenster.isDestroyed()) {
-      if (fenster.isMinimized()) fenster.restore()
-      fenster.show()
-      fenster.focus()
+    if (win && !win.isDestroyed()) {
+      if (win.isMinimized()) win.restore()
+      win.show()
+      win.focus()
     }
   })
 
   app.whenReady().then(() => {
-    erstelleFenster()
+    createWindow()
     app.on('activate', () => {
-      if (BrowserWindow.getAllWindows().length === 0) erstelleFenster()
+      if (BrowserWindow.getAllWindows().length === 0) createWindow()
     })
   })
 }

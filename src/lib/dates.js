@@ -1,94 +1,96 @@
-// Datums-Helfer. Alle Daten laufen als ISO-Strings ("YYYY-MM-DD") durch die App
-// und werden bewusst als LOKALE Daten geparst (kein UTC-Versatz an Zeitzonengrenzen).
+// Date helpers. All dates travel through the app as ISO strings ("YYYY-MM-DD")
+// and are deliberately parsed as LOCAL dates (no UTC offset at time-zone borders).
 
-export const WOCHENTAG_NAMEN = [
+// German weekday names for the IHK output (index = Date#getDay(), 0 = Sunday)
+export const WEEKDAY_NAMES_DE = [
   'Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag',
 ]
 
-// Reihenfolge der konfigurierbaren Wochentage (Mo–Sa)
-export const WOCHENTAG_KEYS = ['mo', 'di', 'mi', 'do', 'fr', 'sa']
-export const WOCHENTAG_LABELS = {
-  mo: 'Montag', di: 'Dienstag', mi: 'Mittwoch', do: 'Donnerstag', fr: 'Freitag', sa: 'Samstag',
+// Order of the configurable weekdays (Mon–Sat)
+export const WEEKDAY_KEYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat']
+// German UI labels per weekday key
+export const WEEKDAY_LABELS = {
+  mon: 'Montag', tue: 'Dienstag', wed: 'Mittwoch', thu: 'Donnerstag', fri: 'Freitag', sat: 'Samstag',
 }
 
 const pad2 = (n) => String(n).padStart(2, '0')
 
-/** Date -> "YYYY-MM-DD" (lokal) */
+/** Date -> "YYYY-MM-DD" (local) */
 export function toISO(date) {
   return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`
 }
 
-/** "YYYY-MM-DD" -> Date (lokal, 00:00) */
+/** "YYYY-MM-DD" -> Date (local, 00:00) */
 export function parseISO(iso) {
-  const [j, m, t] = iso.split('-').map(Number)
-  return new Date(j, m - 1, t)
+  const [y, m, d] = iso.split('-').map(Number)
+  return new Date(y, m - 1, d)
 }
 
-/** "YYYY-MM-DD" -> "TT.MM.JJJJ" */
+/** "YYYY-MM-DD" -> "DD.MM.YYYY" (German notation) */
 export function formatDE(iso) {
-  const [j, m, t] = iso.split('-')
-  return `${t}.${m}.${j}`
+  const [y, m, d] = iso.split('-')
+  return `${d}.${m}.${y}`
 }
 
-/** ISO-Datum + n Tage */
+/** ISO date + n days */
 export function addDays(iso, n) {
   const d = parseISO(iso)
   d.setDate(d.getDate() + n)
   return toISO(d)
 }
 
-/** Deutscher Wochentagsname für ein ISO-Datum */
-export function wochentagName(iso) {
-  return WOCHENTAG_NAMEN[parseISO(iso).getDay()]
+/** German weekday name for an ISO date */
+export function weekdayName(iso) {
+  return WEEKDAY_NAMES_DE[parseISO(iso).getDay()]
 }
 
-/** Montag der Woche, in der `date` liegt (als ISO-String) */
-export function montagVon(date) {
+/** Monday of the week containing `date` (as ISO string) */
+export function mondayOf(date) {
   const d = new Date(date.getFullYear(), date.getMonth(), date.getDate())
-  const tag = d.getDay() // 0 = So
-  d.setDate(d.getDate() + (tag === 0 ? -6 : 1 - tag))
+  const day = d.getDay() // 0 = Sunday
+  d.setDate(d.getDate() + (day === 0 ? -6 : 1 - day))
   return toISO(d)
 }
 
 /**
- * ISO-8601-Kalenderwoche. Der Donnerstag der Woche bestimmt das KW-Jahr:
- * KW 1 ist die Woche, die den ersten Donnerstag des Jahres enthält.
+ * ISO-8601 week number. The Thursday of the week determines the week-year:
+ * week 1 is the week containing the first Thursday of the year.
  */
-export function kalenderwoche(iso) {
+export function isoWeek(iso) {
   const d = parseISO(iso)
-  const donnerstag = new Date(d)
-  donnerstag.setDate(d.getDate() - ((d.getDay() + 6) % 7) + 3)
-  const jahr = donnerstag.getFullYear()
-  const ersterDonnerstag = new Date(jahr, 0, 4)
-  ersterDonnerstag.setDate(ersterDonnerstag.getDate() - ((ersterDonnerstag.getDay() + 6) % 7) + 3)
-  const kw = 1 + Math.round((donnerstag - ersterDonnerstag) / (7 * 24 * 3600 * 1000))
-  return { kw, jahr }
+  const thursday = new Date(d)
+  thursday.setDate(d.getDate() - ((d.getDay() + 6) % 7) + 3)
+  const year = thursday.getFullYear()
+  const firstThursday = new Date(year, 0, 4)
+  firstThursday.setDate(firstThursday.getDate() - ((firstThursday.getDay() + 6) % 7) + 3)
+  const week = 1 + Math.round((thursday - firstThursday) / (7 * 24 * 3600 * 1000))
+  return { week, year }
 }
 
-/** Montag der KW `kw` im Jahr `jahr` (ISO-8601) */
-export function montagAusKW(jahr, kw) {
-  // 4. Januar liegt immer in KW 1
-  const vierterJanuar = new Date(jahr, 0, 4)
-  const montagKW1 = parseISO(montagVon(vierterJanuar))
-  montagKW1.setDate(montagKW1.getDate() + (kw - 1) * 7)
-  return toISO(montagKW1)
+/** Monday of ISO week `week` in `year` */
+export function mondayOfIsoWeek(year, week) {
+  // January 4th is always in week 1
+  const jan4 = new Date(year, 0, 4)
+  const mondayWeek1 = parseISO(mondayOf(jan4))
+  mondayWeek1.setDate(mondayWeek1.getDate() + (week - 1) * 7)
+  return toISO(mondayWeek1)
 }
 
-/** "20.04. – 26.04.2026" für die Woche ab Montag `montagISO` */
-export function wochenBereichLabel(montagISO) {
-  const sonntag = addDays(montagISO, 6)
-  const [, m1, t1] = montagISO.split('-')
-  return `${t1}.${m1}. – ${formatDE(sonntag)}`
+/** "20.04. – 26.04.2026" for the week starting Monday `mondayISO` */
+export function weekRangeLabel(mondayISO) {
+  const sunday = addDays(mondayISO, 6)
+  const [, m1, d1] = mondayISO.split('-')
+  return `${d1}.${m1}. – ${formatDE(sunday)}`
 }
 
-/** Heutiges Datum als ISO-String */
-export function heuteISO() {
+/** Today as ISO string */
+export function todayISO() {
   return toISO(new Date())
 }
 
-/** Liegt `iso` im Bereich [von, bis] (beide inklusiv, leere Grenzen = offen)? */
-export function imBereich(iso, von, bis) {
-  if (von && iso < von) return false
-  if (bis && iso > bis) return false
+/** Is `iso` within [from, to] (both inclusive, empty bounds = open)? */
+export function inRange(iso, from, to) {
+  if (from && iso < from) return false
+  if (to && iso > to) return false
   return true
 }

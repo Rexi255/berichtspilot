@@ -15,7 +15,7 @@ The app's user interface is German.
 ![React](https://img.shields.io/badge/React-19-61DAFB.svg?logo=react&logoColor=black)
 ![Offline](https://img.shields.io/badge/100%25-offline-blue.svg)
 
-<img src="docs/screenshots/uebersicht.png" alt="Overview with documented training weeks and progress" width="820">
+<img src="docs/screenshots/overview.png" alt="Overview with documented training weeks and progress" width="820">
 
 </div>
 
@@ -64,7 +64,7 @@ Everything runs locally. No cloud, no account, no internet connection required.
 
 | Week editor with live output | Profiles / half-years |
 | :---: | :---: |
-| ![Week editor](docs/screenshots/editor.png) | ![Profiles](docs/screenshots/profile.png) |
+| ![Week editor](docs/screenshots/editor.png) | ![Profiles](docs/screenshots/profiles.png) |
 
 Type on the left; the finished target format appears instantly on the right with a
 copy button.
