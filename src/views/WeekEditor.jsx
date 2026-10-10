@@ -16,6 +16,7 @@ import {
   CalendarPlusIcon,
   ClipboardTextIcon,
   NotePencilIcon,
+  ListBulletsIcon,
 } from '@phosphor-icons/react'
 import { useStore, api } from '../store.jsx'
 import { Button, IconButton, Input, TextArea, Segment, Panel, Pill, SectionTitle, cx } from '../ui/basics.jsx'
@@ -24,6 +25,7 @@ import { isoWeek, weekRangeLabel, weekdayName, formatDE, mondayOf, parseISO, add
 import { holidayOn } from '../lib/holidays.js'
 import { profileForDate } from '../lib/model.js'
 import { formatAll } from '../lib/format.js'
+import { splitNotes, BULLET_PREFIX } from '../lib/notes.js'
 
 const STATUS_OPTIONS = [
   { value: 'normal', label: 'Normal' },
@@ -165,7 +167,7 @@ function BulletList({ bullets, onChange, placeholder, suggestions = [] }) {
     const text = await api.readClipboard()
     const lines = (text ?? '')
       .split(/\r?\n/)
-      .map((l) => l.replace(/^\s*(?:[-–—•*·]|\d+[.)])\s*/, '').trim())
+      .map((l) => l.replace(BULLET_PREFIX, '').trim())
       .filter(Boolean)
     if (lines.length === 0) {
       showToast('Zwischenablage enthält keinen Text', { kind: 'error' })
@@ -268,6 +270,18 @@ function DayCard({ day, onChange, suggestions }) {
     vacation: 'Urlaub',
   }[day.status]
 
+  // Notes -> bullets without AI (work days): replaces empty placeholders,
+  // keeps the notes so the user can still compare/delete them
+  const notesToBullets = () => {
+    const items = splitNotes(day.notes)
+    if (items.length === 0) {
+      showToast('Keine Notizen zum Übernehmen', { kind: 'error' })
+      return
+    }
+    onChange({ ...day, bullets: [...day.bullets.filter((b) => b.trim()), ...items] })
+    showToast(items.length === 1 ? '1 Stichpunkt übernommen' : `${items.length} Stichpunkte übernommen`)
+  }
+
   const setStatus = (status) => {
     // When switching to "holiday", suggest the real holiday name
     const autoName = holidayOn(day.date) || day.holidayName || ''
@@ -318,6 +332,19 @@ function DayCard({ day, onChange, suggestions }) {
             onChange={(e) => onChange({ ...day, notes: e.target.value })}
             className="text-[12.5px]"
           />
+          {day.type === 'work' && day.status === 'normal' && (
+            <div className="mt-1.5 flex justify-end">
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={notesToBullets}
+                disabled={!hasNotes}
+                title="Jede Zeile bzw. jeden Satz als eigenen Stichpunkt anhängen"
+              >
+                <ListBulletsIcon size={14} /> In Stichpunkte übernehmen
+              </Button>
+            </div>
+          )}
         </div>
       )}
 

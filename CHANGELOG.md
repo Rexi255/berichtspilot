@@ -12,6 +12,9 @@ versioning follows [Semantic Versioning](https://semver.org/).
   field for raw text (e.g. dictated or quick keywords). Notes never appear in
   the output blocks but are included in the overview search. Schema v4 adds the
   field automatically to all existing weeks.
+- **"In Stichpunkte übernehmen":** on work days, notes are split into bullets
+  with one click — one bullet per line or sentence, bullet characters and
+  numbering removed, German abbreviations like "z. B." or "ca." kept intact.
 
 ### Changed
 

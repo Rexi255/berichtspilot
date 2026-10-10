@@ -59,6 +59,9 @@ installer** (no download on first use). Engine still to be chosen in a spike:
 whisper.cpp binary vs. ONNX/transformers.js in a worker/utility process. Criteria:
 German accuracy, model size (installer and portable .exe size!), speed on the
 Windows notebook, packaging for NSIS/portable/AppImage, CSP compatibility (WASM).
+Candidates: whisper.cpp (binary/addon in a utility process), transformers.js
+(ONNX Whisper in a worker), Vosk (small but weaker). Rejected: the Web Speech API
+(no service in Electron without a Google key; audio would go to Google).
 
 ### E-011 · AI phrasing without an own API key · proposed
 User (2026-10): preferably cloud quality, but **not via an API** (no key/billing).

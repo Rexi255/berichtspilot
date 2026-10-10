@@ -30,26 +30,34 @@ WebUntis lesson notes ────────────┘    (daten.json)   
 
 ## Next step
 
-**Step 2.1 — Notes → bullets without AI**
+**Step 2.2 — Spike: choose the local speech engine** (finalizes E-010)
 
-Goal: notes (typed, pasted or — later — dictated) become bullets with one click.
-Useful right away and the fallback whenever no AI is used.
+Goal: a measured decision, not a guess. Model ships with the installer (user
+decision). Candidates (see E-010 for details):
 
-- New pure module `src/lib/notes.js` with `splitNotes(text)` → `string[]`:
-  split on line breaks and on sentence ends (`.`, `!`, `?` followed by space +
-  capital letter or end), strip bullet characters/numbering (same regex as
-  `pasteFromClipboard` in `WeekEditor.jsx` — move that regex into the module and
-  reuse it there), trim, drop empty items, keep abbreviations like "z. B.",
-  "u. a.", "ca.", "Nr." and decimal numbers intact.
-- Tests `src/lib/notes.test.js`: multi-line input, run-on sentences, bullet
-  characters, numbering, abbreviations, empty input.
-- UI (`DayCard` in `WeekEditor.jsx`, inside the open notes area): button
-  "In Stichpunkte übernehmen" (work days: append to `bullets`, replacing empty
-  placeholders; school days: hidden for now — subjects need mapping, phase 4).
-  Keep the notes (user may delete them manually); toast with the count.
-- Verify: lint, tests, build, browser smoke test; update CHANGELOG.
+| Engine | Integration | Model sizes (German-capable) |
+|---|---|---|
+| whisper.cpp | native binary or Node addon in a utility process | base ~140 MB · small ~470 MB (q5 ~180 MB) · large-v3-turbo q5 ~550 MB |
+| transformers.js (ONNX Whisper) | Web Worker in the renderer, WASM/WebGPU | similar sizes; CSP needs `'wasm-unsafe-eval'` |
+| Vosk | Node binding | small German ~45 MB (noticeably weaker accuracy) |
 
-Then: step 2.2 (speech engine spike).
+Rejected up front: the browser Web Speech API (doesn't work in Electron without
+a Google key and sends audio to Google anyway).
+
+Tasks:
+1. Prototype each viable engine in `scratch/` (not committed) with 3–4 German
+   test recordings typical for the user (IT jargon: "DHCP", "Switch-Ports",
+   "VLAN", "Active Directory"). Ask the user for 2–3 short sample recordings or
+   use public-domain German speech if none are available.
+2. Measure: word error rate on the jargon, real-time factor on the cloud CPU,
+   RAM, size added to installer / portable .exe / AppImage, cold-start time.
+3. Check packaging: electron-builder `extraResources` / `asarUnpack` for the
+   binary + model on Windows (NSIS + portable) and Linux (AppImage).
+4. Write the result table + recommendation into E-010 (DECISIONS.md), ask the
+   user to confirm (and ideally to run the prototype once on the Windows notebook
+   for speed), then set E-010 to accepted.
+
+Then: steps 2.3–2.5 (mic permission, transcription IPC, dictate button).
 
 ## Open questions (for the user)
 
@@ -75,7 +83,7 @@ Then: step 2.2 (speech engine spike).
 - [x] 1.2 Schema v4: `notes` (raw text) per day + collapsible "Notizen" field, searchable (2026-10-10)
 
 ### Phase 2 — Dictation (offline, model bundled — E-010)
-- [ ] 2.1 Notes → bullets without AI (pure `splitNotes()` + button)
+- [x] 2.1 Notes → bullets without AI (pure `splitNotes()` + button) (2026-10-10)
 - [ ] 2.2 Spike: choose the Whisper variant (German accuracy, size, speed,
       packaging for NSIS/portable/AppImage, CSP) → finalize E-010
 - [ ] 2.3 Microphone: `setPermissionRequestHandler` grants only `media` to the app window
@@ -126,4 +134,5 @@ Then: step 2.2 (speech engine spike).
 | 2026-10-09 | Phase 0: AI groundwork | b32a115 |
 | 2026-10-10 | Docs + AI instructions in English | a81b351 |
 | 2026-10-10 | Step 1.1: English identifiers, schema v3 | 33a971f |
-| 2026-10-10 | Step 1.2: notes per day, schema v4 | branch `claude/intelligent-curie-yxizss` |
+| 2026-10-10 | Step 1.2: notes per day, schema v4 | 446a8f3 |
+| 2026-10-10 | Step 2.1: notes → bullets without AI | branch `claude/intelligent-curie-yxizss` |
