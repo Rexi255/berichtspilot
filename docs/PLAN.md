@@ -27,33 +27,34 @@ WebUntis "Lehrstoff" ─────────────┘    (daten.json) 
 - Nothing leaves the machine without the user seeing it (E-009 – E-011).
 - Without network/accounts everything works like v1.2 (every automation is optional).
 - Output format and `daten.json` safety stay untouched.
-- Release target **v2.0.0**; all work stays on `claude/intelligent-curie-yxizss`,
-  no merge into `main` before V2 is complete (E-018).
+- Release target **v2.0.0** (E-018). V2 is complete and prepared on
+  `claude/intelligent-curie-yxizss`; it only has to be merged into `main` and tagged.
 
 ## Next step
 
-**Collect the user's V2 additions.** Phase 5 auto-update is complete (5.3 UI
-done). The user decided (E-018): the overhaul ships as **v2.0.0**, everything
-stays on branch `claude/intelligent-curie-yxizss` until V2 is complete — no
-merge into `main`, no tag before that. Before the release the user wants to add
-a few more things they haven't named yet.
+**Ship v2.0.0.** Everything for the release is done on branch
+`claude/intelligent-curie-yxizss` (2026-10-10): README overhaul with new
+screenshots, `package.json` 2.0.0, `CHANGELOG.md` `## [2.0.0] - 2026-10-10`,
+PR into `main` open. The user closed the V2 scope — no further additions; the UI
+overhaul is v2.1 (E-018 addendum).
 
-1. Ask the user (German) which additions they want for V2. Offer the open ideas
-   from the roadmap as a starting point ("Ideas from the old README roadmap"
-   below: light theme, "copy all 3 blocks", full export/PDF, copy a single day
-   from the previous week, character counter) and the parked dictation phase.
-2. Turn the answer into a new roadmap phase ("Phase 6 — V2 additions") with
-   small, numbered steps, each with files + acceptance criteria, and implement
-   the first one with `/next`.
-3. Last phase before merging: **V2 release** — README overhaul (features of the
-   overhaul, new screenshots), bump `package.json` to 2.0.0, move
-   `## [Unreleased]` in `CHANGELOG.md` to `## [2.0.0]`, PR into `main`, tag
-   `v2.0.0` (release workflow builds installer + AppImage + `latest*.yml`),
-   then the real update test (see open questions).
+1. Wait for CI on the PR to be green, then merge it into `main` (the branch is
+   a fast-forward of `main`, a merge commit is fine too). If the merge happens on
+   a later day, adjust the date of `## [2.0.0]` in `CHANGELOG.md` first.
+2. Tag on the merged `main`: `git checkout main && git pull && git tag v2.0.0 &&
+   git push origin v2.0.0`. The release workflow checks tag = `package.json`
+   version, runs lint + tests, builds the installer + AppImage and attaches them
+   with `latest.yml`, `latest-linux.yml` and the `.blockmap` to a GitHub release.
+   Check that the release is **not** a draft/pre-release and has all five files
+   (otherwise the updater can't see it). Optionally rename it "Berichtspilot 2.0.0".
+3. Install `Berichtspilot-Setup-2.0.0.exe` by hand (1.x has no updater); check
+   that the existing data is migrated and Settings → "Updates" says "neueste
+   Version".
+4. Real update test (open question below), then start v2.1 (UI overhaul,
+   "Later / to-do") or the parked dictation phase — ask the user which first.
 
 ## Open questions (for the user)
 
-- Which additions belong in V2 before the release? (see "Next step")
 - Real update test (after v2.0.0 is out): v2.0.0 is the first release with the
   updater and has to be installed by hand once. Then publish a small follow-up
   (`v2.0.1`) and update in-app — or first a pre-release? Ask at release time.
@@ -134,12 +135,46 @@ decision).
       user (2026-10-10): neither an in-app hint nor a system notification
 - [x] Create the current week automatically on start — Mon–Fri only (E-016),
       schema v7 `settings.autoCreateWeek`, switch in Settings → Verhalten (2026-10-10)
-- [ ] Ideas from the old README roadmap: light theme, "copy all 3 blocks",
-      full export/PDF, copy a single day from the previous week, character counter
 - [x] README "100 % offline" badge → "local-first · online optional" (2026-10-10)
+
+### Phase 6 — V2 release (E-018)
+- [x] V2 scope closed by the user: no further additions, UI overhaul → v2.1 (2026-10-10)
+- [x] README overhaul: "New in 2.0", updates + upgrading from 1.x, privacy &
+      network table, new screenshots from fictional demo data (2026-10-10)
+- [x] `package.json` + lock → 2.0.0, `CHANGELOG.md` `## [2.0.0] - 2026-10-10`,
+      ARCHITECTURE diagram + DATA_MODEL example brought up to date (2026-10-10)
+- [x] Release dry run: local `build:win` → `Berichtspilot-Setup-2.0.0.exe` +
+      `latest.yml` (version 2.0.0) (2026-10-10)
+- [ ] PR into `main` merged (CI green)
+- [ ] Tag `v2.0.0` → release workflow → GitHub release with all assets
+- [ ] Installed by hand once; real update test (see open questions)
 
 ### Later / to-do
 - [ ] Automatic entry into the IHK portal (deferred by the user, E-012)
+- [ ] Ideas from the old README roadmap: light theme, "copy all 3 blocks",
+      full export/PDF, copy a single day from the previous week, character counter
+- [ ] **UI overhaul — planned for v2.1, not part of V2** (user, 2026-10-10).
+      Workflow agreed in chat (the *how*; the *what* is still open):
+  1. Baseline: demo `daten.json` fixture (no customer data, reusable for README
+     screenshots) + project skill `.claude/skills/ui-shots/` that builds the
+     renderer and screenshots every view/state/theme via `--screenshot` from a
+     scratch folder (unset `ELECTRON_RUN_AS_NODE`).
+  2. Explore 2–3 directions in Claude Design (claude.ai/design), seeded with the
+     existing "Nordlicht" tokens + `src/ui/basics.jsx`; layout/workflow of the
+     week editor first, colors later. Code stays the source of truth afterwards.
+  3. Record the result in `docs/DESIGN.md` (principles, tokens, components,
+     anti-patterns) + a DECISIONS entry; plan a light theme into the tokens.
+  4. Implement inside-out, one commit per step: tokens → `basics.jsx` → shell
+     (Titlebar/Sidebar/toast) → one view per step. Store API and `src/lib/` untouched.
+  5. Review per view: `design:accessibility-review`, `design:design-critique`,
+     `design:ux-copy` (German).
+  - Tooling: one taste skill only (`design-taste` *or* the `frontend-design`
+    plugin), no `ui-styling` (shadcn = new UI framework); Playwright MCP against
+    `vite preview` + context7 (Tailwind v4); `ask` permission on
+    `src/lib/format.js`, `format.test.js`, `docs/OUTPUT_FORMAT.md`; optional
+    read-only `ui-reviewer` subagent.
+  - Pitfalls: CSP → fonts only via `@fontsource`, no CDNs; every new token in
+    every `data-theme` block; never change the output blocks' content.
 
 ## Done log
 
@@ -168,3 +203,4 @@ decision).
 | 2026-10-10 | Step 5.2: `electron/updater.js` + IPC `update:*`, schema v8 `settings.updateCheck` (packaged build checked against the real repo → `none`; non-allowlisted host → `blocked`) | branch `claude/intelligent-curie-yxizss` |
 | 2026-10-10 | Step 5.3: update UI — sidebar card + Settings → "Updates" (browser smoke test with mocked `window.api` through all states; `build:win` unpacked exe: v1.2.0, real GitHub check → "neueste Version"). User: overhaul ships as v2.0.0 (E-018) | branch `claude/intelligent-curie-yxizss` |
 | 2026-10-10 | Code-review fixes (updater install/headers/support check, load-error guard; Electron screenshot with corrupt `daten.json` + backups: files untouched). Not fixed by choice: a deleted current week is auto-created again on the next start (would need a schema change) | branch `claude/intelligent-curie-yxizss` |
+| 2026-10-10 | Phase 6: V2 release prepared — README + screenshots, version 2.0.0, CHANGELOG, docs check, local `build:win` dry run; PR into `main` | branch `claude/intelligent-curie-yxizss` |

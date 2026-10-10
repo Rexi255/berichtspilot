@@ -378,3 +378,9 @@ including the additions the user still wants to name. Consequences: v2.0.0 is
 the first release with the updater and has to be installed by hand once (E-017);
 the real in-app update test happens after it (e.g. v2.0.0 → v2.0.1).
 `package.json` `version` is bumped to 2.0.0 only as part of the release step.
+
+*Addendum (user, 2026-10-10):* the V2 scope is closed without further
+additions. The planned UI overhaul becomes **v2.1** (workflow in `PLAN.md` →
+"Later / to-do"); voice dictation stays parked until the model choice (E-010).
+The release step is done on the branch (README, version 2.0.0, CHANGELOG); what
+remains is merging into `main` and tagging `v2.0.0`.

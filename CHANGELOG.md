@@ -6,6 +6,12 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [2.0.0] - 2026-10-10
+
+The automation release: notes per day, AI phrasing via the clipboard, WebUntis
+import and in-app updates. Upgrading from 1.x: install this version by hand once
+(1.x has no updater); `daten.json` is migrated automatically.
+
 ### Added
 
 - **Notes per day:** every day in the week editor has a collapsible "Notizen"
@@ -79,9 +85,9 @@ versioning follows [Semantic Versioning](https://semver.org/).
   and imports of older exports are migrated automatically and losslessly on
   load; the file name stays `daten.json`.
 - **Releases carry update metadata:** every release now also contains
-  `latest.yml` / `latest-linux.yml` (and the installer's `.blockmap`) —
-  groundwork for the upcoming in-app update. The release build stops if the tag
-  doesn't match the app version.
+  `latest.yml` / `latest-linux.yml` (and the installer's `.blockmap`), which the
+  in-app update reads. The release build stops if the tag doesn't match the app
+  version.
 
 ### Fixed
 
