@@ -129,6 +129,33 @@ export function Segment({ options, value, onChange, size = 'md', className }) {
   )
 }
 
+/** On/off switch; `label` is the visible text next to it (clickable) */
+export function Switch({ checked, onChange, label, disabled = false, className }) {
+  return (
+    <label className={cx('inline-flex cursor-pointer select-none items-center gap-2.5', disabled && 'pointer-events-none opacity-40', className)}>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={checked}
+        disabled={disabled}
+        onClick={() => onChange(!checked)}
+        className={cx(
+          'relative h-5 w-9 shrink-0 rounded-full border transition-[background-color,border-color] duration-150 ease-(--ease-smooth)',
+          checked ? 'border-transparent bg-accent' : 'border-white/[0.1] bg-inset/60 hover:border-white/20'
+        )}
+      >
+        <span
+          className={cx(
+            'absolute top-1/2 h-3.5 w-3.5 -translate-y-1/2 rounded-full transition-[left,background-color] duration-150 ease-(--ease-smooth)',
+            checked ? 'left-[18px] bg-inset' : 'left-[2px] bg-ink-3'
+          )}
+        />
+      </button>
+      {label && <span className="text-[13px] font-medium text-ink">{label}</span>}
+    </label>
+  )
+}
+
 const PILL_COLORS = {
   done: 'text-done bg-done/10 border-done/20',
   draft: 'text-draft bg-draft/10 border-draft/20',

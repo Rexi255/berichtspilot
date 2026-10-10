@@ -7,7 +7,7 @@ export const DAY_STATUSES = ['normal', 'holiday', 'sick', 'vacation']
 
 // Current schema version of daten.json. Older files are upgraded on load/import
 // via migrateData(); newer ones are rejected (downgrade protection).
-export const DATA_VERSION = 4
+export const DATA_VERSION = 5
 
 let idCounter = 0
 export const newId = (prefix) =>
@@ -173,6 +173,16 @@ function migrateV3toV4(d) {
 }
 
 /**
+ * Schema v4 -> v5: `settings.webuntis` (only the on/off switch — server and
+ * school are fixed by the allowlist, credentials/tokens never go into the file).
+ */
+function migrateV4toV5(d) {
+  const settings = isObject(d.settings) ? d.settings : {}
+  const webuntis = isObject(settings.webuntis) ? settings.webuntis : {}
+  return { ...d, version: 5, settings: { ...settings, webuntis: { enabled: false, ...webuntis } } }
+}
+
+/**
  * Upgrade older daten.json files to the current schema version.
  * Throws for a file from a NEWER app version (downgrade protection).
  */
@@ -191,12 +201,14 @@ export function migrateData(raw) {
   }
   if (d.version < 3) d = migrateV2toV3(d)
   if (d.version < 4) d = migrateV3toV4(d)
+  if (d.version < 5) d = migrateV4toV5(d)
 
   // Defensive defaults in case single fields are missing (e.g. hand-edited file)
   d.periods ??= []
   d.settings ??= {}
   d.settings.startView ??= 'overview'
   d.settings.snippets ??= []
+  d.settings.webuntis ??= { enabled: false }
   return d
 }
 
@@ -236,6 +248,10 @@ export function validateData(d) {
   }
   if (d.periods !== undefined && !Array.isArray(d.periods)) {
     fail('Die Zeiträume müssen eine Liste sein.')
+  }
+  const webuntis = d.settings?.webuntis
+  if (webuntis !== undefined && (!isObject(webuntis) || typeof webuntis.enabled !== 'boolean')) {
+    fail('Die WebUntis-Einstellung in der Datei ist ungültig.')
   }
   return d
 }
@@ -344,6 +360,7 @@ export function seedData() {
       theme: 'northern-lights',
       startView: 'overview',
       snippets: [],
+      webuntis: { enabled: false },
     },
     periods: [],
     profiles: [

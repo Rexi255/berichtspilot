@@ -178,12 +178,14 @@ function createWindow() {
     win.loadFile(path.join(__dirname, '..', 'dist', 'index.html'))
   }
 
-  // Dev helper: `electron . --screenshot=path.png [--view=editor]` renders the
-  // app, saves a screenshot and quits (for UI checks without a display).
+  // Dev helper: `electron . --screenshot=path.png [--view=editor] [--scroll=selector]`
+  // renders the app, saves a screenshot and quits (for UI checks without a
+  // display). `--scroll` brings an element below the fold into view first.
   const shotArg = process.argv.find((a) => a.startsWith('--screenshot='))
   if (shotArg) {
     const targetPath = shotArg.split('=')[1]
     const viewArg = process.argv.find((a) => a.startsWith('--view='))
+    const scrollArg = process.argv.find((a) => a.startsWith('--scroll='))
     win.webContents.once('did-finish-load', () => {
       setTimeout(async () => {
         if (viewArg) {
@@ -192,6 +194,13 @@ function createWindow() {
             `document.querySelector('[data-nav="${view}"]')?.click()`
           )
           await new Promise((r) => setTimeout(r, 900))
+        }
+        if (scrollArg) {
+          const selector = JSON.stringify(scrollArg.slice('--scroll='.length))
+          await win.webContents.executeJavaScript(
+            `document.querySelector(${selector})?.scrollIntoView({ block: 'start' })`
+          )
+          await new Promise((r) => setTimeout(r, 300))
         }
         const image = await win.webContents.capturePage()
         await fsp.writeFile(targetPath, image.toPNG())

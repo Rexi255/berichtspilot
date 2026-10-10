@@ -95,7 +95,7 @@ describe('migrateData', () => {
   it('migrates a full v2 file to the current version with English names and values', () => {
     const d = migrateData(v2File())
     expect(d.version).toBe(DATA_VERSION)
-    expect(DATA_VERSION).toBe(4)
+    expect(DATA_VERSION).toBe(5)
 
     expect(d.settings).toEqual({
       trainingStart: '2025-08-01',
@@ -104,6 +104,7 @@ describe('migrateData', () => {
       startView: 'profiles',
       snippets: ['Ticket bearbeitet'],
       eigenesFeld: 42,
+      webuntis: { enabled: false },
     })
     expect(d.periods).toEqual([
       { id: 'zeitraum-1', type: 'vacation', label: 'Sommer', from: '2026-08-03', to: '2026-08-14' },
@@ -212,10 +213,30 @@ describe('migrateData', () => {
       ],
     }
     const d = migrateData(v3)
-    expect(d.version).toBe(4)
+    expect(d.version).toBe(DATA_VERSION)
     expect(d.weeks[0].days.map((day) => day.notes)).toEqual(['', 'schon da'])
     expect(d.weeks[0].days[0].bullets).toEqual(['x'])
     expect(() => validateData(d)).not.toThrow()
+  })
+
+  it('v4 -> v5 adds the WebUntis switch (off) and keeps all other settings', () => {
+    const v4 = {
+      version: 4,
+      settings: { theme: 'forest', startView: 'editor', snippets: ['a'] },
+      periods: [],
+      profiles: [],
+      weeks: [],
+    }
+    const d = migrateData(v4)
+    expect(d.version).toBe(5)
+    expect(d.settings).toEqual({ theme: 'forest', startView: 'editor', snippets: ['a'], webuntis: { enabled: false } })
+    expect(() => validateData(d)).not.toThrow()
+  })
+
+  it('v4 -> v5 keeps an existing WebUntis value and survives missing settings', () => {
+    expect(migrateData({ version: 4, settings: { webuntis: { enabled: true } }, profiles: [], weeks: [] })
+      .settings.webuntis).toEqual({ enabled: true })
+    expect(migrateData({ version: 4, profiles: [], weeks: [] }).settings.webuntis).toEqual({ enabled: false })
   })
 
   it('keeps unknown enum values instead of dropping them', () => {
@@ -265,6 +286,9 @@ describe('validateData', () => {
     expect(() =>
       validateData({ profiles: [], weeks: [{ id: '2026-07-06', days: [{ date: '2026-07-06', notes: 42 }] }] })
     ).toThrow(/Tag/)
+    expect(() =>
+      validateData({ settings: { webuntis: { enabled: 'ja' } }, profiles: [], weeks: [] })
+    ).toThrow(/WebUntis/)
   })
 })
 

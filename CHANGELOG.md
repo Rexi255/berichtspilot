@@ -25,7 +25,12 @@ versioning follows [Semantic Versioning](https://semver.org/).
 - **WebUntis probe (developer tool):** `npm run probe:webuntis` opens WebUntis
   in a separate, isolated window and records the anonymised structure of the
   school's API (no names, notes or passwords) — groundwork for the WebUntis
-  import. The app itself does not use the network yet.
+  import.
+- **Settings → "Verbindungen":** new switch "WebUntis-Import" (off by default —
+  then nothing is ever requested). When on, it shows the school (BBZ
+  Dithmarschen), the login status and "Anmelden"/"Abmelden". The login happens
+  in a separate window on the school's page; the app never sees the password.
+  Switching off also logs out. Schema v5 adds the switch to existing data.
 
 ### Changed
 

@@ -62,8 +62,14 @@ npm test               # Vitest — pure logic in src/lib (fast, <1 s)
 npm run lint           # ESLint (required by CI)
 npm run build:renderer # Vite build — proves the renderer compiles
 npm run dev            # Vite + Electron with hot reload (needs a display)
-electron . --screenshot=shot.png [--view=editor|profiles|settings]  # headless UI check
+electron . --screenshot=shot.png [--view=editor|profiles|settings] [--scroll=<css selector>]  # headless UI check
 ```
+
+Dev mode keeps `daten.json` in the **current working directory** — run screenshot
+checks from a scratch folder (`<repo>/node_modules/electron/dist/electron <repo> …`)
+so the real data file isn't migrated/overwritten. In a VS Code terminal on
+Windows `ELECTRON_RUN_AS_NODE` may be set; unset it (`env -u ELECTRON_RUN_AS_NODE …`)
+or Electron starts as plain Node.
 
 Cloud sessions can still fetch the Electron binary (`node node_modules/electron/install.js`)
 and run it headless: `xvfb-run -a node_modules/electron/dist/electron --no-sandbox <dir>`

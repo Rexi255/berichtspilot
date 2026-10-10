@@ -30,39 +30,42 @@ WebUntis "Lehrstoff" ─────────────┘    (daten.json) 
 
 ## Next step
 
-**Step 4.4 — Settings section "Verbindungen" (WebUntis)** (unblocked; the
-session API from 4.3 exists: `window.api.webuntisStatus()` / `webuntisLogin()` /
-`webuntisLogout()` → `{ ok, loggedIn, personId?, code?, error? }`).
+**Step 4.5 — Fetch a week from WebUntis** (unblocked; 4.4 delivered the
+switch `settings.webuntis.enabled` + login UI in Settings → "Verbindungen").
+Split into two parts; do **4.5a** first:
 
-- Schema v5: `settings.webuntis = { enabled: false }` (only the on/off switch —
-  server and school are fixed by the allowlist in `electron/net.js`, so they are
-  shown read-only, not stored). Bump `DATA_VERSION`, migration step + test in
-  `src/lib/model.test.js`, update `docs/DATA_MODEL.md`. No credentials, no
-  token, no person id in `daten.json` (rule 5).
-- Store mutation `setWebuntisEnabled(bool)` in `src/store.jsx`.
-- New `<section>` in `src/views/Settings.jsx` (same pattern as the existing
-  sections, components from `src/ui/basics.jsx`), German texts:
-  - switch "WebUntis-Import" (off = section collapsed, nothing is ever requested)
-  - read-only "Schule: BBZ Dithmarschen (bbz-dithmarschen.webuntis.com)"
-  - status line: "Angemeldet" / "Nicht angemeldet" / error text from `error`;
-    fetched with `webuntisStatus()` when the section opens (and only if enabled)
-  - buttons "Anmelden" (→ `webuntisLogin()`, button shows a busy state while
-    the login window is open) and "Abmelden" (→ `webuntisLogout()`)
-  - short privacy note: login happens in a separate window on the school's
-    page; the app never sees the password.
-- Browser mode: the fallback returns "Nur in der Desktop-App verfügbar" —
-  show it as the status text, don't crash.
-- The login does not survive an app restart (WebUntis uses a session
-  cookie) — the UI must handle "nicht angemeldet" as the normal state after
-  start, with "Anmelden" as the obvious action.
-- Verify: lint/test/build + Electron screenshot `--view=settings`.
+**4.5a — main-process fetch + pure normaliser (no UI yet)**
+- `electron/webuntis.js`: `fetchWeek(session, mondayISO)` using
+  `session.getToken()` from `createWebUntisSession()` (instance `webuntis` in
+  `electron/main.js`). Headers `Authorization: Bearer <token>` + `Tenant-Id:
+  <payload.tenant_id>`; requests only via `request()` from `electron/net.js`.
+  1. `GET /WebUntis/api/rest/view/v1/timetable/entries?start=<mon>&end=<sat>&format=4
+     &resourceType=STUDENT&resources=<person_id>&periodTypes=&timetableType=MY_TIMETABLE`
+  2. per non-cancelled `gridEntries[]` block: `GET /WebUntis/api/rest/view/v2/calendar-entry/detail
+     ?elementId=<person_id>&elementType=5&startDateTime=<duration.start>&endDateTime=<duration.end>
+     &homeworkOption=DUE` → `calendarEntries[].teachingContent` only (user: topic = "Lehrstoff").
+     Sequential or small concurrency (≤ 3); one failed detail call must not
+     fail the whole week (topic just stays empty).
+  - Return a **trimmed** shape (no names of teachers/classes/rooms, no
+    `notesAll`): `{ ok, days: [{ date, holiday: bool, lessons: [{ start, end,
+    status, subjectShort, subjectLong, topic }] }] }` or `{ ok: false, code, error }`.
+- IPC `webuntis:week` → `window.api.webuntisWeek(mondayISO)` (preload +
+  `browserApi` fallback "Nur in der Desktop-App verfügbar"; doc in
+  `docs/ARCHITECTURE.md` IPC table). Main refuses (`code: 'disabled'`) unless
+  the renderer passes it — better: main reads nothing from daten.json, so the
+  renderer only calls it when `settings.webuntis.enabled`.
+- Pure `src/lib/webuntis.js` + `webuntis.test.js`: `schoolDaysFromWebuntis(days)`
+  → per date: subjects in timetable order, cancelled lessons dropped, double
+  periods of the same subject merged, topics de-duplicated, `HOLIDAY` back
+  entries → day marked as school break. Fixtures hand-written from the shape in
+  `docs/DECISIONS.md` E-013 (no real data in the repo).
+- Test the main-process part against a local stub via `fetchImpl` (like
+  `electron/webuntis-session.test.mjs`); verify once with the real account (user, Windows).
 
-**Then 4.5–4.6** (see E-013): `electron/webuntis.js` uses `getToken()` from
-`createWebUntisSession()` in `main.js` (headers `Authorization: Bearer …` +
-`Tenant-Id` from the payload's `tenant_id`) → week from `timetable/entries` →
-topics per lesson from `calendar-entry/detail` (`teachingContent` only) →
-subject mapping → "Woche aus WebUntis füllen" (skip cancelled lessons,
-`HOLIDAY` = school break).
+**4.5b** — subject mapping WebUntis `shortName` → profile subject label
+(identical names map automatically; others via a small per-profile map →
+schema v6 `profile.webuntisSubjects`), then **4.6** "Woche aus WebUntis füllen"
+in the week editor (preview, apply undoable, only into empty school days).
 
 ## Open questions (for the user)
 
@@ -110,8 +113,8 @@ decision).
 - [x] 4.3 Session handling: `electron/webuntis-session.js` (login window in
       partition `persist:webuntis`, token cache with renewal, status, logout) +
       `electron/jwt.js`; IPC `webuntis:status|login|logout` (2026-10-10)
-- [ ] 4.4 Settings → new section "Verbindungen" (WebUntis on/off, server, school,
-      user, status)
+- [x] 4.4 Settings → new section "Verbindungen": WebUntis on/off (schema v5
+      `settings.webuntis.enabled`), school read-only, status, login/logout (2026-10-10)
 - [ ] 4.5 `electron/webuntis.js` + mapping WebUntis subject → learning-field label (per profile)
 - [ ] 4.6 "Woche aus WebUntis füllen": school days + subjects + topics from lesson
       topics ("Lehrstoff" = `teachingContent`); detect breaks/cancelled lessons
@@ -142,3 +145,4 @@ decision).
 | 2026-10-10 | Step 2.2: speech spike (model parked) | branch `claude/intelligent-curie-yxizss` |
 | 2026-10-10 | Step 4.2: network layer `electron/net.js` | branch `claude/intelligent-curie-yxizss` |
 | 2026-10-10 | Step 4.3: WebUntis session handling (real login tested by the user 2026-10-10: window closes itself, `loggedIn: true` + person id; login does not survive an app restart — accepted) | branch `claude/intelligent-curie-yxizss` |
+| 2026-10-10 | Step 4.4: Settings → "Verbindungen" (WebUntis), schema v5 | branch `claude/intelligent-curie-yxizss` |

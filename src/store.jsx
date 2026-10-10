@@ -216,6 +216,11 @@ export function StoreProvider({ children }) {
     setData((d) => ({ ...d, settings: { ...d.settings, ...patch } }))
   }, [])
 
+  // Only the on/off switch is stored — login state lives in the main process
+  const setWebuntisEnabled = useCallback((enabled) => {
+    setData((d) => ({ ...d, settings: { ...d.settings, webuntis: { ...d.settings.webuntis, enabled } } }))
+  }, [])
+
   const exportData = useCallback(() => api.exportData(data), [data])
 
   // Import: migrate + validate the file, then ask natively whether to merge
@@ -261,6 +266,7 @@ export function StoreProvider({ children }) {
     updatePeriod,
     deletePeriod,
     updateSettings,
+    setWebuntisEnabled,
     exportData,
     importData,
     saveNow: () => data && saveNow(data),

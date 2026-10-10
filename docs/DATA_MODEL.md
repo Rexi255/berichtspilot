@@ -1,6 +1,6 @@
 # Data model — `daten.json`
 
-Current schema version: **4** (`DATA_VERSION` in `src/lib/model.js`).
+Current schema version: **5** (`DATA_VERSION` in `src/lib/model.js`).
 One JSON file holds the configuration **and** every training week. It is also the
 export/backup format. The file name stays German (`daten.json`) for compatibility
 with existing installations (DECISIONS E-014); all field names are English.
@@ -9,13 +9,16 @@ with existing installations (DECISIONS E-014); all field names are English.
 
 ```jsonc
 {
-  "version": 4,
+  "version": 5,
   "settings": {
     "trainingStart": "2025-08-01",   // optional; progress line + gap detection
     "trainingEnd": "2028-07-31",
     "theme": "northern-lights",      // a theme id from src/index.css
     "startView": "overview",         // overview | editor | profiles | settings
-    "snippets": ["…"]                // user-defined autocomplete suggestions
+    "snippets": ["…"],               // user-defined autocomplete suggestions
+    "webuntis": { "enabled": false } // WebUntis import on/off (schema v5) — only
+                                     // the switch: server/school are fixed by the
+                                     // allowlist, login state lives in main
   },
   "periods": [                       // vacation / school breaks
     { "id": "period-…", "type": "vacation" | "schoolBreak", "label": "", "from": "YYYY-MM-DD", "to": "YYYY-MM-DD" }
@@ -77,6 +80,7 @@ with existing installations (DECISIONS E-014); all field names are English.
 | 1 → 2 | added `zeitraeume: []`, `einstellungen.startAnsicht`, `einstellungen.textbausteine` |
 | 2 → 3 | all field names and enum values German → English (full mapping in `GLOSSARY.md`) |
 | 3 → 4 | `notes: ''` added to every day (existing values kept) |
+| 4 → 5 | `settings.webuntis = { enabled: false }` (existing value kept); `validateData()` rejects a non-boolean `enabled` |
 
 Versions newer than `DATA_VERSION` are **rejected** (downgrade protection: otherwise
 autosave would overwrite the file with an older structure).

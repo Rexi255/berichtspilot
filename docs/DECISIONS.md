@@ -204,6 +204,12 @@ two clicks via SSO and only needed when importing; no workaround to keep
 session cookies alive. W2 (QR code) stays the option if it becomes annoying. `logout()` bumps a generation counter so a token request still in
 flight cannot re-populate the cache afterwards.
 
+**Settings UI (step 4.4, 2026-10-10):** `daten.json` stores only
+`settings.webuntis.enabled` (schema v5) — no server/school (fixed by the
+allowlist, shown read-only), no user name, person id or token (rule 5). Off is
+the default and means no WebUntis request at all; switching off also logs out
+(wipes the partition locally).
+
 ### E-014 · Keep the file name `daten.json` · accepted
 Field names became English in schema v3, but the file name stays: existing
 installations, portable copies, backups (`.bak1–3`) and the README all rely on it.

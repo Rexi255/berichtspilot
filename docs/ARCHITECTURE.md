@@ -73,7 +73,7 @@ main process, only to hosts in this allowlist, each with a reason.
 
 | Host | Purpose | Since |
 |---|---|---|
-| `bbz-dithmarschen.webuntis.com` | WebUntis: timetable + lesson topics (E-013). Session handling (`electron/webuntis-session.js`: token from `/api/token/new`) + the probe (`--webuntis-probe`); no UI yet | 2026-10 (step 4.1) |
+| `bbz-dithmarschen.webuntis.com` | WebUntis: timetable + lesson topics (E-013). Session handling (`electron/webuntis-session.js`: token from `/api/token/new`) + the probe (`--webuntis-probe`); UI: Settings → "Verbindungen" (step 4.4) | 2026-10 (step 4.1) |
 
 `login.bbz-dithmarschen.de` (school SSO) is only *navigated to* inside the
 isolated login window; the main process never sends requests there.
@@ -88,6 +88,13 @@ the partition, all permission requests denied) and the 15-min bearer token
 (cached in memory, renewed 60 s before `exp`, concurrent callers share one
 request). Only main-process code may call `getToken()`; the renderer sees just
 `loggedIn` and `personId`. `logout()` clears the partition's storage.
+
+**Settings → "Verbindungen" (step 4.4):** the renderer calls
+`webuntisStatus()` only while `settings.webuntis.enabled` is true (switched
+off, nothing is ever requested). Switching off also calls `webuntisLogout()` —
+it only wipes the local partition, so it is safe without a session. The login
+does not survive an app restart (session cookie), so "Nicht angemeldet" is the
+normal state after start.
 
 ### Network layer `electron/net.js` (step 4.2)
 

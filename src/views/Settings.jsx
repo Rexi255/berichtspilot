@@ -1,9 +1,10 @@
 // Settings: appearance (color themes), behavior (start view), snippets
-// (autocomplete templates), data location and a keyboard shortcut reference.
+// (autocomplete templates), connections (WebUntis), data location and a
+// keyboard shortcut reference.
 // Each theme card carries data-theme={id} itself; that way its preview colors
 // (bg-base, bg-accent …) render in that theme automatically — without
 // duplicating the color values in JS.
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   CheckIcon,
   PaletteIcon,
@@ -13,9 +14,16 @@ import {
   KeyboardIcon,
   PlusIcon,
   XIcon,
+  PlugsConnectedIcon,
+  ShieldCheckIcon,
+  SignInIcon,
+  SignOutIcon,
+  CircleNotchIcon,
+  ArrowClockwiseIcon,
 } from '@phosphor-icons/react'
 import { useStore, api } from '../store.jsx'
-import { SectionTitle, Button, IconButton, Input, Segment, Panel, cx } from '../ui/basics.jsx'
+import { SectionTitle, Button, IconButton, Input, Segment, Panel, Pill, Switch, cx } from '../ui/basics.jsx'
+import { showToast } from '../ui/toast.jsx'
 
 // Order + labels of the themes; the colors live in index.css.
 export const THEMES = [
@@ -141,6 +149,129 @@ function SnippetEditor() {
   )
 }
 
+/* ------------------------- Connections (WebUntis) ------------------------- */
+
+// Fixed by the allowlist in electron/net.js — shown read-only, not stored
+const WEBUNTIS_SCHOOL = { name: 'BBZ Dithmarschen', host: 'bbz-dithmarschen.webuntis.com' }
+
+// Status pill for `{ ok, loggedIn, error }` from webuntis:status|login; null = checking
+function WebuntisStatus({ status }) {
+  if (!status) return <Pill color="neutral">Wird geprüft …</Pill>
+  if (status.loggedIn) return <Pill color="done">Angemeldet</Pill>
+  if (status.ok) return <Pill color="neutral">Nicht angemeldet</Pill>
+  return <Pill color="sick">{status.error || 'Status unbekannt'}</Pill>
+}
+
+function WebuntisConnection() {
+  const { data, setWebuntisEnabled } = useStore()
+  const enabled = data.settings.webuntis?.enabled === true
+  const [status, setStatus] = useState(null)
+  const [busy, setBusy] = useState(null) // 'login' | 'logout' | null
+  const [checks, setChecks] = useState(0) // bump → ask the main process again
+
+  // Only ask while enabled: switched off, nothing is ever requested
+  useEffect(() => {
+    if (!enabled) return
+    let alive = true
+    api.webuntisStatus().then((res) => alive && setStatus(res))
+    return () => {
+      alive = false
+    }
+  }, [enabled, checks])
+
+  const recheck = () => {
+    setStatus(null)
+    setChecks((n) => n + 1)
+  }
+
+  const toggle = async (on) => {
+    setStatus(null)
+    setWebuntisEnabled(on)
+    // Switching off also ends the session: logout only wipes the login
+    // partition locally (no request), so it's safe to call unconditionally
+    if (!on) await api.webuntisLogout()
+  }
+
+  const login = async () => {
+    setBusy('login')
+    const res = await api.webuntisLogin()
+    setBusy(null)
+    setStatus(res)
+    if (res.loggedIn) showToast('Bei WebUntis angemeldet')
+  }
+
+  const logout = async () => {
+    setBusy('logout')
+    const res = await api.webuntisLogout()
+    setBusy(null)
+    if (res.ok) setStatus({ ok: true, loggedIn: false })
+    else showToast(res.error || 'Abmelden fehlgeschlagen', { kind: 'error', duration: 5000 })
+  }
+
+  return (
+    <Panel className="max-w-2xl">
+      <div className="flex items-center gap-4 px-4 py-3">
+        <div className="min-w-0 flex-1">
+          <Switch checked={enabled} onChange={toggle} label="WebUntis-Import" disabled={!!busy} />
+          <p className="mt-1 text-[12px] text-ink-3">
+            Schultage, Fächer und Lehrstoff aus dem Stundenplan der Berufsschule übernehmen.
+          </p>
+        </div>
+      </div>
+
+      {enabled && (
+        <div className="flex flex-col gap-3 border-t border-white/[0.05] px-4 py-3">
+          <div className="flex items-center gap-3">
+            <div className="w-16 shrink-0 text-[12px] font-medium text-ink-2">Schule</div>
+            <div className="min-w-0 truncate text-[12.5px] text-ink">
+              {WEBUNTIS_SCHOOL.name}{' '}
+              <span className="text-ink-3">({WEBUNTIS_SCHOOL.host})</span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <div className="w-16 shrink-0 text-[12px] font-medium text-ink-2">Status</div>
+            <div className="flex min-w-0 flex-1 items-center gap-1">
+              <WebuntisStatus status={status} />
+              {status && !status.ok && (
+                <IconButton label="Erneut prüfen" onClick={recheck} disabled={!!busy}>
+                  <ArrowClockwiseIcon size={13} />
+                </IconButton>
+              )}
+            </div>
+            {status?.loggedIn ? (
+              <Button size="sm" onClick={logout} disabled={!!busy}>
+                <SignOutIcon size={14} /> Abmelden
+              </Button>
+            ) : (
+              <Button size="sm" variant="primary" onClick={login} disabled={!status || !!busy}>
+                {busy === 'login' ? (
+                  <>
+                    <CircleNotchIcon size={14} className="animate-spin" /> Anmeldefenster offen …
+                  </>
+                ) : (
+                  <>
+                    <SignInIcon size={14} /> Anmelden
+                  </>
+                )}
+              </Button>
+            )}
+          </div>
+
+          <p className="flex items-start gap-1.5 text-[11.5px] text-ink-3">
+            <ShieldCheckIcon size={14} className="mt-px shrink-0" />
+            <span>
+              Die Anmeldung läuft in einem eigenen Fenster direkt auf der Seite der Schule —
+              Berichtspilot sieht dein Passwort nie. Sie gilt, bis die App beendet wird; danach
+              einfach erneut anmelden.
+            </span>
+          </p>
+        </div>
+      )}
+    </Panel>
+  )
+}
+
 /* ---------------------- Keyboard shortcut reference ---------------------- */
 
 const SHORTCUTS = [
@@ -210,6 +341,16 @@ export default function Settings() {
             zusätzlich zu allen bereits geschriebenen Stichpunkten.
           </p>
           <SnippetEditor />
+        </section>
+
+        <section className="max-w-4xl" data-section="connections">
+          <SectionTitle className="mb-1 flex items-center gap-1.5">
+            <PlugsConnectedIcon size={14} /> Verbindungen
+          </SectionTitle>
+          <p className="mb-3 text-[12.5px] text-ink-3">
+            Optionale Online-Dienste. Ausgeschaltet funktioniert alles wie bisher — ohne Netzwerk.
+          </p>
+          <WebuntisConnection />
         </section>
 
         <section className="max-w-4xl">

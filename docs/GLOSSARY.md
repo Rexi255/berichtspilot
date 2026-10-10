@@ -38,6 +38,8 @@ names consistently. Add new terms here before using them.
 | Wochen-Editor | week editor (`WeekEditor`) | |
 | Einstellungen | `settings` | |
 | Start-Ansicht | `startView` | |
+| Verbindungen | connections (`data-section="connections"`) | settings section for online services |
+| WebUntis-Import (Schalter) | `settings.webuntis.enabled` | schema v5; only the switch is stored |
 | Stunde (WebUntis) | lesson / `gridEntry` | one timetable block from WebUntis |
 | Lehrstoff | `teachingContent` | topic the teacher entered for a lesson (WebUntis field name) |
 | Notizen (WebUntis, „für alle“) | `notesAll` | short lesson note (WebUntis field name); not the day `notes` of daten.json |
