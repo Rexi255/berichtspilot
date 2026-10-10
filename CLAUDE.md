@@ -65,6 +65,10 @@ npm run dev            # Vite + Electron with hot reload (needs a display)
 electron . --screenshot=shot.png [--view=editor|profiles|settings]  # headless UI check
 ```
 
+Cloud sessions can still fetch the Electron binary (`node node_modules/electron/install.js`)
+and run it headless: `xvfb-run -a node_modules/electron/dist/electron --no-sandbox <dir>`
+(the cloud proxy blocks most external hosts — test network code against a local server).
+
 Without an Electron binary (cloud), the renderer also runs in a plain browser:
 `npx vite preview` serves `dist/`, and `browserApi` in `src/store.jsx` swaps the
 IPC bridge for `localStorage`. Playwright + Chromium are preinstalled in cloud

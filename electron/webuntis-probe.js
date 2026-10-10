@@ -150,9 +150,12 @@ async function runWebUntisProbe({ outFile }) {
   // --- Record the web UI's own API calls (only on the WebUntis host) ---------
   const requests = new Map() // CDP requestId -> { method, url, postData, type, status, mimeType }
   const dbg = win.webContents.debugger
+  // Don't await Network.enable here: on a window without a page the command only
+  // answers once a renderer exists, i.e. after loadURL — awaiting it first left
+  // the window blank forever. The first requests (login page) don't matter.
   try {
     dbg.attach('1.3')
-    await dbg.sendCommand('Network.enable')
+    dbg.sendCommand('Network.enable').catch((error) => result.errors.push(`debugger: ${cleanError(error)}`))
   } catch (error) {
     result.errors.push(`debugger: ${cleanError(error)}`)
   }
