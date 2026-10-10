@@ -30,19 +30,22 @@ WebUntis "Lehrstoff" ─────────────┘    (daten.json) 
 
 ## Next step
 
-**Step 4.5a is done in code** (`electron/webuntis.js` `fetchWeek()`, IPC
+**Step 4.5a is done** (`electron/webuntis.js` `fetchWeek()`, IPC
 `webuntis:week` → `window.api.webuntisWeek(mondayISO)`, pure
-`src/lib/webuntis.js` `schoolDaysFromWebuntis()`; tested against stubs only).
-
-**First: one real-account check (user, Windows)** — not possible from a cloud
-session. `npm run dev` → Einstellungen → Verbindungen → WebUntis on → Anmelden;
-then DevTools (Ctrl+Shift+I) → console:
-`await api.webuntisWeek('<a Monday with school>')`. Expected: `ok: true`, the
-school day(s) with subject short names, times and `topics` filled from
-"Lehrstoff". If `topics` stay empty or the call fails, check: does
-`calendar-entry/detail` accept the `startDateTime` exactly as
-`gridEntries[].duration.start` delivers it (URL-encoded `:`)? Does
-`position2` hold the subject? Fix in `electron/webuntis.js` + its test.
+`src/lib/webuntis.js` `schoolDaysFromWebuntis()`). Real-account check by the
+user (2026-10-10, week 2026-10-05): `ok: true`, 6 days, subjects/times/status
+correct, `topics` filled from "Lehrstoff". Observations that matter for 4.5b/4.6:
+- WebUntis short names are mixed case (`LF07`, but `kom`, `wipo`, `pfk`) →
+  mapping must be case-insensitive.
+- **Parallel lessons** in `MY_TIMETABLE`: e.g. Wed 11:15–12:45 `LF10` + `LF08` +
+  `pfk` (cancelled) at the same time — probably group splits/courses. The
+  normaliser keeps all non-cancelled ones; the 4.6 preview must let the user
+  untick subjects (and 4.5b's "ignore" mapping covers permanent ones like `pfk`).
+- Topics can be non-content markers like "Klassenarbeit" — keep them, the
+  user edits in the preview.
+- Work days come back as days without lessons (`holiday: false`) → 4.6 may only
+  fill days that are school days in the week (`day.type === 'school'`), never
+  turn an empty WebUntis day into a school day.
 
 **Then step 4.5b — subject mapping WebUntis → profile subject label**
 - Pure `src/lib/webuntis.js`: `mapSubjects(schoolDays, profile)` — a WebUntis
@@ -111,7 +114,7 @@ decision).
 - [x] 4.4 Settings → new section "Verbindungen": WebUntis on/off (schema v5
       `settings.webuntis.enabled`), school read-only, status, login/logout (2026-10-10)
 - [x] 4.5a `electron/webuntis.js` week fetch (timetable + "Lehrstoff" per block) + pure
-      normaliser `schoolDaysFromWebuntis()`; IPC `webuntis:week` (2026-10-10, stub-tested)
+      normaliser `schoolDaysFromWebuntis()`; IPC `webuntis:week` (2026-10-10, real account checked)
 - [ ] 4.5b Mapping WebUntis subject → learning-field label (per profile, schema v6)
 - [ ] 4.6 "Woche aus WebUntis füllen": school days + subjects + topics from lesson
       topics ("Lehrstoff" = `teachingContent`); detect breaks/cancelled lessons
@@ -144,4 +147,4 @@ decision).
 | 2026-10-10 | Step 4.3: WebUntis session handling (real login tested by the user 2026-10-10: window closes itself, `loggedIn: true` + person id; login does not survive an app restart — accepted) | branch `claude/intelligent-curie-yxizss` |
 | 2026-10-10 | Step 4.4: Settings → "Verbindungen" (WebUntis), schema v5 | branch `claude/intelligent-curie-yxizss` |
 | 2026-10-10 | Step 4.4 review fixes: switch enforced in main, import keeps it | 3fb95f7 |
-| 2026-10-10 | Step 4.5a: WebUntis week fetch + normaliser (real-account check pending) | branch `claude/intelligent-curie-yxizss` |
+| 2026-10-10 | Step 4.5a: WebUntis week fetch + normaliser (real account checked by the user) | f9c4b79 |

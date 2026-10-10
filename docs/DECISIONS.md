@@ -233,8 +233,10 @@ that lesson's topics empty. The pure normaliser `schoolDaysFromWebuntis()`
 merges **all** lessons of one subject on a day (not only adjacent double
 periods), because the record lists each subject once per day; subjects whose
 lessons were all cancelled are returned as `cancelledSubjects` for the import
-preview. Verified only against hand-written stubs so far — the real-account check
-is the first item of the next step.
+preview. Checked with the real account (user, 2026-10-10): topics arrive;
+`MY_TIMETABLE` can contain parallel lessons (group splits/courses) and
+mixed-case short names (`kom`, `wipo`) — handled in 4.5b (case-insensitive
+mapping, "ignore") and 4.6 (untick in the preview).
 
 ### E-014 · Keep the file name `daten.json` · accepted
 Field names became English in schema v3, but the file name stays: existing
