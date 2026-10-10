@@ -32,21 +32,20 @@ WebUntis "Lehrstoff" ─────────────┘    (daten.json) 
 
 ## Next step
 
-**v2.0.1 is prepared** on branch `claude/intelligent-curie-yxizss`: setup-wizard
-scroll fix (PR #2, already in `main`) + one starter bullet per work day
-(schema v11, E-021), `package.json` 2.0.1, CHANGELOG section `[2.0.1]`.
-The user wants it shipped to users right away (plain release, no pre-release).
+**v2.0.1 is released** (2026-10-10, https://github.com/Rexi255/berichtspilot/releases/tag/v2.0.1):
+PR #3 merged, tag `v2.0.1` on `main`, release workflow green, all five assets
+(incl. `latest.yml`) attached, release notes from the `[2.0.1]` CHANGELOG
+section. Work continues on branch `claude/intelligent-curie-yxizss`; deliver via
+PR into `main` (the user allowed `gh pr merge` for Claude Code).
 
-1. Merge the v2.0.1 PR into `main` (the user merges; Claude Code's auto mode
-   blocks `gh pr merge`), then tag `main` with `v2.0.1` and push the tag →
-   release workflow; check that all assets incl. `latest.yml` are attached and
-   copy the `[2.0.1]` CHANGELOG section into the release notes.
-2. Real in-app update test: in the installed 2.0.0, sidebar card / Settings →
-   "Updates" → download → install → restart on 2.0.1; data migrated to
-   schema v11 (profiles with 2 starter bullets now 1).
-3. Then ask the user what comes first: UI overhaul (v2.1, "Later / to-do"),
-   the parked dictation phase, or WebUntis-assisted setup (fill school days +
-   subjects from the timetable, see E-020).
+1. Real in-app update test by the user: in the installed 2.0.0, sidebar card /
+   Settings → "Updates" → download → install → restart on 2.0.1; data migrated
+   to schema v11 (profiles with 2 starter bullets now 1). If it fails: check
+   `latest.yml` on the release and the updater allowlist (E-017).
+2. Then ask the user what comes first: UI overhaul (v2.1, "Later / to-do"),
+   the parked dictation phase, WebUntis-assisted setup (fill school days +
+   subjects from the timetable, see E-020), or Enter jumping into an empty
+   bullet below instead of inserting one (E-021).
 
 ## Open questions (for the user)
 
@@ -212,4 +211,5 @@ decision).
 | 2026-10-10 | E-020: setup wizard on a fresh install (schema v10 `setupDone`) | PR #1 |
 | 2026-10-10 | v2.0.0 released: PR #1 merged, tag pushed, release workflow green, release notes from CHANGELOG | 674cea3, tag `v2.0.0` |
 | 2026-10-10 | Fix: setup wizard scrolls again (`.aurora` overflow beat Tailwind's `overflow-y-auto`; scrolling moved to an inner element) | PR #2 (18e2325) |
-| 2026-10-10 | E-021: one starter bullet per work day (schema v11); v2.0.1 prepared | branch `claude/intelligent-curie-yxizss` |
+| 2026-10-10 | E-021: one starter bullet per work day (schema v11) | PR #3 |
+| 2026-10-10 | v2.0.1 released: PR #3 merged, tag pushed, release workflow green, release notes from CHANGELOG | 1c70518, tag `v2.0.1` |
