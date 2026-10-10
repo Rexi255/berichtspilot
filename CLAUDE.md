@@ -1,113 +1,134 @@
-# Berichtspilot — Arbeitshandbuch für die KI
+# Berichtspilot — Working Guide for AI Assistants
 
-Electron-Desktop-App, die das wöchentliche IHK-Berichtsheft eines Azubis
-(Fachinformatiker Systemintegration, Schleswig-Holstein) erzeugt. Aktueller Stand:
-v1.2.0 (manuelle Eingabe → drei exakt formatierte Textblöcke zum Kopieren).
-**Ziel des laufenden Umbaus:** den Weg dorthin weitgehend automatisieren
-(Spracheingabe, WebUntis, KI-Formulierung, IHK-Portal) — siehe `docs/PLAN.md`.
+Electron desktop app that produces the weekly IHK training record ("Berichtsheft")
+for an apprentice (IT specialist for system integration, Schleswig-Holstein,
+Germany). Current release: v1.2.0 — manual entry → three exactly formatted text
+blocks to copy into the IHK portal.
+**Ongoing overhaul:** automate as much of that as possible (voice dictation,
+WebUntis import, AI phrasing) — see `docs/PLAN.md`.
 
-## Zu Beginn JEDER Session
+## Language rules
 
-1. `docs/PLAN.md` lesen → Abschnitt **„Nächster Schritt"** und **„Offene Fragen"**.
-2. Nur die Doku lesen, die für die Aufgabe nötig ist (Tabelle unten).
-3. Ist der nächste Schritt unklar oder eine offene Frage blockiert → den Nutzer
-   fragen, nicht raten.
-
-## Am Ende JEDER Session (vor dem Commit)
-
-1. `npm run lint && npm test` müssen grün sein.
-2. `docs/PLAN.md` aktualisieren: Erledigtes abhaken, **„Nächster Schritt"** so
-   konkret neu schreiben, dass ein frischer Chat ohne Vorwissen weitermachen kann.
-3. Neue Architektur-/Technikentscheidung → Eintrag in `docs/ENTSCHEIDUNGEN.md`.
-4. Nutzerrelevante Änderung → `CHANGELOG.md` unter `## [Unreleased]`.
-5. Schema geändert → `docs/DATENMODELL.md` mitpflegen.
-
-Die Skills `/weiter` (nächsten Plan-Schritt umsetzen) und `/abschluss`
-(obige Checkliste + Commit/PR) bilden genau diesen Ablauf ab.
-
-## Wissensbasis
-
-| Datei | Wann lesen |
+| What | Language |
 |---|---|
-| `docs/PLAN.md` | **immer** — Roadmap, nächster Schritt, offene Fragen |
-| `docs/ARCHITEKTUR.md` | Arbeit über Prozessgrenzen (Main ↔ Preload ↔ Renderer), neue IPC-Kanäle, Netzwerk |
-| `docs/DATENMODELL.md` | Änderungen an `daten.json`, Profilen, Wochen, Migration |
-| `docs/AUSGABEFORMAT.md` | alles, was die drei Ausgabeblöcke berührt |
-| `docs/ENTSCHEIDUNGEN.md` | bevor eine grundlegende Entscheidung (neu) getroffen wird |
-| `docs/archiv/ursprungsauftrag.md` | nur historisch — der ursprüngliche Bauauftrag (v1.0) |
+| Code, identifiers, comments, `daten.json` field names, IPC channels, CSS tokens | **English** |
+| Docs (`CLAUDE.md`, `docs/`, README, CONTRIBUTING), skills, CHANGELOG | **English** |
+| Commit messages, branch names, PR titles/bodies, issue templates | **English** |
+| **UI text** (labels, buttons, toasts, dialogs, file names offered to the user) | **German** |
+| **IHK output** (`src/lib/format.js` — weekday names, "den", "Feiertag: …") | **German** |
+| Chat with the user | **German** |
 
-Ordnerspezifische Regeln stehen in `electron/CLAUDE.md` und `src/lib/CLAUDE.md`.
+German domain terms ↔ English code names: `docs/GLOSSARY.md`. Use those names
+consistently; add new terms there.
 
-## Befehle
+## At the start of EVERY session
+
+1. Read `docs/PLAN.md` → sections **"Next step"** and **"Open questions"**.
+2. Read only the docs the task needs (table below).
+3. If the next step is unclear or blocked by an open question → ask the user,
+   don't guess.
+
+## At the end of EVERY session (before committing)
+
+1. `npm run lint && npm test && npm run build:renderer` must pass.
+2. Update `docs/PLAN.md`: tick off what's done and rewrite **"Next step"** so that a
+   fresh chat with zero context can continue.
+3. New architectural/technical decision → entry in `docs/DECISIONS.md`.
+4. User-facing change → `CHANGELOG.md` under `## [Unreleased]`.
+5. Schema changed → update `docs/DATA_MODEL.md`.
+
+The skills `/next` (implement the next plan step) and `/wrap-up` (the checklist
+above + commit/PR) encode exactly this workflow.
+
+## Knowledge base
+
+| File | Read when |
+|---|---|
+| `docs/PLAN.md` | **always** — roadmap, next step, open questions |
+| `docs/GLOSSARY.md` | naming anything; translating German domain terms |
+| `docs/ARCHITECTURE.md` | crossing process boundaries (main ↔ preload ↔ renderer), new IPC channels, networking |
+| `docs/DATA_MODEL.md` | touching `daten.json`, profiles, weeks, migrations |
+| `docs/OUTPUT_FORMAT.md` | anything that affects the three output blocks |
+| `docs/DECISIONS.md` | before making (or revisiting) a fundamental decision |
+| `docs/archive/original-brief.md` | historical only — the original v1.0 build brief (German) |
+
+Folder-specific rules live in `electron/CLAUDE.md` and `src/lib/CLAUDE.md`.
+
+## Commands
 
 ```bash
-npm ci                 # Abhängigkeiten (Cloud: ELECTRON_SKIP_BINARY_DOWNLOAD=1 davor)
-npm test               # Vitest — reine Logik in src/lib (schnell, <1 s)
-npm run lint           # ESLint (CI-Pflicht)
-npm run build:renderer # Vite-Build — prüft, dass der Renderer kompiliert
-npm run dev            # Vite + Electron mit Hot-Reload (braucht Display)
-electron . --screenshot=shot.png [--view=editor|profile|einstellungen]  # UI-Check headless
+npm ci                 # install (cloud sessions: prefix ELECTRON_SKIP_BINARY_DOWNLOAD=1)
+npm test               # Vitest — pure logic in src/lib (fast, <1 s)
+npm run lint           # ESLint (required by CI)
+npm run build:renderer # Vite build — proves the renderer compiles
+npm run dev            # Vite + Electron with hot reload (needs a display)
+electron . --screenshot=shot.png [--view=editor|profiles|settings]  # headless UI check
 ```
 
-CI (`.github/workflows/ci.yml`) führt Lint + Tests bei jedem PR aus.
-Release: Tag `vX.Y.Z` pushen → `.github/workflows/release.yml` baut NSIS + portable
-.exe + AppImage.
+Without an Electron binary (cloud), the renderer also runs in a plain browser:
+`npx vite preview` serves `dist/`, and `browserApi` in `src/store.jsx` swaps the
+IPC bridge for `localStorage`. Playwright + Chromium are preinstalled in cloud
+sessions for smoke tests.
 
-## Projektkarte
+CI (`.github/workflows/ci.yml`) runs lint + tests on every PR.
+Release: push tag `vX.Y.Z` → `.github/workflows/release.yml` builds NSIS installer +
+portable .exe + AppImage.
+
+## Project map
 
 ```
-electron/main.js     Fenster, Ablageort daten.json, atomares Speichern + Backups, alle IPC-Handler
-electron/preload.js  contextBridge → window.api (einzige Brücke zum Renderer)
-src/store.jsx        zentraler Zustand (React Context), Autosave 400 ms, alle Mutationen
-src/lib/             REINE Logik, voll getestet: dates · holidays · format · model
-src/views/           Uebersicht · WochenEditor · Profile · Einstellungen
-src/ui/              Design-System: Titlebar, Sidebar, basics, toast, Logo
-src/index.css        Tailwind v4 + Design-Tokens/Themes (data-theme am <html>)
-docs/                Wissensbasis (s. o.)
+electron/main.js     window, daten.json location, atomic save + backups, all IPC handlers
+electron/preload.js  contextBridge → window.api (the only bridge to the renderer)
+src/store.jsx        central state (React context), 400 ms autosave, all mutations
+src/lib/             PURE logic, fully tested: dates · holidays · format · model
+src/views/           screens: overview · week editor · profiles · settings
+src/ui/              design system: Titlebar, Sidebar, basics, toast, Logo
+src/index.css        Tailwind v4 + design tokens/themes (data-theme on <html>)
+docs/                knowledge base (see above)
 ```
 
-## Harte Regeln (nie brechen)
+## Hard rules (never break)
 
-1. **Ausgabeformat ist heilig.** `src/lib/format.js` muss exakt `docs/AUSGABEFORMAT.md`
-   entsprechen (Leerzeilen-Regeln!). `src/lib/format.test.js` enthält echte IHK-Beispiele
-   — diese Tests nie anpassen, damit sie grün werden.
-2. **Keine Datenverluste.** `daten.json` enthält das komplette Berichtsheft des
-   Nutzers. Schemaänderung ⇒ `DATEN_VERSION` erhöhen + Migration in `migriereDaten()`
-   + Test. Atomares Schreiben/Backups in `electron/main.js` nicht aufweichen.
-3. **Electron-Security.** `contextIsolation: true`, `nodeIntegration: false`,
-   `sandbox: true`, strikte CSP. Renderer bekommt nie Node/`fs`/Netzwerk direkt —
-   alles über einen benannten IPC-Kanal in `preload.js`.
-4. **Netzwerk nur im Main-Prozess**, nur zu ausdrücklich erlaubten Zielen
-   (s. `docs/ARCHITEKTUR.md`). Die CSP des Renderers bleibt ohne externe Hosts.
-5. **Geheimnisse** (API-Keys, Passwörter, Tokens) **nie in `daten.json`** und nie im
-   Repo — nur verschlüsselt über Electron `safeStorage` in einer separaten Datei.
-   Grund: `daten.json` wird exportiert/geteilt.
-6. **Kundendaten-Schutz.** Texte, die die App verlassen (z. B. an eine KI-API),
-   vorher vom Nutzer sichtbar prüfen lassen; keine stillen Uploads.
-7. **Datum:** ISO-Strings `YYYY-MM-DD`, immer lokal parsen über `parseISO()` —
-   nie `new Date('YYYY-MM-DD')` (UTC-Versatz).
-8. **„Easy to use" bleibt Produktprinzip:** herunterladen → installieren → läuft.
-   Keine Pflicht-Zusatzinstallationen (Python, Docker, Ollama …) für Kernfunktionen.
+1. **The output format is sacred.** `src/lib/format.js` must match
+   `docs/OUTPUT_FORMAT.md` exactly (blank-line rules!). `src/lib/format.test.js`
+   holds real IHK examples — never edit those expectations to make tests pass.
+2. **No data loss.** `daten.json` holds the user's entire training record.
+   Schema change ⇒ bump `DATA_VERSION` + migration step + test. Never weaken the
+   atomic write/backup logic in `electron/main.js`.
+3. **Electron security.** `contextIsolation: true`, `nodeIntegration: false`,
+   `sandbox: true`, strict CSP. The renderer never gets Node/`fs`/network directly —
+   everything goes through a named IPC channel exposed in `preload.js`.
+4. **Network only in the main process**, only to explicitly allowed hosts
+   (allowlist in `docs/ARCHITECTURE.md`). The renderer CSP stays free of external hosts.
+5. **Secrets** (API keys, passwords, tokens) **never in `daten.json`** and never in
+   the repo — only encrypted via Electron `safeStorage` in a separate file.
+   Reason: `daten.json` gets exported and shared.
+6. **Customer data protection.** Text leaving the machine must be visible to and
+   confirmed by the user first; no silent uploads.
+7. **Dates:** ISO strings `YYYY-MM-DD`, always parsed as local dates via
+   `parseISO()` — never `new Date('YYYY-MM-DD')` (UTC offset bug).
+8. **"Easy to use" is a product principle:** download → install → it works. No
+   mandatory extra installs (Python, Docker, Ollama …) for core features.
 
-## Code-Konventionen
+## Code conventions
 
-- 2 Leerzeichen, **keine Semikolons**, einfache Anführungszeichen.
-- **Deutsche Bezeichner, Kommentare und UI-Texte** (`wocheAnlegen`, `feiertagAm`).
-  Umlaute in Bezeichnern ausschreiben (`ae`, `oe`, `ue`, `ss`).
-- Zentrale Logik knapp kommentieren (warum, nicht was) — Ton der bestehenden Dateien.
-- Neue Fachlogik als reine Funktion in `src/lib/` + Vitest-Test daneben (`*.test.js`).
-- State-Änderungen immer immutabel über Mutationen in `src/store.jsx`.
-- Design: bestehende Komponenten aus `src/ui/basics.jsx` und Tokens aus
-  `src/index.css` nutzen; keine neuen UI-Frameworks.
+- 2-space indent, **no semicolons**, single quotes.
+- English identifiers in camelCase (`createWeek`, `holidayOn`); components in
+  PascalCase. Domain terms per `docs/GLOSSARY.md`.
+- Comment central logic briefly (why, not what) — match the tone of existing files.
+- New domain logic = pure function in `src/lib/` + Vitest test next to it (`*.test.js`).
+- State changes are always immutable, via mutations in `src/store.jsx`.
+- Design: reuse components from `src/ui/basics.jsx` and tokens from `src/index.css`;
+  no new UI frameworks.
 
-## Git-Workflow
+## Git workflow
 
-- Arbeit auf Feature-Branch, Abgabe als **Pull Request** gegen `main`; CI muss grün sein.
-- Commit-Messages auf Deutsch, Präfix nach Conventional Commits
-  (`feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:`).
-- Kleine, in sich fertige Schritte — lieber ein PR pro Plan-Schritt.
+- Work on a feature branch; deliver via **pull request** against `main`; CI must be green.
+  If the session names a branch, use it.
+- Conventional Commits in English (`feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:`).
+- Small, self-contained steps — ideally one PR (or at least one commit) per plan step.
 
-## Nutzer
+## The user
 
-Azubi FISI (seit 2025), arbeitet unter Arch Linux und Windows. Kommunikation auf
-Deutsch. Technisches Vorwissen vorhanden — Erklärungen dürfen fachlich sein.
+Apprentice IT specialist (since 2025), works on Arch Linux and Windows. Talk to them
+in German; technical explanations are welcome.

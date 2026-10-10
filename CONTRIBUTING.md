@@ -1,11 +1,11 @@
-# Beitragen
+# Contributing
 
-Danke fürs Interesse! Beiträge sind willkommen — egal ob Bugfix, Idee oder
-Verbesserung an der Feiertags-/Formatlogik.
+Thanks for your interest! Contributions are welcome — bug fixes, ideas or
+improvements to the holiday/format logic.
 
 ## Setup
 
-Voraussetzung: **Node.js ≥ 20.19**.
+Requires **Node.js ≥ 20.19**.
 
 ```bash
 git clone https://github.com/Rexi255/berichtspilot.git
@@ -14,52 +14,51 @@ npm install
 npm run dev
 ```
 
-## Doku & Plan
+## Docs & plan
 
-- **[docs/PLAN.md](docs/PLAN.md)** — aktueller Umbau, nächster Schritt, offene Fragen
-- **[docs/ARCHITEKTUR.md](docs/ARCHITEKTUR.md)** — Prozesse, IPC-Kanäle, Netzwerk
-- **[docs/DATENMODELL.md](docs/DATENMODELL.md)** — Aufbau der `daten.json`, Migration
-- **[docs/AUSGABEFORMAT.md](docs/AUSGABEFORMAT.md)** — verbindliches Zielformat
-- **[docs/ENTSCHEIDUNGEN.md](docs/ENTSCHEIDUNGEN.md)** — Entscheidungs-Log
-- **[CLAUDE.md](CLAUDE.md)** — Regeln und Ablauf für KI-Assistenten (gelten sinngemäß für alle)
+- **[docs/PLAN.md](docs/PLAN.md)** — current overhaul, next step, open questions
+- **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** — processes, IPC channels, networking
+- **[docs/DATA_MODEL.md](docs/DATA_MODEL.md)** — structure of `daten.json`, migrations
+- **[docs/OUTPUT_FORMAT.md](docs/OUTPUT_FORMAT.md)** — binding target format
+- **[docs/GLOSSARY.md](docs/GLOSSARY.md)** — German domain terms ↔ English code names
+- **[docs/DECISIONS.md](docs/DECISIONS.md)** — decision log
+- **[CLAUDE.md](CLAUDE.md)** — rules and workflow for AI assistants (apply to humans too)
 
-## Codestil
+## Code style
 
-Der Code hält sich bewusst an ein paar einfache Konventionen:
+- **2-space** indent, **no** semicolons, single quotes.
+- **English** identifiers, comments, docs and commit messages. **The UI and the IHK
+  output stay German** (see `docs/GLOSSARY.md` for the term mapping).
+- Central logic (dates, holidays, output format, data location/safe saving,
+  IPC/preload) is briefly commented; please keep that tone.
+- No new renderer access to Node/`fs`. File I/O happens **only** in the main process
+  and is exposed through the preload bridge (`electron/preload.js`).
 
-- **2 Leerzeichen** Einrückung, **keine** Semikolons (Standard-JS-Stil).
-- **Deutschsprachige** Bezeichner und Kommentare — passend zur Domäne.
-- Zentrale Logik (Datum, Feiertage, Ausgabeformat, Ablageort/sicheres Speichern,
-  IPC/preload) ist knapp kommentiert; bitte diesen Ton beibehalten.
-- Kein neuer Renderer-Zugriff auf Node/`fs`. Datei-I/O läuft **nur** im Main-Prozess
-  und wird über die Preload-Bridge (`electron/preload.js`) freigegeben.
+## Things to watch out for
 
-## Worauf man achten sollte
+- **Output format** (`src/lib/format.js`) must stay exact — including the blank-line
+  rules (see `docs/OUTPUT_FORMAT.md`). Verify changes against the examples.
+- **Holidays** (`src/lib/holidays.js`): back new/changed holidays with the federal
+  state. Movable holidays derive from Easter Sunday.
+- **Dates** (`src/lib/dates.js`): ISO strings are deliberately parsed as *local*
+  dates (no UTC offset). Don't switch to `new Date("YYYY-MM-DD")`.
+- **Schema changes** need a migration step and a test (see `docs/DATA_MODEL.md`).
 
-- **Ausgabeformat** (`src/lib/format.js`) muss exakt bleiben — inkl. der
-  Leerzeilen-Regeln (siehe `docs/AUSGABEFORMAT.md`). Änderungen hier bitte an Beispielen prüfen.
-- **Feiertage** (`src/lib/holidays.js`): Neue/geänderte Feiertage mit dem jeweiligen
-  Bundesland belegen. Bewegliche Feiertage leiten sich vom Ostersonntag ab.
-- **Datum** (`src/lib/dates.js`): ISO-Strings werden bewusst als *lokale* Daten
-  geparst (kein UTC-Versatz). Bitte nicht auf `new Date("YYYY-MM-DD")` umstellen.
+## Quick UI check
 
-## Schneller UI-Check
-
-Es gibt einen eingebauten Screenshot-Helfer, der die App unsichtbar rendert und ein
-PNG speichert:
+A built-in screenshot helper renders the app invisibly and saves a PNG:
 
 ```bash
-electron . --screenshot=shot.png [--view=editor|profile|einstellungen]
+electron . --screenshot=shot.png [--view=editor|profiles|settings]
 ```
 
-## Pull Requests
+## Pull requests
 
-- Kleine, fokussierte PRs mit aussagekräftiger Beschreibung.
-- Vor dem PR einmal `npm run build:renderer` laufen lassen (baut ohne Fehler durch?).
-- Bei UI-Änderungen gern einen Screenshot anhängen.
+- Small, focused PRs with a meaningful description.
+- Run `npm run lint`, `npm test` and `npm run build:renderer` before opening a PR.
+- For UI changes, a screenshot is appreciated.
 
-## Bug melden
+## Reporting bugs
 
-Am hilfreichsten sind: Schritte zum Reproduzieren, erwartetes vs. tatsächliches
-Verhalten, Betriebssystem und App-Version. Bei Formatfehlern bitte den erzeugten
-Text mitschicken.
+Most helpful: steps to reproduce, expected vs. actual behavior, operating system
+and app version. For format errors, please include the generated text.

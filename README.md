@@ -2,133 +2,131 @@
 
 # 📓 Berichtspilot
 
-**Ausbildungsnachweis-Generator für das digitale IHK-Berichtsheft**
+**Generator for the German IHK apprenticeship training record ("Berichtsheft")**
 
-Erzeugt pro Berichtswoche die drei fertig formatierten Textblöcke, die 1:1 ins
-IHK-Heft kopiert werden — Wochentage, Datum, Überschriften und Feiertage kommen
-automatisch. Man tippt nur noch die eigentlichen Tätigkeiten ein.
-
-<!-- Desktop app that turns weekly notes into the exact three text blocks
-     the German IHK apprenticeship report ("Berichtsheft") expects. UI is in German. -->
+Produces, per training week, the three formatted text blocks that go 1:1 into the
+digital IHK training record. Weekdays, dates, headings and public holidays are
+filled in automatically, so you only type the actual activities.
+The app's user interface is German.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-informational.svg)](LICENSE)
-![Platform](https://img.shields.io/badge/Plattform-Windows%20%C2%B7%20Linux-2ea043.svg)
+![Platform](https://img.shields.io/badge/Platform-Windows%20%C2%B7%20Linux-2ea043.svg)
 ![Electron](https://img.shields.io/badge/Electron-43-47848F.svg?logo=electron&logoColor=white)
 ![React](https://img.shields.io/badge/React-19-61DAFB.svg?logo=react&logoColor=black)
 ![Offline](https://img.shields.io/badge/100%25-offline-blue.svg)
 
-<img src="docs/screenshots/uebersicht.png" alt="Übersicht mit dokumentierten Berichtswochen und Fortschritt" width="820">
+<img src="docs/screenshots/uebersicht.png" alt="Overview with documented training weeks and progress" width="820">
 
 </div>
 
 ---
 
-## Was ist das?
+## What is it?
 
-Als Azubi muss man wöchentlich ein Berichtsheft führen. Im digitalen IHK-Portal
-gibt es dafür drei Eingabefelder. Diese App nimmt die eigentliche Fleißarbeit ab:
+Apprentices in Germany must keep a weekly training record. The digital IHK portal
+has three input fields for it. This app takes over the tedious part:
 
-- **Datum & Wochentage** werden aus der Kalenderwoche berechnet.
-- **Feiertage** werden komplett offline erkannt (Gaußsche Osterformel, je Bundesland).
-- **Schul- und Betriebstage** kommen aus einem konfigurierbaren **Profil pro Halbjahr**.
-- Die drei **Ausgabeblöcke** entstehen live im exakt geforderten Format — inklusive
-  aller Leerzeilen-Regeln — und liegen per Klick in der Zwischenablage.
+- **Dates & weekdays** are derived from the ISO week.
+- **Public holidays** are detected fully offline (Gauss Easter formula, per federal state).
+- **School and work days** come from a configurable **profile per school half-year**.
+- The three **output blocks** are generated live in exactly the required format —
+  including every blank-line rule — and copied to the clipboard with one click.
 
-Alles läuft lokal. Keine Cloud, kein Konto, keine Internetverbindung nötig.
+Everything runs locally. No cloud, no account, no internet connection required.
 
 ## Features
 
-- 🗂️ **Übersicht** aller Berichtswochen mit Kalenderwoche, Zeitraum, Status
-  (Entwurf/Fertig), Fortschrittsanzeige, **Jahres-Heatmap** und **Lücken-Erkennung**
-  (fehlende Wochen mit Ein-Klick-Anlegen).
-- 🔎 **Volltextsuche & Filter** über alle Stichpunkte, Fächer und Feiertage —
-  praktisch auch als Nachschlagewerk („wann habe ich den Switch konfiguriert?").
-- ✍️ **Wochen-Editor** mit Live-Vorschau der drei Ausgabeblöcke, Kopier-Buttons,
-  **Autocomplete** aus allen bisherigen Stichpunkten + eigenen **Textbausteinen**
-  und **„Aus Zwischenablage einfügen"** (Zeiterfassung/WebUntis).
-- 🧑‍🏫 **Profile pro Halbjahr** — automatische Auswahl anhand des Wochendatums,
-  **Duplizieren** für den Halbjahreswechsel, Warnungen bei Überlappungen/Lücken,
-  Fächerlisten zwischen Tagen/Profilen übernehmbar.
-- 🏖️ **Zeiträume:** Urlaub und Schulferien einmal eintragen — Urlaub markiert die
-  Tage automatisch, in den Ferien werden Schultage zu Betriebstagen.
-- 🎉 **Feiertage offline** für alle 16 Bundesländer, inkl. beweglicher Feiertage.
-- 🏷️ **Tagesstatus** Normal / Feiertag (auto) / Krank / Urlaub.
-- ⌨️ **Tastaturkürzel** (Strg+1–4, Alt+←/→, Strg+Shift+1/2/3 zum Kopieren) und
-  **deutsche Rechtschreibprüfung** in allen Eingabefeldern.
-- 💾 **Robuste Speicherung:** alle Daten in **einer `daten.json`** — bei der
-  installierten App im nutzereigenen Datenordner, in der portablen Version neben der
-  App. **Atomares Schreiben** mit rollierenden **Backups** (`.bak1`–`.bak3`),
-  **Single-Instance-Schutz**, versioniertem Schema mit Migration sowie
-  Export/Import mit **Zusammenführen oder Ersetzen**. Löschen ist per
-  „Rückgängig"-Toast abgesichert.
-- 🎨 Rahmenloses Fenster mit eigener Titlebar, 6 dunkle Farbthemen, weiche
-  GSAP-Übergänge.
+- 🗂️ **Overview** of all training weeks with ISO week, date range, status
+  (draft/done), progress line, **year heatmap** and **gap detection** (missing
+  weeks with one-click creation).
+- 🔎 **Full-text search & filters** across bullets, subjects and holidays — also
+  handy as a lookup ("when did I configure that switch?").
+- ✍️ **Week editor** with live preview of the three output blocks, copy buttons,
+  **autocomplete** from all previous bullets + your own **snippets**, and
+  **paste from clipboard** (time tracking/WebUntis).
+- 🧑‍🏫 **Profiles per school half-year** — picked automatically by date,
+  **duplicate** for the half-year switch, warnings for overlaps/gaps, subject
+  lists copyable between days/profiles.
+- 🏖️ **Periods:** enter vacations and school breaks once — vacation marks the days
+  automatically; during school breaks, school days become work days.
+- 🎉 **Offline holidays** for all 16 federal states, including movable holidays.
+- 🏷️ **Day status** normal / holiday (auto) / sick / vacation.
+- ⌨️ **Keyboard shortcuts** (Ctrl+1–4, Alt+←/→, Ctrl+Shift+1/2/3 to copy) and
+  **German spell checking** in all input fields.
+- 💾 **Robust storage:** all data in **one `daten.json`** — in the user data folder
+  for the installed app, next to the executable for the portable build.
+  **Atomic writes** with rolling **backups** (`.bak1`–`.bak3`), **single-instance
+  lock**, versioned schema with migration, and export/import with **merge or
+  replace**. Deleting can be undone via toast.
+- 🎨 Frameless window with custom title bar, 6 dark color themes, smooth GSAP transitions.
 
 ## Screenshots
 
-| Wochen-Editor mit Live-Format | Profile / Halbjahre |
+| Week editor with live output | Profiles / half-years |
 | :---: | :---: |
-| ![Wochen-Editor](docs/screenshots/editor.png) | ![Profile](docs/screenshots/profile.png) |
+| ![Week editor](docs/screenshots/editor.png) | ![Profiles](docs/screenshots/profile.png) |
 
-Links wird getippt, rechts entsteht sofort das fertige Zielformat mit „Kopieren"-Button.
+Type on the left; the finished target format appears instantly on the right with a
+copy button.
 
-## Installation (fertige App)
+## Installation (prebuilt app)
 
-Fertige Builds gibt es unter **[Releases](https://github.com/Rexi255/berichtspilot/releases)**:
+Builds are available under **[Releases](https://github.com/Rexi255/berichtspilot/releases)**:
 
-- **Windows (empfohlen):** `Berichtspilot-Setup-<version>.exe` — der Installer. Legt
-  Startmenü- und Desktop-Verknüpfung an, der Installationsordner ist frei wählbar
-  und standardmäßig **ohne Adminrechte** (Installation pro Benutzer).
-- **Windows portabel:** `Berichtspilot-<version>-portable.exe` — ohne Installation,
-  einfach doppelklicken (z. B. direkt vom USB-Stick).
-- **Linux:** `Berichtspilot-<version>.AppImage` — ausführbar machen (`chmod +x`) und starten.
+- **Windows (recommended):** `Berichtspilot-Setup-<version>.exe` — the installer.
+  Creates start-menu and desktop shortcuts; the install folder is selectable and the
+  default install is per user, **without admin rights**.
+- **Windows portable:** `Berichtspilot-<version>-portable.exe` — no installation,
+  just double-click (e.g. straight from a USB stick).
+- **Linux:** `Berichtspilot-<version>.AppImage` — make it executable (`chmod +x`) and run it.
 
-### Wo liegen meine Daten?
+### Where is my data?
 
-- **Installiert:** im nutzereigenen Datenordner (`%APPDATA%\Berichtspilot` unter
-  Windows, `~/.config/Berichtspilot` unter Linux). Der ist **immer beschreibbar** —
-  auch wenn die App unter `C:\Program Files` bzw. `/usr/bin` liegt. Beim Deinstallieren
-  bleiben die Daten erhalten.
-- **Portabel:** in `daten.json` **neben der Executable** — Datei/Ordner kopieren, und
-  die Daten wandern mit. Liegt die portable Version ausnahmsweise an einem
-  schreibgeschützten Ort, weicht sie automatisch auf den nutzereigenen Datenordner aus,
-  statt abzustürzen.
+- **Installed:** in the user data folder (`%APPDATA%\Berichtspilot` on Windows,
+  `~/.config/Berichtspilot` on Linux). It is **always writable** — even when the app
+  lives under `C:\Program Files` or `/usr/bin`. Uninstalling keeps the data.
+- **Portable:** in `daten.json` **next to the executable** — copy the file/folder and
+  the data moves with it. If the portable build sits in a read-only location, it
+  falls back to the user data folder instead of crashing.
 
-Den genauen Pfad zeigt die App unten links in der Seitenleiste (Tooltip). Neben der
-`daten.json` liegen automatisch bis zu drei rollierende Sicherungen (`.bak1`–`.bak3`);
-ist die Hauptdatei einmal beschädigt, stellt die App beim Start automatisch den
-jüngsten intakten Stand wieder her. Zum manuellen Sichern/Umziehen gibt es zusätzlich
-**Daten exportieren/importieren**.
+The exact path is shown in the bottom-left of the sidebar (tooltip). Up to three
+rolling backups (`.bak1`–`.bak3`) live next to `daten.json`; if the main file is
+ever corrupted, the app restores the newest intact backup on start. For manual
+backups/moves there is also **export/import**.
 
-## Entwicklung
+## Development
 
-Voraussetzung: **Node.js ≥ 20.19**.
+Requires **Node.js ≥ 20.19**.
 
 ```bash
 npm install
-npm run dev        # Vite-Devserver + Electron mit Hot-Reload
-npm start          # Renderer bauen + Electron auf dem Build starten
-npm test           # Vitest: Format- (exakte IHK-Beispiele), Feiertags-, Datumslogik
-npm run lint       # ESLint (läuft auch in der CI bei jedem Push/PR)
+npm run dev        # Vite dev server + Electron with hot reload
+npm start          # build renderer + start Electron on the build
+npm test           # Vitest: format (real IHK examples), holiday, date, model logic
+npm run lint       # ESLint (also runs in CI on every push/PR)
 ```
+
+Contributor and AI-assistant guidelines: [CONTRIBUTING.md](CONTRIBUTING.md) and
+[CLAUDE.md](CLAUDE.md). Architecture, data model and decisions live in [`docs/`](docs/).
 
 ## Build
 
 ```bash
-npm run build:win    # Windows: Installer (.exe) + portable .exe  -> release/
-npm run build:linux  # Linux AppImage                             -> release/ (auf Linux ausführen)
-npm run build        # beide Plattformen
+npm run build:win    # Windows: installer (.exe) + portable .exe  -> release/
+npm run build:linux  # Linux AppImage                             -> release/ (run on Linux)
+npm run build        # both platforms
 ```
 
-Wer die [CI](.github/workflows/release.yml) nutzt: Ein Versions-Tag pushen
-(`git tag v1.0.1 && git push --tags`) baut beide Artefakte automatisch und hängt
-sie an ein GitHub-Release.
+With [CI](.github/workflows/release.yml): pushing a version tag
+(`git tag v1.0.1 && git push --tags`) builds both artifacts and attaches them to a
+GitHub release.
 
-## Ausgabeformat
+## Output format
 
-Das Format ist Pflicht und entspricht exakt den echten IHK-Berichten.
+The format is mandatory and matches real IHK reports exactly (the output is
+German). Full specification: [docs/OUTPUT_FORMAT.md](docs/OUTPUT_FORMAT.md).
 
-**Block 1 — Betriebliche Tätigkeiten** (eine Leerzeile zwischen den Tagen):
+**Block 1 — Betriebliche Tätigkeiten** (one blank line between days):
 
 ```
 Mittwoch, den 08.07.2026:
@@ -136,13 +134,13 @@ Mittwoch, den 08.07.2026:
 - Verwaltung von WLAN-Zugangsdaten für Gäste sowie Bearbeitung von Support-Tickets
 ```
 
-Feiertag/Krank/Urlaub ersetzen die Stichpunkte durch eine Statuszeile
+Holiday/sick/vacation replace the bullets with a status line
 (`- Feiertag: Tag der Arbeit`, `- Krankheitstag`, `- Urlaub`).
 
-**Block 2 — Unterweisungen:** freier Text, meist leer.
+**Block 2 — Unterweisungen:** free text, usually empty.
 
-**Block 3 — Berufsschule** (Header, Leerzeile, Fächer mit Bullets; eine Leerzeile
-zwischen Fächern, **zwei** zwischen den Tagen):
+**Block 3 — Berufsschule** (header, blank line, subjects with bullets; one blank
+line between subjects, **two** between days):
 
 ```
 Montag, den 06.07.2026:
@@ -154,48 +152,48 @@ Englisch:
 - Explaining a network diagram in English
 ```
 
-## Projektstruktur
+## Project structure
 
 ```
 electron/
-  main.js        # Fenster, Ablageort + sicheres Speichern, Datei-I/O per IPC
-  preload.js     # schmale contextBridge-API für den Renderer
+  main.js        # window, data location + safe saving, file I/O via IPC
+  preload.js     # narrow contextBridge API for the renderer
 src/
-  lib/dates.js   # Wochentag/Datum, ISO-Kalenderwoche
-  lib/holidays.js# Feiertage je Bundesland (Osterformel, offline)
-  lib/format.js  # exaktes Ausgabeformat der drei Blöcke
-  lib/model.js   # Profile, Wochen, Seed-Daten
-  views/         # Übersicht · WochenEditor · Profile · Einstellungen
-  ui/            # Titlebar, Sidebar, Design-System-Bausteine
-docs/            # Architektur, Datenmodell, Ausgabeformat, Entscheidungen, Plan
-CLAUDE.md        # Arbeitsanweisungen für KI-Assistenten (Claude Code)
+  lib/dates.js   # weekday/date, ISO week
+  lib/holidays.js# holidays per federal state (Easter formula, offline)
+  lib/format.js  # exact output format of the three blocks
+  lib/model.js   # profiles, weeks, seed data, migration
+  views/         # Overview · WeekEditor · Profiles · Settings
+  ui/            # title bar, sidebar, design-system components
+docs/            # architecture, data model, output format, glossary, decisions, plan
+CLAUDE.md        # working guide for AI assistants (Claude Code)
 ```
 
-## Technik & Sicherheit
+## Technology & security
 
-- **Electron + Vite + React + Tailwind CSS**, Animationen mit GSAP & Lenis.
-- **Electron-Härtung:** `contextIsolation: true`, `nodeIntegration: false`,
-  `sandbox: true`. Der Renderer bekommt über die Preload-Bridge nur eine schmale API;
-  Datei-I/O passiert ausschließlich im Main-Prozess (IPC). Strikte CSP im Renderer.
-- **Offline by design:** Feiertage werden lokal berechnet, keine externen Requests.
+- **Electron + Vite + React + Tailwind CSS**, animations with GSAP & Lenis.
+- **Electron hardening:** `contextIsolation: true`, `nodeIntegration: false`,
+  `sandbox: true`. The renderer only gets a narrow API via the preload bridge; file
+  I/O happens exclusively in the main process (IPC). Strict CSP in the renderer.
+- **Offline by design:** holidays are computed locally, no external requests.
 
 ## Roadmap
 
-Berichtspilot wird gerade zum (weitgehend) automatischen Berichtsheft ausgebaut:
-Spracheingabe, WebUntis-Import, KI-Formulierung und Eintragen ins IHK-Portal.
-Stand, Reihenfolge und offene Fragen: **[docs/PLAN.md](docs/PLAN.md)**.
+Berichtspilot is being extended into a largely automatic training record: voice
+dictation, WebUntis import and AI phrasing. Status, order and open questions:
+**[docs/PLAN.md](docs/PLAN.md)**.
 
-## Beitragen
+## Contributing
 
-Pull Requests und Issues sind willkommen — siehe **[CONTRIBUTING.md](CONTRIBUTING.md)**.
+Pull requests and issues are welcome — see **[CONTRIBUTING.md](CONTRIBUTING.md)**.
 
-## Haftungsausschluss
+## Disclaimer
 
-Inoffizielles, privates Hilfswerkzeug. **Nicht** mit einer IHK oder dem IHK-Portal
-verbunden oder von diesen unterstützt. Die erzeugten Texte vor dem Absenden immer
-selbst prüfen — für Richtigkeit und Vollständigkeit der Ausbildungsnachweise ist
-jede*r selbst verantwortlich. Nutzung auf eigene Verantwortung, ohne Gewähr.
+Unofficial, private helper tool. **Not** affiliated with or endorsed by any IHK or
+the IHK portal. Always review the generated texts before submitting — every
+apprentice is responsible for the correctness and completeness of their training
+records. Use at your own risk, without warranty.
 
-## Lizenz
+## License
 
 [MIT](LICENSE)

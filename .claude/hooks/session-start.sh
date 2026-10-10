@@ -1,7 +1,6 @@
 #!/bin/bash
-# SessionStart-Hook: sorgt in Cloud-Sessions dafür, dass Tests und Lint sofort
-# laufen. Lokal (eigener Rechner) passiert nichts — dort verwaltet man
-# node_modules selbst.
+# SessionStart hook: makes tests and lint work right away in cloud sessions.
+# Locally (your own machine) it does nothing — you manage node_modules yourself.
 set -euo pipefail
 
 if [ "${CLAUDE_CODE_REMOTE:-}" != "true" ]; then
@@ -10,9 +9,9 @@ fi
 
 cd "${CLAUDE_PROJECT_DIR:-$(dirname "$0")/../..}"
 
-# Nur installieren, wenn node_modules fehlt oder package-lock.json neuer ist.
-# Das Electron-Binary wird übersprungen: in der Cloud gibt es kein Display, und
-# für Vitest/ESLint/Vite-Build wird es nicht gebraucht.
+# Install only if node_modules is missing or package-lock.json is newer.
+# The Electron binary is skipped: cloud sessions have no display, and Vitest,
+# ESLint and the Vite build don't need it.
 if [ ! -f node_modules/.package-lock.json ] || [ package-lock.json -nt node_modules/.package-lock.json ]; then
   ELECTRON_SKIP_BINARY_DOWNLOAD=1 npm ci --no-audit --no-fund
 fi

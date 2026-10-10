@@ -1,14 +1,14 @@
 ---
-name: Idee / Verbesserung
-about: Vorschlag für ein neues Feature oder eine Verbesserung
+name: Feature request
+about: Suggest a new feature or an improvement
 labels: enhancement
 ---
 
-**Worum geht es?**
-Welches Problem oder welche Umständlichkeit soll gelöst werden?
+**What is it about?**
+Which problem or inconvenience should be solved?
 
-**Lösungsvorschlag**
-Wie könnte es aussehen?
+**Proposed solution**
+What could it look like?
 
-**Alternativen**
-Gibt es andere Wege, das zu lösen?
+**Alternatives**
+Are there other ways to solve it?

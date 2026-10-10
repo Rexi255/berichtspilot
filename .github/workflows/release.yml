@@ -1,5 +1,5 @@
-# Baut bei einem Versions-Tag (z. B. v1.1.0) den Windows-Installer (NSIS) samt
-# portabler .exe und das Linux-AppImage und hängt alles an ein GitHub-Release.
+# On a version tag (e.g. v1.1.0): builds the Windows installer (NSIS) plus the
+# portable .exe and the Linux AppImage and attaches everything to a GitHub release.
 #
 #   git tag v1.1.0
 #   git push origin v1.1.0
@@ -10,10 +10,10 @@ on:
   push:
     tags:
       - 'v*'
-  workflow_dispatch: {} # manueller Start über die Actions-Oberfläche
+  workflow_dispatch: {} # manual start from the Actions UI
 
 permissions:
-  contents: write # zum Anlegen des Releases nötig
+  contents: write # required to create the release
 
 jobs:
   build:

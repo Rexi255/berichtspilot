@@ -1,37 +1,37 @@
-# electron/ — Main-Prozess & Preload
+# electron/ — main process & preload
 
-Hier liegt alles mit Systemzugriff. Der Renderer ist absichtlich „dumm" und darf nur,
-was `preload.js` freigibt.
+Everything with system access lives here. The renderer is deliberately "dumb" and
+may only do what `preload.js` exposes.
 
-## Regeln
+## Rules
 
-- **Neuer Kanal = drei Stellen:** `ipcMain.handle('bereich:aktion', …)` in `main.js`,
-  eine benannte Funktion in `preload.js`, ein Fallback in `browserApi` in
-  `src/store.jsx` (damit `vite dev` im Browser nicht crasht). Danach die Tabelle in
-  `docs/ARCHITEKTUR.md` ergänzen.
-- Kanalnamen: `bereich:aktion` auf Deutsch (`daten:speichern`, `fenster:schliessen`).
-- Handler liefern Objekte `{ ok: true, … }` bzw. `{ ok: false, fehler: '…' }` —
-  nicht werfen (Fehler über IPC verlieren ihren Typ).
-- **Eingaben aus dem Renderer validieren** (Typ, Länge, erlaubte Werte). Niemals
-  Pfade, URLs oder Shell-Befehle ungeprüft aus dem Renderer übernehmen.
-- Kein `ipcRenderer` roh exponieren, keine generischen „invoke(kanal)"-Brücken.
-- `webPreferences` des Hauptfensters (`contextIsolation`, `nodeIntegration: false`,
-  `sandbox`) nicht ändern. Zusätzliche Fenster (z. B. IHK-Portal) bekommen eine
-  **eigene Session-Partition** und eine eigene, minimale Preload.
-- **Netzwerk:** nur hier, nur zu Hosts aus der Allowlist in `docs/ARCHITEKTUR.md`.
-- **Geheimnisse:** nur über `safeStorage.encryptString()` in einer eigenen Datei
-  neben `daten.json` (nicht darin). Nie loggen, nie an den Renderer zurückgeben,
-  außer der Nutzer will sie ausdrücklich sehen.
+- **A new channel touches three places:** `ipcMain.handle('area:action', …)` in
+  `main.js`, a named function in `preload.js`, and a fallback in `browserApi` in
+  `src/store.jsx` (so `vite` in a plain browser doesn't crash). Then add it to the
+  channel table in `docs/ARCHITECTURE.md`.
+- Channel names: `area:action` in English (`data:save`, `window:close`).
+- Handlers return `{ ok: true, … }` or `{ ok: false, error: '…' }` — don't throw
+  (errors lose their type across IPC). User-facing error texts are German.
+- **Validate renderer input** (type, length, allowed values). Never take paths,
+  URLs or shell commands from the renderer unchecked.
+- Never expose raw `ipcRenderer` or a generic "invoke(channel)" bridge.
+- Don't change the main window's `webPreferences` (`contextIsolation`,
+  `nodeIntegration: false`, `sandbox`). Additional windows get their **own session
+  partition** and their own minimal preload.
+- **Network:** only here, only to hosts in the allowlist in `docs/ARCHITECTURE.md`.
+- **Secrets:** only via `safeStorage.encryptString()` in a dedicated file next to
+  `daten.json` (never inside it). Never log them, never send them back to the
+  renderer unless the user explicitly asks to see them.
 
-## Speicherlogik (nicht aufweichen)
+## Storage logic (do not weaken)
 
-`ermittleDatenVerzeichnis()` (Dev → CWD, portabel → neben Exe falls beschreibbar,
-sonst `userData`) und `schreibeDaten()` (tmp + fsync → Backups rotieren → atomares
-rename) sind Abnahmekriterien. Änderungen hier nur mit ausdrücklicher Begründung
-in `docs/ENTSCHEIDUNGEN.md`.
+`resolveDataDir()` (dev → CWD, portable → next to the executable if writable,
+otherwise `userData`) and `writeData()` (tmp + fsync → rotate backups → atomic
+rename) are acceptance criteria. Change them only with a written rationale in
+`docs/DECISIONS.md`.
 
-## Testen
+## Testing
 
-Main-Prozess-Code hat (noch) keine Unit-Tests. Logik, die testbar sein soll
-(Parser, Mapper, Validierung), in ein eigenes CommonJS-Modul unter `electron/`
-auslagern und mit Vitest testen, statt sie in `main.js` zu vergraben.
+Main-process code has no unit tests yet. Logic that should be testable (parsers,
+mappers, validation) goes into its own CommonJS module under `electron/` with a
+Vitest test, instead of being buried in `main.js`.

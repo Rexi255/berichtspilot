@@ -1,5 +1,5 @@
-# Qualitäts-Check bei jedem Push/PR: Lint + Tests (Format-/Feiertags-/Datums-
-# Logik). Die Builds selbst laufen weiterhin nur im Release-Workflow.
+# Quality check on every push/PR: lint + tests (format/holiday/date logic).
+# The builds themselves only run in the release workflow.
 name: CI
 
 on:

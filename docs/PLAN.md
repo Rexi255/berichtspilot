@@ -1,123 +1,129 @@
-# Umbau-Plan: Berichtspilot automatisieren
+# Overhaul plan: automating Berichtspilot
 
-> **Staffelstab zwischen den Chats.** Jede Session liest zuerst „Nächster Schritt"
-> und „Offene Fragen" und aktualisiert beides am Ende. Erledigtes abhaken `[x]`,
-> mit PR-Link/Datum. Entscheidungen → `ENTSCHEIDUNGEN.md`.
+> **The baton between chats.** Every session reads "Next step" and "Open questions"
+> first and updates both at the end. Tick off done items `[x]` with date/commit.
+> Decisions → `DECISIONS.md`.
 
 ## Vision
 
-Heute: Tätigkeiten aus Zeiterfassung und WebUntis abtippen → App formatiert → drei
-Blöcke ins IHK-Portal kopieren.
+Today: type activities from time tracking and WebUntis → app formats → copy three
+blocks into the IHK portal.
 
-Ziel: **Pro Tag kurz diktieren, WebUntis-Themen kommen automatisch, die KI
-formuliert sauber, ein Klick trägt die Woche ins IHK-Portal ein** — der Nutzer
-prüft nur noch und klickt selbst auf Absenden.
+Goal: **dictate a few sentences per day (customer details left out while
+speaking), school topics come from WebUntis automatically, an AI turns the notes
+into clean bullets** — the user only reviews and copies.
 
 ```
-Diktat (lokal) ─┐
-WebUntis ───────┼─► Rohdaten je Tag ─► KI-Formulierung ─► Woche (wie heute) ─► IHK-Portal
-(Zeiterf.-Datei)┘    (daten.json)       (anonymisiert,      editierbar,          (eingebettetes
-                                         mit Vorschau)      exaktes Format       Fenster, Nutzer
-                                                                                  sendet selbst)
+dictation (local, bundled model) ─┐
+                                   ├─► raw notes per day ─► AI phrasing ─► week (as today) ─► copy to IHK
+WebUntis lesson notes ────────────┘    (daten.json)         (E-011)        editable, exact     (portal automation
+                                                                            output format        deferred, E-012)
 ```
 
-## Leitplanken
+## Guardrails
 
-- „Easy to use": Installer → läuft. Keine Pflicht-Zusatzsoftware (E-006).
-- Lokal zuerst; Netzwerk nur Main-Prozess + Allowlist (E-007).
-- Kundendaten verlassen den Rechner nie unbemerkt (E-009, E-010, E-011).
-- Ohne Netz/Accounts funktioniert alles wie v1.2 (jede Automatik ist optional).
-- Ausgabeformat und `daten.json`-Sicherheit bleiben unangetastet.
+- "Easy to use": installer → works. No mandatory extra software (E-006).
+- Local first; network only in the main process + allowlist (E-007).
+- Nothing leaves the machine without the user seeing it (E-009 – E-011).
+- Without network/accounts everything works like v1.2 (every automation is optional).
+- Output format and `daten.json` safety stay untouched.
 
-## Nächster Schritt
+## Next step
 
-**Schritt 1.1 — Schema v3: Rohnotizen pro Tag**
+**Step 1.1 — English identifiers + schema v3** (requested by the user, E-015)
 
-Ziel: Grundlage, damit Diktat/Import/KI Rohtext ablegen können, ohne die fertigen
-Stichpunkte zu überschreiben.
+Goal: all code names and `daten.json` fields in English, existing user data migrates
+losslessly. UI texts and IHK output stay German.
 
-- In `src/lib/model.js`: `DATEN_VERSION = 3`; jeder Tag erhält `notizen: ''`
-  (Rohtext, z. B. Diktat-Transkript). Migration 2 → 3 in `migriereDaten()` ergänzt
-  das Feld in allen bestehenden Tagen. `neueWoche()`/`wocheAusVorlage()` legen es an.
-- `validiereDaten()` akzeptiert fehlendes/vorhandenes `notizen` (String).
-- Tests in `model.test.js`: Migration v2-Datei → v3, neue Woche hat `notizen`.
-- `format.js` ignoriert `notizen` (Ausgabe unverändert — Format-Tests bleiben grün).
-- UI (`WochenEditor.jsx`): pro Tag ein einklappbares Feld „Notizen (Rohtext)"
-  oberhalb der Stichpunkte, dezent, standardmäßig zu, wenn leer.
-- `docs/DATENMODELL.md` + CHANGELOG aktualisieren.
+- Rename identifiers in `src/lib/*`, `src/store.jsx`, `src/App.jsx`, `src/views/*`,
+  `src/ui/*`, `electron/*` per `docs/GLOSSARY.md`; view files become
+  `Overview.jsx`, `WeekEditor.jsx`, `Profiles.jsx`, `Settings.jsx`.
+- IPC channels + preload API per the table in `docs/ARCHITECTURE.md`
+  (`data:load` / `loadData()` …); IPC result fields `{ ok, data, path, fromBackup, error, canceled }`.
+- CSS design tokens and theme ids in English (`--color-ink`, `northern-lights` …).
+- `model.js`: `DATA_VERSION = 3`, migration step 2 → 3 maps every field/enum per the
+  GLOSSARY table; `validateData()` and `mergeData()` work on v3; imports of v1/v2
+  files keep working (migrate first, then validate).
+- Tests: migration v1 → v3 and v2 → v3 (full fixture incl. periods, profiles,
+  weeks, all enum values), unknown extra fields survive, newer version rejected.
+  Format tests unchanged and green.
+- Smoke test in browser mode (vite preview + Playwright): all four views render
+  without console errors; a v2 dataset in localStorage is migrated and displayed.
 
-Danach: Schritt 1.2.
+Then: step 1.2.
 
-## Offene Fragen (an den Nutzer)
+## Open questions (for the user)
 
-1. **KI-Formulierung:** Ist eine Cloud-KI (Claude-API, eigener API-Key, Kosten
-   grob wenige Cent pro Woche) okay — mit Anonymisierung + Vorschau? Oder muss es
-   zwingend lokal laufen (dann deutlich schwächere Qualität bzw. Zusatzsoftware)?
-2. **Spracherkennungs-Modell:** Einmaliger Download (~150–500 MB) beim ersten
-   Diktat okay, oder soll das Modell im Installer stecken (größerer Download)?
-3. **WebUntis:** Schulname/Server (z. B. `xyz.webuntis.com`)? Sieht man als Schüler
-   in WebUntis die eingetragenen **Unterrichtsthemen/Lehrstoff** — oder nur den
-   Stundenplan?
-4. **IHK-Portal:** URL der Berichtsheft-Seite, Login-Verfahren (2FA?), und
-   Screenshots (oder gespeichertes HTML) der Eingabemaske einer Woche.
-5. **Zeiterfassung:** Welches System? Gibt es einen Export (CSV/Excel), der
-   *ohne* Kundendaten auskommt — oder reicht die Spracheingabe komplett?
+1. **AI phrasing (E-011):** Option A "clipboard bridge" (works with any chat AI you
+   already use, no key, no cost, 2 pastes per week), option B "bundled local model"
+   (fully automatic and offline, but weaker and +2–3 GB installer), or both?
+   Recommendation: start with A, evaluate B in a spike.
+2. **WebUntis:** name of the school / WebUntis server (e.g. `xyz.webuntis.com`) — no
+   password. For the spike I'd write a small probe script you run locally that
+   prints the (anonymised) structure of what WebUntis returns for one lesson.
+3. **Installer size:** the speech model adds roughly 150–500 MB (depending on the
+   model) to installer and portable .exe — acceptable?
 
 ## Roadmap
 
-### Phase 0 — KI-Fundament
-- [x] Repo-Struktur für KI-Arbeit: `CLAUDE.md` neu, `docs/`-Wissensbasis,
-      Skills `/weiter` + `/abschluss`, SessionStart-Hook (2026-10)
+### Phase 0 — AI groundwork
+- [x] Repo structure for AI work: `CLAUDE.md`, `docs/` knowledge base, skills,
+      SessionStart hook (2026-10-09)
+- [x] Docs, AI instructions and skills switched to English; glossary (2026-10-10)
 
-### Phase 1 — Fundament für Automatisierung (nicht blockiert)
-- [ ] 1.1 Schema v3: `notizen` (Rohtext) pro Tag + UI-Feld
-- [ ] 1.2 Geheimnis-Speicher: `electron/geheimnisse.js` (safeStorage, eigene Datei),
-      IPC `geheimnis:setzen|vorhanden|loeschen` (Werte gehen nie zum Renderer zurück)
-- [ ] 1.3 Netzwerk-Schicht im Main: `electron/netz.js` — `fetch`-Wrapper mit
-      Host-Allowlist, Timeout, verständlichen Fehlern; Vitest für die Allowlist
-- [ ] 1.4 Einstellungen → neuer Bereich „Verbindungen & Automatik" (je Funktion
-      an/aus, Status, Zugangsdaten)
-- [ ] 1.5 Anonymisierung als reine Lib `src/lib/anonymisierung.js`: eigene
-      Begriffsliste (Kunden, Namen) + Muster (IPv4/6, Mail, Telefon, Ticket-Nr.) →
-      Platzhalter; Tests
+### Phase 1 — Foundation for automation (not blocked)
+- [ ] 1.1 English identifiers + `daten.json` fields, schema v3 with migration + tests
+- [ ] 1.2 Schema v4: `notes` (raw text) per day + collapsible "Notizen" field in the
+      week editor; `format.js` ignores notes
+- [ ] 1.3 Network layer in main: `electron/net.js` — `fetch` wrapper with host
+      allowlist, timeout, readable errors; Vitest for the allowlist
+- [ ] 1.4 Secret store: `electron/secrets.js` (safeStorage, separate file), IPC
+      `secret:set|has|delete` (values never go back to the renderer)
+- [ ] 1.5 Settings → new section "Verbindungen & Automatik" (per feature on/off,
+      status, credentials)
 
-### Phase 2 — Spracheingabe (offline)
-- [ ] 2.1 Spike: Whisper-Variante wählen (Qualität Deutsch, Größe, Geschwindigkeit,
-      Packaging für NSIS/portable/AppImage, CSP) → E-010 entscheiden
-- [ ] 2.2 Mikrofon: `setPermissionRequestHandler` erlaubt nur `media` fürs eigene Fenster
-- [ ] 2.3 Transkription im Utility-Process/Worker, IPC `sprache:transkribieren`
-- [ ] 2.4 UI: Diktat-Button je Tag (Aufnahme-Status, Pegel, Abbrechen) → `notizen`
-- [ ] 2.5 Ohne KI: Notizen per Klick in Stichpunkte zerlegen (Satz-/Zeilensplit)
+### Phase 2 — Dictation (offline, model bundled — E-010)
+- [ ] 2.1 Spike: choose the Whisper variant (German accuracy, size, speed,
+      packaging for NSIS/portable/AppImage, CSP) → finalize E-010
+- [ ] 2.2 Microphone: `setPermissionRequestHandler` grants only `media` to the app window
+- [ ] 2.3 Transcription in a utility process/worker, IPC `speech:transcribe`
+- [ ] 2.4 UI: dictate button per day (recording state, level meter, cancel) → `notes`
+- [ ] 2.5 Without AI: split notes into bullets with one click (sentence/line split)
 
-### Phase 3 — KI-Formulierung
-- [ ] 3.1 Provider-Abstraktion im Main (`electron/ki.js`), erster Provider laut Frage 1
-- [ ] 3.2 Prompt mit Stilregeln aus `AUSGABEFORMAT.md` + Beispielen aus den eigenen
-      fertigen Wochen (Few-Shot, anonymisiert)
-- [ ] 3.3 UI: „Formulieren" je Tag/Woche → Vorschau gesendeter Text → Vorschläge
-      übernehmen/verwerfen/einzeln bearbeiten
-- [ ] 3.4 Schultage: Themenstichworte je Fach glätten
+### Phase 3 — AI phrasing (E-011)
+- [ ] 3.1 User picks the option(s) (open question 1) → finalize E-011
+- [ ] 3.2 Pure lib `src/lib/phrasing.js`: build the prompt (style rules from
+      `OUTPUT_FORMAT.md`, few-shot examples from the user's own finished weeks) and
+      parse a strictly formatted answer back into bullets per day; tests
+- [ ] 3.3 Lightweight safety check before anything leaves the app: warn about
+      patterns like IPs, e-mail addresses, phone and ticket numbers
+- [ ] 3.4 Provider "clipboard bridge" (option A): copy prompt → paste answer →
+      preview → accept/reject per day
+- [ ] 3.5 Spike provider "local model" (option B): node-llama-cpp + small German-capable
+      model; measure quality/speed on the notebook
+- [ ] 3.6 School days: polish topic keywords per subject
 
-### Phase 4 — WebUntis-Import
-- [ ] 4.1 Spike mit echtem Account: Login, Stundenplan, Lehrstoff abrufbar? → E-013
-- [ ] 4.2 `electron/webuntis.js` + Mapping WebUntis-Fach → LF-Label (im Profil)
-- [ ] 4.3 „Woche aus WebUntis füllen": Schultage + Fächer + Themen, Ferien/Ausfall erkennen
+### Phase 4 — WebUntis import (E-013)
+- [ ] 4.1 Spike with a real account (probe script run by the user): login, timetable,
+      where the lesson notes live → finalize E-013
+- [ ] 4.2 `electron/webuntis.js` + mapping WebUntis subject → learning-field label (per profile)
+- [ ] 4.3 "Woche aus WebUntis füllen": school days + subjects + topics from lesson
+      notes; detect breaks/cancelled lessons
 
-### Phase 5 — IHK-Portal eintragen
-- [ ] 5.1 Spike: Portal-DOM analysieren (Material vom Nutzer, Frage 4) → E-012
-- [ ] 5.2 Portal-Fenster mit eigener Partition + Fill-Preload; Nutzer loggt selbst ein
-- [ ] 5.3 „Woche eintragen": richtige Woche im Portal wählen, 3 Felder füllen,
-      Erfolg prüfen, Status in Berichtspilot vermerken (z. B. `eingetragenAm`)
+### Phase 5 — Comfort
+- [ ] Auto-update (electron-updater, GitHub Releases)
+- [ ] Friday reminder (tray/notification) if the current week is still a draft
+- [ ] Create the current week automatically on start
+- [ ] Ideas from the old README roadmap: light theme, "copy all 3 blocks",
+      full export/PDF, copy a single day from the previous week, character counter
+- [ ] Update the README "100 % offline" badge once network features exist
 
-### Phase 6 — Komfort
-- [ ] Auto-Update (electron-updater, GitHub Releases)
-- [ ] Freitags-Erinnerung (Tray/Notification), wenn die Woche Entwurf ist
-- [ ] Wochen automatisch anlegen beim Start
-- [ ] Ideen aus alter README-Roadmap: Light-Theme, „Alle 3 Blöcke kopieren",
-      Gesamtexport/PDF, Einzeltag aus Vorwoche kopieren, Zeichenzähler
-- [ ] README-Badge „100 % offline" anpassen, sobald Netzwerkfunktionen existieren
+### Later / to-do
+- [ ] Automatic entry into the IHK portal (deferred by the user, E-012)
 
-## Erledigt-Log
+## Done log
 
-| Datum | Schritt | PR |
+| Date | Step | Commit/PR |
 |---|---|---|
-| 2026-10-09 | Phase 0: KI-Fundament | (dieser Branch) |
+| 2026-10-09 | Phase 0: AI groundwork | b32a115 |
+| 2026-10-10 | Docs + AI instructions in English | branch `claude/intelligent-curie-yxizss` |

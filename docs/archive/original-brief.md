@@ -1,5 +1,5 @@
-> **Archiv:** Ursprünglicher Bauauftrag für v1.0 (Juli 2026). Nicht mehr maßgeblich —
-> aktuelle Regeln stehen in `/CLAUDE.md`, der aktuelle Plan in `docs/PLAN.md`.
+> **Archive:** original build brief for v1.0 (July 2026, German). No longer
+> authoritative — current rules are in `/CLAUDE.md`, the current plan in `docs/PLAN.md`.
 
 # Prompt: Ausbildungsnachweis-Generator (IHK-Berichtsheft-Helfer)
 
