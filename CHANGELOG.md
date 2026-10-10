@@ -6,6 +6,16 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [2.0.1] - 2026-10-10
+
+### Changed
+
+- **One empty bullet per work day instead of two:** with two, Enter in the
+  first bullet added a third one instead of moving to the second. New weeks
+  now start with one bullet. Existing profiles still set to 2 are switched to
+  1 automatically; any other count you chose in Profile → "Leere Stichpunkte"
+  stays.
+
 ### Fixed
 
 - **Setup wizard scrolls again:** when a step grew taller than the window
