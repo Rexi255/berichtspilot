@@ -35,7 +35,7 @@ WebUntis "Lehrstoff" ─────────────┘    (daten.json) 
 **Ship v2.0.0.** Everything for the release is done on branch
 `claude/intelligent-curie-yxizss` (2026-10-10): README overhaul with new
 screenshots, `package.json` 2.0.0, `CHANGELOG.md` `## [2.0.0] - 2026-10-10`,
-PR into `main` open. The user closed the V2 scope — no further additions; the UI
+PR #1 into `main` open, CI green. The user closed the V2 scope — no further additions; the UI
 overhaul is v2.1 (E-018 addendum).
 
 1. Wait for CI on the PR to be green, then merge it into `main` (the branch is
@@ -203,4 +203,4 @@ decision).
 | 2026-10-10 | Step 5.2: `electron/updater.js` + IPC `update:*`, schema v8 `settings.updateCheck` (packaged build checked against the real repo → `none`; non-allowlisted host → `blocked`) | branch `claude/intelligent-curie-yxizss` |
 | 2026-10-10 | Step 5.3: update UI — sidebar card + Settings → "Updates" (browser smoke test with mocked `window.api` through all states; `build:win` unpacked exe: v1.2.0, real GitHub check → "neueste Version"). User: overhaul ships as v2.0.0 (E-018) | branch `claude/intelligent-curie-yxizss` |
 | 2026-10-10 | Code-review fixes (updater install/headers/support check, load-error guard; Electron screenshot with corrupt `daten.json` + backups: files untouched). Not fixed by choice: a deleted current week is auto-created again on the next start (would need a schema change) | branch `claude/intelligent-curie-yxizss` |
-| 2026-10-10 | Phase 6: V2 release prepared — README + screenshots, version 2.0.0, CHANGELOG, docs check, local `build:win` dry run; PR into `main` | branch `claude/intelligent-curie-yxizss` |
+| 2026-10-10 | Phase 6: V2 release prepared — README + screenshots, version 2.0.0, CHANGELOG, docs check, local `build:win` dry run | PR #1 |
