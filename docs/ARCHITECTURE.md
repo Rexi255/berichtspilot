@@ -67,15 +67,15 @@ the bridge with `localStorage` stubs — handy for smoke tests.
 
 ## Networking
 
-**Currently: no network access at all** (CSP `connect-src` allows only localhost
-for Vite HMR).
-
-The overhaul (see `PLAN.md`) adds network targets. Rule: requests only from the
-main process, only to hosts in this allowlist, each with a reason.
+The renderer has **no network access** (CSP `connect-src` allows only localhost
+for Vite HMR). Rule (E-007): requests only from the main process, only to hosts
+in this allowlist, each with a reason; every network feature can be switched off.
 
 | Host | Purpose | Since |
 |---|---|---|
 | `bbz-dithmarschen.webuntis.com` | WebUntis: timetable + lesson topics (E-013). Session handling (`electron/webuntis-session.js`: token from `/api/token/new`), week fetch (`electron/webuntis.js`: `timetable/entries`, `calendar-entry/detail`) + the probe (`--webuntis-probe`); UI: Settings → "Verbindungen" (step 4.4) | 2026-10 (step 4.1) |
+| `github.com` | Auto-update (E-017): electron-updater reads `/Rexi255/berichtspilot/releases.atom`, `/releases/latest` and `/releases/download/<tag>/latest*.yml` + the installer/AppImage. Public repo, no token | planned (step 5.2) |
+| `release-assets.githubusercontent.com` | Auto-update (E-017): GitHub redirects every release download there (checked 2026-10-10). Only reached via that redirect | planned (step 5.2) |
 
 `login.bbz-dithmarschen.de` (school SSO) is only *navigated to* inside the
 isolated login window; the main process never sends requests there.

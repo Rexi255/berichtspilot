@@ -67,6 +67,17 @@ versioning follows [Semantic Versioning](https://semver.org/).
   English now (e.g. `wochen` → `weeks`, `stichpunkte` → `bullets`). Existing files
   and imports of older exports are migrated automatically and losslessly on
   load; the file name stays `daten.json`.
+- **Releases carry update metadata:** every release now also contains
+  `latest.yml` / `latest-linux.yml` (and the installer's `.blockmap`) —
+  groundwork for the upcoming in-app update. The release build stops if the tag
+  doesn't match the app version.
+
+### Removed
+
+- **Portable Windows build:** there is no `…-portable.exe` any more — it can't
+  update itself. Use the installer (`Berichtspilot-Setup-<version>.exe`, no
+  admin rights needed). To keep your data, import an export or copy `daten.json`
+  from next to the old portable `.exe` into `%APPDATA%\Berichtspilot`.
 
 ## [1.2.0] - 2026-07-09
 

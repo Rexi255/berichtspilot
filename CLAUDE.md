@@ -82,7 +82,8 @@ sessions for smoke tests.
 
 CI (`.github/workflows/ci.yml`) runs lint + tests on every PR.
 Release: push tag `vX.Y.Z` → `.github/workflows/release.yml` builds NSIS installer +
-portable .exe + AppImage.
+AppImage + auto-update metadata (`latest*.yml`); the tag must match `package.json`
+`version` (E-017).
 
 ## Project map
 

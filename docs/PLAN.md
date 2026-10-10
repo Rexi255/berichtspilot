@@ -30,41 +30,50 @@ WebUntis "Lehrstoff" ─────────────┘    (daten.json) 
 
 ## Next step
 
-**Phase 5 — auto-update (electron-updater + GitHub Releases).** The Friday
-reminder was dropped by the user (2026-10-10). Ask the open questions below
-first, then split the step:
+**Phase 5 — auto-update, step 5.2: main process.** Behaviour is decided (E-017):
+check on start, show "Update verfügbar", download and restart **only after a
+click**; no portable build any more. 5.1 (publish config, release workflow,
+allowlist rows) is done — read E-017 before starting.
 
-- **5.1 Decision + release plumbing:** entry E-017 in `docs/DECISIONS.md`
-  (behaviour, hosts, which builds update). `package.json` → `build.publish`
-  (`provider: github`, owner `Rexi255`, repo `berichtspilot`) so electron-builder
-  writes `latest.yml` / `latest-linux.yml` (+ `.blockmap`);
-  `.github/workflows/release.yml` must attach those files to the release too.
-  New allowlist rows in `docs/ARCHITECTURE.md` (`github.com`,
-  `api.github.com` if used, the release-asset download host — check which host
-  the redirect really goes to before listing it).
-- **5.2 Main process:** `electron/updater.js` — `autoUpdater` with
-  `autoDownload` per the user's answer, only for the NSIS install and the
-  AppImage (`process.env.PORTABLE_EXECUTABLE_DIR` set ⇒ portable ⇒ only "new
-  version available" + link, no self-update); dev mode never checks. IPC
-  `update:status|check|download|install` in `preload.js`; German error texts
-  like `electron/net.js`. Vitest for the pure parts (version compare /
-  portable detection helper if any).
-- **5.3 UI:** quiet hint (toast or sidebar badge) "Update auf vX.Y.Z
-  verfügbar" → button per the chosen behaviour; Settings → "Verhalten" or a new
-  "Über/Updates" row with the current version and "Nach Updates suchen".
-- Verify: lint/test/build; a real update test needs two tagged releases — plan
-  it with the user (e.g. a `v1.2.1-beta` pre-release) instead of guessing.
+- **Dependency:** `npm i electron-updater` (a `dependency`, not dev — it ships
+  in the app). Pin the version you checked (E-017 used 6.8.9's source).
+- **`electron/updater.js`** — `createUpdater({ app, autoUpdater, session })`
+  (injectable for tests, like `webuntis-session.js`):
+  - `autoDownload = false`, `autoInstallOnAppQuit = false`, logger off or to
+    console; never runs when `!app.isPackaged`.
+  - `canSelfUpdate()`: Windows (NSIS) or Linux with `process.env.APPIMAGE`;
+    otherwise status `unsupported` (no request at all).
+  - Allowlist on the partition `electron-updater` (electron-updater's own
+    session): `webRequest.onBeforeRequest` cancels everything that is not https
+    to `github.com` / `release-assets.githubusercontent.com`. Put the host list
+    next to `ALLOWED_HOSTS` in `electron/net.js` (e.g. `UPDATE_HOSTS`) and reuse
+    `isAllowedUrl(url, hosts)`; extend `net.test.mjs`.
+  - Status object for the renderer: `{ state: 'idle'|'checking'|'available'|
+    'none'|'downloading'|'ready'|'error'|'unsupported', current, version?,
+    percent?, code?, error? }` — German error texts via `describeFailure()`
+    from `net.js` where it fits (offline/timeout), a pure mapping function with
+    Vitest (`electron/updater.test.mjs`).
+- **IPC** (`electron/main.js` + `preload.js`, table in `ARCHITECTURE.md`):
+  `update:status`, `update:check`, `update:download`, `update:install`
+  (`quitAndInstall`), event `update:changed` main → renderer.
+- **Switch (E-007/E-017):** `settings.updateCheck` (default `true`) = "Beim
+  Start nach Updates suchen" → schema **v8** in `src/lib/model.js` (migration +
+  test, `DATA_MODEL.md`). The renderer calls `updateCheck()` once after load
+  only when it is on; the manual check always works. UI for it comes in 5.3.
+- **5.3 UI (next session):** quiet hint (sidebar badge or toast) "Update auf
+  vX.Y.Z verfügbar" → "Herunterladen" → progress → "Neu starten und
+  installieren"; Settings → "Verhalten" (or a new "Über" section): current
+  version, the switch, "Nach Updates suchen".
+- Verify: lint/test/build + `npm run build:win` (app must start; in the
+  unpacked build a check against the real repo should answer "none" for
+  v1.2.0 = no newer release with `latest.yml`). A real update test needs two
+  releases with the updater — see open questions.
 
 ## Open questions (for the user)
 
-- Auto-update behaviour? Options: (a) check on start, show "Update
-  verfügbar" — download + restart only after a click (recommended: nothing
-  happens behind the user's back, fits the "visible and confirmed" rule);
-  (b) download silently in the background, install when the app is closed;
-  (c) only show "new version available" with a link to the release page (no
-  self-update at all). Ask at the start of the next step.
-- Portable .exe can't update itself — is a hint with a download link enough
-  there (recommended), or should the portable build be dropped?
+- Real update test (after 5.3): tag a release with the updater (e.g. `v1.3.0`),
+  install it, then publish a small follow-up (`v1.3.1`) and update in-app — or
+  first a pre-release? Ask when 5.3 is done.
 
 Parked by the user (2026-10-10), not to be asked now: which speech model to
 bundle (E-010 has the measurements; real-voice recordings belong to that
@@ -124,7 +133,12 @@ decision).
         login retry, apply + undo (2026-10-10; real account checked by the user)
 
 ### Phase 5 — Comfort
-- [ ] Auto-update (electron-updater, GitHub Releases)
+- [ ] Auto-update (electron-updater, GitHub Releases) — E-017: check on start,
+      download + restart only on click; portable build dropped
+  - [x] 5.1 Decision E-017, `build.publish` (GitHub), release workflow attaches
+        `latest*.yml` + `.blockmap`, tag/version guard, allowlist rows (2026-10-10)
+  - [ ] 5.2 Main process: `electron/updater.js`, IPC `update:*`, schema v8 switch
+  - [ ] 5.3 UI: update hint + Settings row
 - [x] ~~Friday reminder if the current week is still a draft~~ — dropped by the
       user (2026-10-10): neither an in-app hint nor a system notification
 - [x] Create the current week automatically on start — Mon–Fri only (E-016),
@@ -159,3 +173,4 @@ decision).
 | 2026-10-10 | Step 4.6b: "Aus WebUntis füllen" panel (browser smoke test with mocked API; real account checked by the user: works, one wrong topic from a parallel lesson) | branch `claude/intelligent-curie-yxizss` |
 | 2026-10-10 | Fix: WebUntis topics matched per subject (stray parallel lesson), one detail call per time range — re-run by the user: LF08 correct | abbe2bb |
 | 2026-10-10 | Phase 5: current week created on start (Mon–Fri, schema v7; browser smoke test with fixed clock Wed/Sat/Mon + v6 migration) | branch `claude/intelligent-curie-yxizss` |
+| 2026-10-10 | Step 5.1: auto-update decision E-017, release plumbing, portable build dropped (local `build:win` writes `latest.yml` + `.blockmap` + `app-update.yml`) | branch `claude/intelligent-curie-yxizss` |

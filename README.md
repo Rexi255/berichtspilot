@@ -54,7 +54,7 @@ Everything runs locally. No cloud, no account, no internet connection required.
 - ⌨️ **Keyboard shortcuts** (Ctrl+1–4, Alt+←/→, Ctrl+Shift+1/2/3 to copy) and
   **German spell checking** in all input fields.
 - 💾 **Robust storage:** all data in **one `daten.json`** — in the user data folder
-  for the installed app, next to the executable for the portable build.
+  for the Windows installer, next to the AppImage on Linux.
   **Atomic writes** with rolling **backups** (`.bak1`–`.bak3`), **single-instance
   lock**, versioned schema with migration, and export/import with **merge or
   replace**. Deleting can be undone via toast.
@@ -76,18 +76,19 @@ Builds are available under **[Releases](https://github.com/Rexi255/berichtspilot
 - **Windows (recommended):** `Berichtspilot-Setup-<version>.exe` — the installer.
   Creates start-menu and desktop shortcuts; the install folder is selectable and the
   default install is per user, **without admin rights**.
-- **Windows portable:** `Berichtspilot-<version>-portable.exe` — no installation,
-  just double-click (e.g. straight from a USB stick).
 - **Linux:** `Berichtspilot-<version>.AppImage` — make it executable (`chmod +x`) and run it.
 
 ### Where is my data?
 
-- **Installed:** in the user data folder (`%APPDATA%\Berichtspilot` on Windows,
-  `~/.config/Berichtspilot` on Linux). It is **always writable** — even when the app
-  lives under `C:\Program Files` or `/usr/bin`. Uninstalling keeps the data.
-- **Portable:** in `daten.json` **next to the executable** — copy the file/folder and
-  the data moves with it. If the portable build sits in a read-only location, it
-  falls back to the user data folder instead of crashing.
+- **Windows (installer):** in the user data folder `%APPDATA%\Berichtspilot`. It is
+  **always writable** — even when the app lives under `C:\Program Files`.
+  Uninstalling keeps the data.
+- **Linux (AppImage):** in `daten.json` **next to the AppImage** — move the folder and
+  the data moves with it. If that folder is read-only, the app falls back to
+  `~/.config/Berichtspilot` instead of crashing.
+- **Coming from the portable `.exe` (up to v1.2.0)?** There is no portable build any
+  more. Install the setup and either import your export, or copy the `daten.json`
+  from next to the old portable `.exe` into `%APPDATA%\Berichtspilot` (app closed).
 
 The exact path is shown in the bottom-left of the sidebar (tooltip). Up to three
 rolling backups (`.bak1`–`.bak3`) live next to `daten.json`; if the main file is
@@ -112,7 +113,7 @@ Contributor and AI-assistant guidelines: [CONTRIBUTING.md](CONTRIBUTING.md) and
 ## Build
 
 ```bash
-npm run build:win    # Windows: installer (.exe) + portable .exe  -> release/
+npm run build:win    # Windows: installer (.exe) + latest.yml     -> release/
 npm run build:linux  # Linux AppImage                             -> release/ (run on Linux)
 npm run build        # both platforms
 ```

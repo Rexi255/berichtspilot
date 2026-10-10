@@ -298,3 +298,39 @@ creates the running week once on start only on Mon–Fri, only inside
 `newWeek()` (profile, holidays, periods), not the previous week as a template.
 The switch `settings.autoCreateWeek` (schema v7, default on) is a plain preference
 and travels with export/import (unlike the WebUntis opt-in).
+
+### E-017 · Auto-update: check on start, download + install only on click; no portable build · accepted
+User (2026-10-10), asked with three options — (a) check on start, show "Update
+verfügbar", download + restart only after a click; (b) download silently, install
+on quit; (c) only a link to the release page — picked **(a)**: nothing happens
+behind the user's back, in line with E-009 – E-011. The portable `.exe` cannot
+replace itself; offered "hint + download link" or "drop it", the user **dropped
+the portable build**. Releases now ship the NSIS installer and the AppImage only.
+
+- **Mechanics:** `electron-updater` with the GitHub provider (`build.publish` in
+  `package.json` → `app-update.yml` in the app, `latest.yml` /
+  `latest-linux.yml` next to the artifacts; checked locally with
+  `npm run build:win`, 2026-10-10). `autoDownload = false`,
+  `autoInstallOnAppQuit = false`: the user clicks "Herunterladen", then
+  "Neu starten und installieren". NSIS updates are differential via the
+  `.blockmap`; the AppImage carries its blockmap inside and is replaced in place
+  (same folder, so a `daten.json` next to it stays where it is).
+- **Hosts** (electron-updater 6.8 source, public repo): `github.com`
+  (`/releases.atom`, `/releases/latest`, `/releases/download/<tag>/…`) and the
+  download redirect target `release-assets.githubusercontent.com` (checked with
+  `curl` on the v1.2.0 assets). `api.github.com` is **not** used (only for
+  GitHub Enterprise/private repos). electron-updater does its own requests in
+  the session partition `electron-updater`, not through `electron/net.js` — step
+  5.2 enforces the allowlist on that partition.
+- **When it checks:** only in the packaged app (never in dev), only for the NSIS
+  install and the AppImage (`APPIMAGE` set). Extends E-007: like every network
+  feature it gets a switch (planned: Settings, default on); "Nach Updates
+  suchen" by hand always works. The request reveals only the IP address and the
+  app version — no training data.
+- **Releases:** the tag must equal `package.json` `version` (guard step in
+  `release.yml`), otherwise `latest.yml` would announce the wrong version.
+  v1.2.0 and older have no updater: the first release with this code has to be
+  installed by hand once.
+- **Former portable users:** E-004 is unchanged (a self-built portable copy still
+  keeps `daten.json` next to the exe). Moving to the installer = export/import,
+  or copy `daten.json` into `%APPDATA%\Berichtspilot`.

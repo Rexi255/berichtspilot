@@ -24,8 +24,7 @@
     "react",
     "vite",
     "desktop-app",
-    "installer",
-    "portable"
+    "installer"
   ],
   "engines": {
     "node": ">=20.19.0"
@@ -54,11 +53,17 @@
       "!electron/**/*.test.mjs",
       "package.json"
     ],
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "Rexi255",
+        "repo": "berichtspilot"
+      }
+    ],
     "win": {
       "icon": "build/icon.ico",
       "target": [
-        "nsis",
-        "portable"
+        "nsis"
       ]
     },
     "nsis": {
@@ -72,9 +77,6 @@
       "uninstallDisplayName": "Berichtspilot ${version}",
       "deleteAppDataOnUninstall": false,
       "artifactName": "Berichtspilot-Setup-${version}.exe"
-    },
-    "portable": {
-      "artifactName": "Berichtspilot-${version}-portable.exe"
     },
     "linux": {
       "icon": "build/icon.png",
