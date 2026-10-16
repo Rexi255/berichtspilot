@@ -5,7 +5,8 @@ for an apprentice (IT specialist for system integration, Schleswig-Holstein,
 Germany). Current release: v2.0.1 — entry by hand or from notes, WebUntis
 import, AI phrasing via the clipboard, in-app updates → three exactly formatted
 text blocks to copy into the IHK portal.
-**Next:** UI overhaul (v2.1) and voice dictation (parked) — see `docs/PLAN.md`.
+**Next:** hardening + maintenance (phases 7–10 from the 2026-10-15 code review,
+release v2.0.2), then the UI overhaul (v2.1); voice dictation is parked — see `docs/PLAN.md`.
 
 ## Language rules
 
@@ -75,11 +76,18 @@ or Electron starts as plain Node.
 Cloud sessions can still fetch the Electron binary (`node node_modules/electron/install.js`)
 and run it headless: `xvfb-run -a node_modules/electron/dist/electron --no-sandbox <dir>`
 (the cloud proxy blocks most external hosts — test network code against a local server).
+To drive the real app, add `--remote-debugging-port=9333` and talk CDP to the page
+target from `http://127.0.0.1:9333/json` (Node 22 has `WebSocket` built in):
+`Runtime.evaluate` (clicks, `window.api` calls), `Input.insertText` (typing),
+`Page.captureScreenshot`. Native dialogs are invisible to CDP — start `Xvfb :99`
+yourself and capture them with `import -display :99 -window root shot.png`.
 
 Without an Electron binary (cloud), the renderer also runs in a plain browser:
 `npx vite preview` serves `dist/`, and `browserApi` in `src/store.jsx` swaps the
 IPC bridge for `localStorage`. Playwright + Chromium are preinstalled in cloud
-sessions for smoke tests.
+sessions for smoke tests (global `playwright` package under `/opt/node-tools`);
+`page.addInitScript()` can install a fake `window.api` to test store flows such
+as restore/import with dialogs answered.
 
 CI (`.github/workflows/ci.yml`) runs lint + tests on every PR.
 Release: push tag `vX.Y.Z` → `.github/workflows/release.yml` builds NSIS installer +

@@ -32,16 +32,43 @@ WebUntis "Lehrstoff" ─────────────┘    (daten.json) 
 
 ## Next step
 
-**Phase 7 — hardening (v2.0.2)** is in progress on branch
-`claude/clever-mendel-psk8d2` (from the code review of 2026-10-15, see the
-roadmap). Order: 7.1 → 7.5, one commit each, one PR into `main`.
+**Phase 7 (hardening) is done** on branch `claude/clever-mendel-psk8d2` — 7.1–7.5,
+one commit each, PR into `main` (see the Done log). Before continuing: the PR
+must be merged into `main` by the user (or with their explicit go); start the
+next step from the current `main`.
+
+**Next: 8.1 — Electron + audit fixes** (no breaking changes expected):
+
+1. `npm install --save-dev electron@^43` → lock on the newest 43.x (was 43.0.0);
+   44.x only after reading https://www.electronjs.org/docs/latest/breaking-changes
+   (otherwise leave it to Dependabot, 8.3).
+2. `npm audit fix` (never `--force`); afterwards `npm audit --omit=dev` must show
+   no high/critical (it listed `js-yaml` inside `electron-updater`); note what
+   remains in dev-only tools in the PR.
+3. Verify: `npm run lint && npm test && npm run build:renderer`; Electron smoke
+   test in the cloud: `node node_modules/electron/install.js`, then from a
+   scratch folder `xvfb-run -a <repo>/node_modules/electron/dist/electron
+   --no-sandbox --remote-debugging-port=9333 <repo>` and drive it via CDP
+   (`Runtime.evaluate`, `Input.insertText`, `Page.captureScreenshot`): app loads,
+   every view opens, typing + closing at once still saves (E-023), a navigation
+   to a file is still cancelled (E-022). Optionally `npm run build:linux` →
+   AppImage starts.
+4. CHANGELOG `[Unreleased]` → "Changed: Electron 43.x (security fixes)".
+5. Then 8.2 (Node 22 in CI/release/`.nvmrc`/`engines`/CONTRIBUTING, CI also runs
+   `npm run build:renderer`) and 8.3 (Dependabot) — small, can share one PR.
 
 Still open from v2.0.1: the user's real in-app update test (installed 2.0.0 →
 sidebar card / Settings → "Updates" → download → install → restart on 2.0.1).
+The first real install of v2.0.2 will also exercise the new snapshots: after
+the update `sicherungen/` should hold a `…-vor-update.json` only if the schema
+changed (it doesn't in 2.0.2 — expect just the daily snapshot).
 
 ## Open questions (for the user)
 
-None right now.
+- **When to release v2.0.2?** Recommendation: after 8.1–8.3 (8.4), so the
+  release carries the hardening *and* the Electron security update. Alternative:
+  release phase 7 right after its PR is merged and ship the Electron update as
+  v2.0.3. Ask before 8.4 (or earlier if the user brings it up).
 
 Parked by the user (2026-10-10), not to be asked now: which speech model to
 bundle (E-010 has the measurements; real-voice recordings belong to that
@@ -177,8 +204,8 @@ anything new is built.
       `daysBetween()`, `trainingProgress()`, `withStatus()`, `restoreDays()`;
       tests now run in Europe/Berlin; browser mode: old build vs. new — undo
       kept the other day's edit, toast A left on time, broken file → error screen)
-- [ ] 7.6 Release v2.0.2: version bump in `package.json` + lock, CHANGELOG
-      section, PR, tag (needs the user's go)
+- [ ] 7.6 Release → moved to 8.4, so v2.0.2 also ships the Electron security
+      update (see "Open questions" for an earlier release)
 
 ### Phase 8 — Maintenance automation
 - [ ] 8.1 Electron to the newest 43.x (lock is still on 43.0.0, `npm audit` lists a
@@ -189,6 +216,11 @@ anything new is built.
       `.nvmrc`, `engines`, CONTRIBUTING; `npm run build:renderer` as a CI step
 - [ ] 8.3 `.github/dependabot.yml`: npm weekly (minor/patch grouped, Electron on its
       own) + github-actions
+- [ ] 8.4 Release v2.0.2 (phase 7 + 8.1–8.3): `npm version 2.0.2 --no-git-tag-version`,
+      CHANGELOG `[Unreleased]` → `## [2.0.2] - <date>`, PR into `main`, after the
+      merge tag `v2.0.2` → release workflow green, assets incl. `latest.yml` +
+      `latest-linux.yml`, release notes from the CHANGELOG section (needs the
+      user's go, like every release)
 
 ### Phase 9 — Release hardening (supply chain)
 - [ ] 9.1 `release.yml`: build jobs without write access; a separate release job
@@ -276,3 +308,9 @@ anything new is built.
 | 2026-10-10 | Fix: setup wizard scrolls again (`.aurora` overflow beat Tailwind's `overflow-y-auto`; scrolling moved to an inner element) | PR #2 (18e2325) |
 | 2026-10-10 | E-021: one starter bullet per work day (schema v11) | PR #3 |
 | 2026-10-10 | v2.0.1 released: PR #3 merged, tag pushed, release workflow green, release notes from CHANGELOG | 1c70518, tag `v2.0.1` |
+| 2026-10-15 | Code review of the whole project (user request) → phases 7–10 planned | be62952 |
+| 2026-10-16 | 7.1: main window locked to the app, IPC sender check, permissions, save shape check (E-022) | 6dfd44e |
+| 2026-10-16 | 7.2: save queue + rename retry + flush on close (E-023) | 5f08126 |
+| 2026-10-16 | 7.3: snapshots in `sicherungen/` + restore in Settings (E-024) | 5ef3ee4 |
+| 2026-10-16 | 7.4: error boundaries + renderer crash dialog | e8b054f |
+| 2026-10-16 | 7.5: DST progress, holiday state, scoped undo, toast timers, load errors (tests in Europe/Berlin) | 060447a |

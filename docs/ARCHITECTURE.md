@@ -8,9 +8,11 @@ Keep this file in sync when changing process boundaries, IPC or networking.
 ┌──────────────────────────── Main process (Node) ─────────────────────────────┐
 │ electron/main.js                                                             │
 │  · frameless window, context menu + spell check (de-DE)                      │
-│  · resolve daten.json location, atomic save, rolling backups .bak1–3         │
+│  · resolve daten.json location, close flush, all IPC via handle()            │
 │  · native dialogs (export/import/ask), clipboard, reveal in file manager     │
 │  · single-instance lock                                                      │
+│ electron/guard.js       app URL only, trusted IPC senders (E-022)            │
+│ electron/storage.js     load, atomic save queue, .bak1–3, sicherungen/       │
 │ electron/net.js         network layer: allowlist, timeout, German errors     │
 │ electron/webuntis-*.js  WebUntis login window, token, week fetch (E-013)     │
 │ electron/updater.js     auto-update via electron-updater (E-017)             │
