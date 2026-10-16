@@ -11,6 +11,8 @@ release/
 daten.json
 daten.json.tmp
 daten.json.bak*
+# Snapshots next to daten.json (daily + before update/import/restore, E-024)
+/sicherungen/
 # Output of the WebUntis probe (electron . --webuntis-probe)
 webuntis-probe.json
 

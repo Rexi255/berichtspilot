@@ -122,6 +122,21 @@ autosave would overwrite the file with an older structure).
 `validateData()` / `mergeData()` → test "old file → new structure" in
 `model.test.js` → update this file + the table above → CHANGELOG.
 
+## Files next to daten.json
+
+| File | Written | Kept |
+|---|---|---|
+| `daten.json.tmp` | every save (fsync, then renamed onto `daten.json`) | only while writing |
+| `daten.json.bak1–3` | every save, rolling (E-003) | the last 3 states |
+| `sicherungen/daten-YYYY-MM-DD.json` | before the first save of a day (E-024) | 30 |
+| `sicherungen/daten-YYYY-MM-DD-HHMMSS-vor-update.json` | before the first save with a higher `version` than on disk | 10 |
+| `sicherungen/daten-…-vor-import.json` / `…-vor-wiederherstellung.json` | right before an import or a restore replaces the record | 10 each |
+
+All of them are plain copies of `daten.json` (same format, any schema version);
+a restore runs them through `migrateData()` + `validateData()` like an import.
+Only file names matching the pattern are listed, read or pruned — other files in
+`sicherungen/` stay untouched.
+
 ## What does NOT belong in daten.json
 
 API keys, passwords, session tokens (→ `safeStorage`, separate file), audio

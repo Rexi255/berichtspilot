@@ -4,7 +4,7 @@
 // Each theme card carries data-theme={id} itself; that way its preview colors
 // (bg-base, bg-accent …) render in that theme automatically — without
 // duplicating the color values in JS.
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import {
   CheckIcon,
   PaletteIcon,
@@ -22,6 +22,7 @@ import {
   ArrowClockwiseIcon,
   ArrowCircleUpIcon,
   SparkleIcon,
+  ClockCounterClockwiseIcon,
 } from '@phosphor-icons/react'
 import { useStore, api } from '../store.jsx'
 import { SectionTitle, Button, IconButton, Input, Segment, Panel, Pill, Switch, cx } from '../ui/basics.jsx'
@@ -29,6 +30,7 @@ import { showToast } from '../ui/toast.jsx'
 import { UpdateAction, useUpdateActions } from '../ui/UpdateHint.jsx'
 import { updateHint, updateSummary, canCheckForUpdate } from '../lib/update.js'
 import { parseWebuntisAddress } from '../lib/webuntis.js'
+import { BACKUP_KINDS, backupTitle, sizeLabel } from '../lib/backups.js'
 
 // Order + labels of the themes; the colors live in index.css.
 export const THEMES = [
@@ -405,6 +407,87 @@ function UpdateSettings() {
   )
 }
 
+/* ------------------------------- Backups ------------------------------- */
+
+// Shown before "Alle anzeigen"
+const BACKUPS_SHOWN = 5
+
+// Snapshots in sicherungen/ (E-024): newest first, each one restorable. The
+// restore itself (ask, keep the current state, replace) lives in the store.
+function Backups() {
+  const { restoreBackup } = useStore()
+  const [backups, setBackups] = useState(null) // null = loading
+  const [showAll, setShowAll] = useState(false)
+  const [busy, setBusy] = useState(false)
+
+  const reload = useCallback(
+    () => api.listBackups().then((res) => setBackups(res.ok ? res.backups : []), () => setBackups([])),
+    []
+  )
+  useEffect(() => {
+    reload()
+  }, [reload])
+
+  const restore = async (backup) => {
+    setBusy(true)
+    try {
+      const res = await restoreBackup(backup)
+      if (res.ok) showToast(`Stand vom ${backupTitle(backup)} wiederhergestellt`)
+      else if (!res.canceled) showToast(res.error || 'Wiederherstellen fehlgeschlagen', { kind: 'error', duration: 6000 })
+    } catch {
+      showToast('Wiederherstellen fehlgeschlagen', { kind: 'error', duration: 6000 })
+    } finally {
+      setBusy(false)
+      reload()
+    }
+  }
+
+  const visible = showAll ? backups : backups?.slice(0, BACKUPS_SHOWN)
+
+  return (
+    <Panel className="max-w-2xl overflow-hidden" data-section="backups">
+      <div className="flex items-center gap-2 border-b border-white/[0.05] px-4 py-2.5">
+        <ClockCounterClockwiseIcon size={15} className="text-ink-3" />
+        <span className="mr-auto text-[12px] font-medium text-ink-2">Sicherungen</span>
+        <IconButton label="Liste aktualisieren" onClick={reload} disabled={busy}>
+          <ArrowClockwiseIcon size={13} />
+        </IconButton>
+      </div>
+      {backups === null ? (
+        <p className="px-4 py-3 text-[12px] text-ink-3">Wird geladen …</p>
+      ) : backups.length === 0 ? (
+        <p className="px-4 py-3 text-[12px] text-ink-3">
+          Noch keine Sicherung — die erste entsteht beim ersten Speichern eines neuen Tages.
+        </p>
+      ) : (
+        <>
+          {visible.map((b, i) => (
+            <div key={b.name} className={cx('flex items-center gap-3 px-4 py-2', i > 0 && 'border-t border-white/[0.04]')}>
+              <span className="w-44 shrink-0 text-[12.5px] text-ink tabular-nums">{backupTitle(b)}</span>
+              <Pill color={b.reason === 'daily' ? 'neutral' : 'accent'} dot={false}>
+                {BACKUP_KINDS[b.reason] ?? 'Sicherung'}
+              </Pill>
+              <span className="mr-auto text-[11.5px] text-ink-3 tabular-nums">{sizeLabel(b.size)}</span>
+              <Button size="sm" variant="ghost" onClick={() => restore(b)} disabled={busy}>
+                Wiederherstellen
+              </Button>
+            </div>
+          ))}
+          {backups.length > BACKUPS_SHOWN && (
+            <button
+              type="button"
+              onClick={() => setShowAll((all) => !all)}
+              className="w-full border-t border-white/[0.04] px-4 py-2 text-left text-[12px] font-medium text-ink-3 transition-colors duration-150 hover:text-accent"
+            >
+              {showAll ? 'Weniger anzeigen' : `Alle anzeigen (${backups.length})`}
+            </button>
+          )}
+        </>
+      )}
+    </Panel>
+  )
+}
+
 /* ---------------------- Keyboard shortcut reference ---------------------- */
 
 const SHORTCUTS = [
@@ -520,8 +603,10 @@ export default function Settings() {
             <FolderOpenIcon size={14} /> Daten
           </SectionTitle>
           <p className="mb-3 text-[12.5px] text-ink-3">
-            Alle Berichte liegen in einer daten.json mit rollierenden Sicherungen (.bak1–.bak3).
-            Export/Import als zusätzliches Backup findest du in der Seitenleiste.
+            Alle Berichte liegen in einer daten.json, jede Änderung wird sofort gespeichert. Im Ordner
+            „sicherungen“ daneben legt Berichtspilot jeden Tag eine Sicherung an (die letzten 30 Tage)
+            und zusätzlich eine vor jedem Update, Import und Wiederherstellen. Export/Import als
+            weitere Kopie findest du in der Seitenleiste.
           </p>
           <Panel className="flex max-w-2xl items-center gap-3 px-4 py-3">
             <div className="min-w-0 flex-1">
@@ -534,6 +619,9 @@ export default function Settings() {
               <FolderOpenIcon size={14} /> Ordner öffnen
             </Button>
           </Panel>
+          <div className="mt-3">
+            <Backups />
+          </div>
         </section>
 
         <section className="max-w-4xl">

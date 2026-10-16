@@ -27,14 +27,15 @@ Keep this file in sync when changing process boundaries, IPC or networking.
 │                Profiles · Settings · SetupWizard                             │
 │ src/ui/*       Titlebar · Sidebar · UpdateHint · basics · toast              │
 │ src/lib/*      pure logic: dates · holidays · format · model · notes ·       │
-│                phrasing · webuntis · update · setup                          │
+│                phrasing · webuntis · update · setup · backups                │
 └──────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ## Data flow
 
 1. Start: `store.jsx` → `api.loadData()` → main reads `daten.json` (fallback: newest
-   intact `.bakN`) → `migrateData()` upgrades old schemas → `setData`.
+   intact `.bakN`, then the newest intact snapshot in `sicherungen/`) →
+   `migrateData()` upgrades old schemas → `setData`.
    No file ⇒ `seedData()` with `settings.setupDone: false` ⇒ `App.jsx` shows
    `SetupWizard` instead of the shell (also when opened from Settings, store
    flag `setupOpen`); the current week is auto-created only after it (E-020).
@@ -46,6 +47,11 @@ Keep this file in sync when changing process boundaries, IPC or networking.
    Closing the window first asks the renderer to write its pending change
    (`app:flush` → `flush()` in the store → `app:flushed`; 3 s timeout, a failed
    save asks "Trotzdem schließen?"); `will-quit` waits for a running write.
+   Snapshots (E-024): before the first write of a day `daten.json` is copied to
+   `sicherungen/daten-YYYY-MM-DD.json` (30 kept); before the first write with a
+   higher schema version (= after an app update) to `…-HHMMSS-vor-update.json`;
+   import and restore ask for `…-vor-import` / `…-vor-wiederherstellung` via
+   `backup:create` before they replace the record (10 of each kept).
 4. Output: `WeekEditor` calls `formatAll(week)` from `src/lib/format.js` → copy via
    `navigator.clipboard.writeText`.
 5. AI phrasing (clipboard bridge, E-011): `PhrasingPanel` builds a prompt from the
@@ -71,6 +77,9 @@ frame, app URL — `isTrustedSender()` in `electron/guard.js`) is refused with
 | `data:save` | `saveData(data)` | shape check (`checkSaveData()`), then queued atomic write → `{ ok, error }` |
 | `app:flush` (event main → renderer) | `onFlushRequest(cb)` | the window is closing: `cb` (the store's `flush()`) writes a pending autosave; the preload answers with `app:flushed` `{ ok, error? }` even if `cb` throws |
 | `app:flushed` | (preload, from `onFlushRequest`) | answer to `app:flush` — main closes the window, or asks first if `ok` is false |
+| `backup:list` | `listBackups()` | snapshots in `sicherungen/`, newest first → `{ ok, dir, backups: [{ name, date, time, reason, size }] }` (`reason`: `daily`/`update`/`import`/`restore`) |
+| `backup:read` | `readBackup(name)` | parsed content of one snapshot → `{ ok, data }`; `name` must match the snapshot name pattern (`parseSnapshotName()`), never a path. The renderer migrates + validates it like an import |
+| `backup:create` | `createBackup(reason)` | snapshot of the current `daten.json` after queued writes, `reason` only `import` or `restore` → `{ ok, name }` (`name` null without a daten.json) |
 | `data:export` | `exportData(data)` | save dialog, write JSON → `{ ok, path, canceled, error }` |
 | `data:import` | `importData()` | open dialog, read JSON (validated in renderer) → `{ ok, data, canceled, error }` |
 | `text:export` | `exportText(fileName, content)` | save one output block as .txt |

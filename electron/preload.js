@@ -23,6 +23,12 @@ contextBridge.exposeInMainWorld('api', {
     return () => ipcRenderer.removeListener('app:flush', handler)
   },
 
+  // Snapshots in sicherungen/ next to daten.json (daily, before update/import/restore)
+  listBackups: () => ipcRenderer.invoke('backup:list'),
+  readBackup: (name) => ipcRenderer.invoke('backup:read', String(name)),
+  // reason: 'import' | 'restore' — taken right before the data gets replaced
+  createBackup: (reason) => ipcRenderer.invoke('backup:create', String(reason)),
+
   // Backup via native dialogs
   exportData: (data) => ipcRenderer.invoke('data:export', data),
   importData: () => ipcRenderer.invoke('data:import'),

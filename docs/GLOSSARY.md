@@ -56,6 +56,9 @@ names consistently. Add new terms here before using them.
 | Kopier-Brücke | clipboard bridge | user copies prompt/answer between app and chat AI (E-011) |
 | Auftrag (an die KI) | prompt | built by `buildPrompt()` |
 | Zeiterfassung | time tracking | |
+| Sicherung (Ordner `sicherungen/`) | snapshot (`createStorage().snapshot()`, `backup:*` IPC) | copy of daten.json in `sicherungen/` (E-024); not the rolling `.bak1–3` |
+| Tagesbeginn / Vor dem Update / Vor dem Import / Vor dem Wiederherstellen | snapshot reason `daily` / `update` / `import` / `restore` | labels in `BACKUP_KINDS` (`src/lib/backups.js`) |
+| Wiederherstellen | restore (`restoreBackup()` in the store) | replace the record with a snapshot (current state is snapshotted first) |
 
 ## Schema v2 → v3 field mapping (`daten.json`)
 

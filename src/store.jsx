@@ -18,6 +18,7 @@ import {
 import { isoWeek, mondayOf, toISO } from './lib/dates.js'
 import { setMapping } from './lib/webuntis.js'
 import { applySetup } from './lib/setup.js'
+import { BACKUP_KINDS, backupTitle } from './lib/backups.js'
 import { showToast } from './ui/toast.jsx'
 
 const StoreContext = createContext(null)
@@ -37,6 +38,9 @@ const browserApi = {
     return { ok: true }
   },
   onFlushRequest: () => () => {},
+  listBackups: async () => ({ ok: true, backups: [] }),
+  readBackup: async () => ({ ok: false, error: DESKTOP_ONLY }),
+  createBackup: async () => ({ ok: true, name: null }),
   exportData: async () => ({ ok: false, error: DESKTOP_ONLY }),
   importData: async () => ({ ok: false, error: DESKTOP_ONLY }),
   exportText: async () => ({ ok: false, error: DESKTOP_ONLY }),
@@ -385,6 +389,19 @@ export function StoreProvider({ children }) {
 
   const exportData = useCallback(() => api.exportData(data), [data])
 
+  // Snapshot in sicherungen/ right before the record gets replaced (import,
+  // restore — E-024). Pending changes are written first, so it holds exactly
+  // what is on screen; without it nothing gets replaced.
+  const snapshotBefore = useCallback(
+    async (reason) => {
+      const saved = await flush()
+      if (!saved.ok) return { ok: false, error: 'Die aktuellen Änderungen konnten nicht gespeichert werden — nichts geändert.' }
+      const res = await api.createBackup(reason)
+      return res.ok ? res : { ok: false, error: `${res.error || 'Sicherung fehlgeschlagen'} — nichts geändert.` }
+    },
+    [flush]
+  )
+
   // Import: migrate + validate the file, then ask natively whether to merge
   // (add only what's missing) or replace everything.
   const importData = useCallback(async () => {
@@ -408,9 +425,41 @@ export function StoreProvider({ children }) {
       cancelId: 2,
     })
     if (choice !== 0 && choice !== 1) return { ok: false, canceled: true }
+    const snap = await snapshotBefore('import')
+    if (!snap.ok) return snap
     setData((d) => (choice === 0 ? mergeData(d, imported) : replaceData(d, imported)))
     return { ok: true, merged: choice === 0 }
-  }, [])
+  }, [snapshotBefore])
+
+  // Restore a snapshot from Settings → Daten: read, migrate + validate like an
+  // import, ask, keep the current state as a snapshot, then replace (the
+  // device's WebUntis and update opt-ins stay, like import "Ersetzen")
+  const restoreBackup = useCallback(
+    async (backup) => {
+      const res = await api.readBackup(backup.name)
+      if (!res.ok || !res.data) return { ok: false, error: res.error ?? 'Die Sicherung konnte nicht gelesen werden.' }
+      let restored
+      try {
+        restored = validateData(migrateData(res.data))
+      } catch (error) {
+        return { ok: false, error: String(error.message ?? error) }
+      }
+      const choice = await api.askDialog({
+        title: 'Sicherung wiederherstellen',
+        message: `Stand „${BACKUP_KINDS[backup.reason] ?? 'Sicherung'}“ vom ${backupTitle(backup)} wiederherstellen?`,
+        detail:
+          'Der aktuelle Datenbestand wird dabei komplett ersetzt. Vorher wird er selbst gesichert („Vor dem Wiederherstellen“) — du kannst also jederzeit zurück.',
+        buttons: ['Wiederherstellen', 'Abbrechen'],
+        cancelId: 1,
+      })
+      if (choice !== 0) return { ok: false, canceled: true }
+      const snap = await snapshotBefore('restore')
+      if (!snap.ok) return snap
+      setData((d) => replaceData(d, restored))
+      return { ok: true }
+    },
+    [snapshotBefore]
+  )
 
   const value = {
     data,
@@ -433,6 +482,7 @@ export function StoreProvider({ children }) {
     setWebuntisAddress,
     exportData,
     importData,
+    restoreBackup,
     setupOpen,
     completeSetup,
     skipSetup,

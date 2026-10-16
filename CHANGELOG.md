@@ -6,6 +6,14 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- **Daily backups you can restore:** Berichtspilot now keeps a copy of your
+  data for each day (the last 30 days) in the folder `sicherungen` next to
+  `daten.json`, plus one before every app update, import and restore. Settings →
+  Daten → "Sicherungen" lists them; "Wiederherstellen" brings an older state
+  back — the current one is saved first, so you can always go back.
+
 ### Fixed
 
 - **Closing right after typing no longer loses the last change:** the app now

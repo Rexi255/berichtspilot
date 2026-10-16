@@ -484,3 +484,38 @@ missing). Extends E-003, nothing weakened (step 7.2):
   renderer or no answer within 3 s doesn't block closing. `will-quit` waits for a
   running write. Checked in Electron: typed + closed at once → saved; failing
   write → window stays open with the question.
+
+### E-024 · Snapshots in `sicherungen/`: daily + before update, import, restore · accepted
+Code review (2026-10-15): `.bak1–3` rotate on every autosave, so they only
+cover the last few seconds — they protect against a corrupted file, not against
+a logic error. Every start saves right after loading (and migrating), so a
+faulty migration would have pushed the original out of all backups within
+three starts or edits. Additive to E-003/E-023 (step 7.3):
+
+- Folder `sicherungen/` next to `daten.json` (German: the user may browse it),
+  plain copies of `daten.json`:
+  - `daten-YYYY-MM-DD.json` — before the first save of a day (the state the
+    day started with), 30 kept (≈ a month back);
+  - `daten-YYYY-MM-DD-HHMMSS-vor-update.json` — before the first save whose
+    `version` is higher than the file on disk (= first start after an app
+    update with a schema change), 10 kept;
+  - `…-vor-import.json` / `…-vor-wiederherstellung.json` — requested by the
+    renderer (`backup:create`) after flushing pending changes and before it
+    replaces the record; without the snapshot nothing gets replaced. 10 each.
+- Automatic snapshots never block a save (like the `.bak` rotation); the
+  requested ones report errors.
+- Restore in Settings → Daten → "Sicherungen": read (`backup:read`, name pattern
+  only, never a path) → `migrateData()` + `validateData()` → native question →
+  snapshot "vor-wiederherstellung" → `replaceData()` (the device's WebUntis and
+  update opt-ins stay, like import "Ersetzen").
+- Load falls back to the newest readable snapshot after `.bak3`.
+- Size: a 3-year record is ~1–2 MB, so at most ~60 snapshots ≈ 100 MB in the
+  worst case — acceptable for the safety; the limits live in `KEEP`
+  (`electron/storage.js`).
+
+Checked: Electron with a v10 file → `daten-2026-10-16.json` + `…-vor-update.json`
+holding the v10 state, IPC refuses `../daten.json` and unknown reasons;
+browser mode with a fake bridge: restore = read → ask → snapshot → replace,
+cancel changes nothing, import snapshots before replacing.
+Considered: snapshots on every app start — rejected, a day is the unit the user
+thinks in ("gestern war noch alles da"), and starts can be many per day.

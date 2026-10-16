@@ -271,8 +271,14 @@ handle('data:load', () => storage.load())
 handle('data:save', async (_ev, data) => {
   const invalid = checkSaveData(data)
   if (invalid) return { ok: false, error: invalid }
-  return storage.save(JSON.stringify(data, null, 2))
+  return storage.save(data)
 })
+
+// Snapshots in sicherungen/ (E-024): list, read one (validated name, never a
+// path from the renderer), and take one before an import or a restore
+handle('backup:list', () => storage.listSnapshots())
+handle('backup:read', (_ev, name) => storage.readSnapshot(name))
+handle('backup:create', (_ev, reason) => storage.snapshot(reason))
 
 handle('data:export', async (_ev, data) => {
   const { canceled, filePath } = await dialog.showSaveDialog(win, {

@@ -160,10 +160,12 @@ anything new is built.
       flushed on close (handshake `app:flush`), writes finish before quit
       (2026-10-16; E-023; Electron: typed + closed at once → saved, the commit
       before lost it; failing write → window stays open and asks)
-- [ ] 7.3 Snapshots in `sicherungen/` next to `daten.json` (E-022): one per day
+- [x] 7.3 Snapshots in `sicherungen/` next to `daten.json` (E-022): one per day
       (30 kept), plus before an app update (schema change), an import
       "Ersetzen" and a restore (10 each); restore in Settings → Daten; load
-      falls back to the newest snapshot
+      falls back to the newest snapshot (2026-10-16; E-024; Electron: v10 file →
+      daily + vor-update snapshot with the v10 state; browser mode: restore and
+      import flows with a fake bridge)
 - [ ] 7.4 Error boundary around the views (title bar stays usable) + dialog on a
       renderer crash
 - [ ] 7.5 Small bugs, each with a test: training progress off by one after the
