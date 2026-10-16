@@ -16,6 +16,18 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **Training progress after the clock change:** on the Monday after the switch
+  to summer time, the progress tile showed the previous week (only for a
+  training that started in winter).
+- **Holiday name for your federal state:** setting a day to "Feiertag" now
+  suggests the holiday of the profile's state (e.g. "Heilige Drei Könige" in
+  Bayern) instead of always using Schleswig-Holstein.
+- **"Rückgängig" after "Mit KI formulieren" / "Aus WebUntis füllen"** only
+  undoes those bullets or subjects — changes you made meanwhile on other days
+  or in "Unterweisungen" stay.
+- **Notifications disappear on time** even when a new one shows up meanwhile.
+- **A damaged data file shows an explanation** instead of hanging at
+  "Lade Daten …".
 - **An error in one view no longer blanks the whole window:** Berichtspilot
   shows a message with "Neu laden" and "Fehlerdetails kopieren" instead; the
   window buttons and the other views keep working (e.g. to restore a backup).

@@ -170,10 +170,13 @@ anything new is built.
       renderer crash (2026-10-16; browser mode: a hand-broken week → message in
       the view, sidebar + window buttons work, Settings reachable; Electron:
       `Page.crash` → native dialog)
-- [ ] 7.5 Small bugs, each with a test: training progress off by one after the
+- [x] 7.5 Small bugs, each with a test: training progress off by one after the
       DST switch, holiday name always from SH, toast timers restarting, undo
       of AI/WebUntis resetting the whole week, template date math via
-      `new Date('YYYY-MM-DD')`, load errors hanging at "Lade Daten …"
+      `new Date('YYYY-MM-DD')`, load errors hanging at "Lade Daten …" (2026-10-16;
+      `daysBetween()`, `trainingProgress()`, `withStatus()`, `restoreDays()`;
+      tests now run in Europe/Berlin; browser mode: old build vs. new — undo
+      kept the other day's edit, toast A left on time, broken file → error screen)
 - [ ] 7.6 Release v2.0.2: version bump in `package.json` + lock, CHANGELOG
       section, PR, tag (needs the user's go)
 

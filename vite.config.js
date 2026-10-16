@@ -31,4 +31,9 @@ export default defineConfig({
     outDir: 'dist',
     target: 'chrome120',
   },
+  test: {
+    // German local time (with DST) like the users — date bugs around the
+    // clock change only show up there, not in a UTC container (step 7.5)
+    env: { TZ: 'Europe/Berlin' },
+  },
 })

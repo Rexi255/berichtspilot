@@ -16,7 +16,7 @@ import {
   parseISO,
   addDays,
 } from '../lib/dates.js'
-import { profileForDate } from '../lib/model.js'
+import { profileForDate, trainingProgress } from '../lib/model.js'
 
 // Count a number up from 0 to the target on mount (GSAP). Returns the ref for
 // the target element.
@@ -249,15 +249,7 @@ export default function Overview({ openWeek }) {
   const stats = useMemo(() => {
     const weeks = data.weeks
     const drafts = weeks.filter((w) => w.status !== 'done').length
-    const { trainingStart, trainingEnd } = data.settings
-    let progress = null
-    if (trainingStart && trainingEnd && trainingEnd > trainingStart) {
-      const weekIndex = (iso) =>
-        Math.floor((parseISO(iso) - parseISO(mondayOf(parseISO(trainingStart)))) / (7 * 86400000)) + 1
-      const total = weekIndex(trainingEnd)
-      const current = Math.min(Math.max(weekIndex(todayISO()), 1), total)
-      progress = { current, total }
-    }
+    const progress = trainingProgress(data.settings, todayISO())
     // Streak: consecutive documented weeks, backwards from the current week
     let streak = 0
     let m = weekIds.has(currentMonday) ? currentMonday : addDays(currentMonday, -7)

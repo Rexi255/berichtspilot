@@ -39,6 +39,19 @@ export function addDays(iso, n) {
   return toISO(d)
 }
 
+/**
+ * Calendar days from `fromISO` to `toISO` (negative if earlier). Counted via
+ * UTC midnights — local midnights are 23 or 25 hours apart across the DST
+ * switch, which made plain millisecond math one day (or week) short.
+ */
+export function daysBetween(fromISO, toISO) {
+  const utc = (iso) => {
+    const [y, m, d] = iso.split('-').map(Number)
+    return Date.UTC(y, m - 1, d)
+  }
+  return Math.round((utc(toISO) - utc(fromISO)) / 86400000)
+}
+
 /** German weekday name for an ISO date */
 export function weekdayName(iso) {
   return WEEKDAY_NAMES_DE[parseISO(iso).getDay()]

@@ -96,8 +96,16 @@ export function StoreProvider({ children }) {
 
   // Load on start; if the file is missing, seed data is created.
   // Older files are migrated; files from NEWER app versions block loading
-  // (instead of being silently destroyed by the next autosave).
+  // (instead of being silently destroyed by the next autosave). Anything else
+  // that goes wrong here shows the error screen instead of hanging at
+  // "Lade Daten …" (step 7.5).
   useEffect(() => {
+    const failed = (error) =>
+      setLoadError({
+        message: `Die Daten konnten nicht geöffnet werden (${String(error?.message ?? error)}).`,
+        hint: 'Deine Dateien bleiben unverändert. Im Ordner „sicherungen“ neben daten.json liegen ältere Stände: Kopiere einen davon als daten.json in den Datenordner und starte Berichtspilot neu.',
+        canReveal: true,
+      })
     api.loadData().then((res) => {
       setDataPath(res.path ?? '')
       // daten.json and every backup exist but are unreadable: never fall back to
@@ -105,7 +113,7 @@ export function StoreProvider({ children }) {
       if (!res.ok) {
         setLoadError({
           message: `daten.json und alle Sicherungen sind nicht lesbar (${res.error ?? 'unbekannter Fehler'}).`,
-          hint: 'Deine Dateien bleiben unverändert. Ersetze daten.json im Datenordner durch eine lesbare Kopie (z. B. einen Export) und starte Berichtspilot neu.',
+          hint: 'Deine Dateien bleiben unverändert. Ersetze daten.json im Datenordner durch eine lesbare Kopie (z. B. aus dem Ordner „sicherungen“ oder einen Export) und starte Berichtspilot neu.',
           canReveal: true,
         })
         return
@@ -124,9 +132,20 @@ export function StoreProvider({ children }) {
       } else {
         d = seedData()
       }
+      // A hand-edited file without the lists would crash every view
+      if (!Array.isArray(d.profiles) || !Array.isArray(d.weeks)) {
+        failed(new Error('der Datei fehlen die Listen der Profile oder Wochen'))
+        return
+      }
       // Current week missing (Mon–Fri)? Create it once, right with the loaded data
-      const today = new Date()
-      const autoCreated = shouldAutoCreate(d, toISO(today)) ? newWeek(mondayOf(today), d.profiles, d.periods) : null
+      let autoCreated
+      try {
+        const today = new Date()
+        autoCreated = shouldAutoCreate(d, toISO(today)) ? newWeek(mondayOf(today), d.profiles, d.periods) : null
+      } catch (error) {
+        failed(error)
+        return
+      }
       if (autoCreated) d = { ...d, weeks: [...d.weeks, autoCreated].sort(byId) }
       loadedRef.current = true
       setData(d)
@@ -139,7 +158,7 @@ export function StoreProvider({ children }) {
       // Look for a new version once per start, only if the user leaves it on
       // (E-017). Main answers 'unsupported' without a request in dev/portable.
       if (d.settings.updateCheck) api.updateCheck().then(setUpdate, () => {})
-    })
+    }, failed)
   }, [])
 
   // Every status change (progress included) arrives as an event from main

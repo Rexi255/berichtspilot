@@ -24,8 +24,7 @@ import { useStore, api } from '../store.jsx'
 import { Button, IconButton, Input, TextArea, Segment, Panel, Pill, SectionTitle, cx } from '../ui/basics.jsx'
 import { showToast } from '../ui/toast.jsx'
 import { isoWeek, weekRangeLabel, weekdayName, formatDE, mondayOf, parseISO, addDays } from '../lib/dates.js'
-import { holidayOn } from '../lib/holidays.js'
-import { profileForDate } from '../lib/model.js'
+import { profileForDate, withStatus, restoreDays } from '../lib/model.js'
 import { formatAll } from '../lib/format.js'
 import { splitNotes, BULLET_PREFIX } from '../lib/notes.js'
 import { fillWeekFromWebuntis } from '../lib/webuntis.js'
@@ -264,7 +263,7 @@ function BulletList({ bullets, onChange, placeholder, suggestions = [] }) {
 
 /* -------------------------------- Day card -------------------------------- */
 
-function DayCard({ day, onChange, suggestions }) {
+function DayCard({ day, state, onChange, suggestions }) {
   // Raw notes (e.g. dictated) are collapsed unless they already have content
   const hasNotes = Boolean(day.notes?.trim())
   const [notesOpen, setNotesOpen] = useState(hasNotes)
@@ -287,11 +286,8 @@ function DayCard({ day, onChange, suggestions }) {
     showToast(items.length === 1 ? '1 Stichpunkt übernommen' : `${items.length} Stichpunkte übernommen`)
   }
 
-  const setStatus = (status) => {
-    // When switching to "holiday", suggest the real holiday name
-    const autoName = holidayOn(day.date) || day.holidayName || ''
-    onChange({ ...day, status, holidayName: status === 'holiday' ? autoName : day.holidayName })
-  }
+  // Switching to "holiday" suggests the real holiday name of the profile's state
+  const setStatus = (status) => onChange(withStatus(day, status, state))
 
   return (
     // no overflow-hidden: the autocomplete dropdown reaches over the card edge
@@ -640,31 +636,36 @@ export default function WeekEditor({ monday, setMonday }) {
     setConfirmDelete(false)
   }
 
-  // Apply AI bullets ({ date: bullets }) — replaces those days' bullets, undoable
+  // Apply AI bullets ({ date: bullets }) — replaces those days' bullets. Undo
+  // puts back only those bullets; edits made meanwhile elsewhere stay
   const applyPhrasing = (result) => {
     const snapshot = week
+    const dates = Object.keys(result)
     updateWeek(monday, (w) => ({
       ...w,
       days: w.days.map((d) => (result[d.date] ? { ...d, bullets: result[d.date] } : d)),
     }))
     setPhrasingFor(null)
-    const count = Object.keys(result).length
-    showToast(count === 1 ? 'Stichpunkte für 1 Tag übernommen' : `Stichpunkte für ${count} Tage übernommen`, {
+    showToast(dates.length === 1 ? 'Stichpunkte für 1 Tag übernommen' : `Stichpunkte für ${dates.length} Tage übernommen`, {
       duration: 6000,
-      action: { label: 'Rückgängig', onClick: () => updateWeek(monday, () => structuredClone(snapshot)) },
+      action: { label: 'Rückgängig', onClick: () => updateWeek(monday, (w) => restoreDays(w, snapshot, dates, 'bullets')) },
     })
   }
 
-  // Apply the ticked WebUntis subjects (mapped days) — fills only empty subjects, undoable
+  // Apply the ticked WebUntis subjects (mapped days) — fills only empty subjects.
+  // Undo puts back only the subjects of the changed days
   const applyWebuntis = (picked) => {
     const snapshot = week
-    const { week: filled, count } = fillWeekFromWebuntis(week, picked)
+    const { week: filled, count, changes } = fillWeekFromWebuntis(week, picked)
     setWebuntisFor(null)
     if (!count) return
+    const dates = changes
+      .filter((c) => c.subjects.some((s) => s.result === 'filled' || s.result === 'added'))
+      .map((c) => c.date)
     updateWeek(monday, () => filled)
     showToast(count === 1 ? '1 Fach übernommen' : `${count} Fächer übernommen`, {
       duration: 6000,
-      action: { label: 'Rückgängig', onClick: () => updateWeek(monday, () => structuredClone(snapshot)) },
+      action: { label: 'Rückgängig', onClick: () => updateWeek(monday, (w) => restoreDays(w, snapshot, dates, 'subjects')) },
     })
   }
 
@@ -794,7 +795,13 @@ export default function WeekEditor({ monday, setMonday }) {
               />
             )}
             {week.days.map((day) => (
-              <DayCard key={day.date} day={day} onChange={(d) => updateDay(day.date, d)} suggestions={suggestions} />
+              <DayCard
+                key={day.date}
+                day={day}
+                state={profile?.state ?? 'SH'}
+                onChange={(d) => updateDay(day.date, d)}
+                suggestions={suggestions}
+              />
             ))}
             <Panel data-daycard className="shrink-0">
               <div className="border-b border-white/[0.05] px-4 py-2.5">

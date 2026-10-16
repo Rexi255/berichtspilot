@@ -1,7 +1,7 @@
 // Lean, decoupled toast confirmations (e.g. "… kopiert").
 // showToast() fires a window event; the ToastHost (mounted once in the app)
 // listens to it and renders a short-lived message in the bottom right.
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { gsap } from 'gsap'
 import { CheckIcon, WarningIcon } from '@phosphor-icons/react'
 import { cx } from './basics.jsx'
@@ -29,15 +29,17 @@ function ToastRow({ toast, onDone }) {
         { opacity: 1, y: 0, scale: 1, duration: 0.32, ease: 'back.out(2)' }
       )
     }
+    const done = () => onDone(toast.id)
     const timer = setTimeout(() => {
       if (el) {
-        gsap.to(el, { opacity: 0, y: 8, duration: 0.22, ease: 'power2.in', onComplete: onDone })
+        gsap.to(el, { opacity: 0, y: 8, duration: 0.22, ease: 'power2.in', onComplete: done })
       } else {
-        onDone()
+        done()
       }
     }, toast.duration)
     return () => clearTimeout(timer)
-  }, [toast.duration, onDone])
+    // onDone is stable (ToastHost) — a new toast must not restart this one's timer
+  }, [toast.id, toast.duration, onDone])
 
   const isError = toast.kind === 'error'
   return (
@@ -63,7 +65,7 @@ function ToastRow({ toast, onDone }) {
           type="button"
           onClick={() => {
             toast.action.onClick()
-            onDone()
+            onDone(toast.id)
           }}
           className="ml-1 rounded-md border border-accent/30 bg-accent/10 px-2 py-1 text-[12px] font-semibold text-accent transition-colors duration-150 hover:bg-accent/20"
         >
@@ -87,12 +89,13 @@ export function ToastHost() {
     return () => window.removeEventListener('app:toast', onToast)
   }, [])
 
-  const remove = (id) => setToasts((list) => list.filter((t) => t.id !== id))
+  // Stable: every row's timer effect depends on it
+  const remove = useCallback((id) => setToasts((list) => list.filter((t) => t.id !== id)), [])
 
   return (
     <div className="pointer-events-none fixed bottom-5 right-5 z-50 flex flex-col items-end gap-2">
       {toasts.map((t) => (
-        <ToastRow key={t.id} toast={t} onDone={() => remove(t.id)} />
+        <ToastRow key={t.id} toast={t} onDone={remove} />
       ))}
     </div>
   )

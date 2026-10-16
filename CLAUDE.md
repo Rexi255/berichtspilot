@@ -59,7 +59,7 @@ Folder-specific rules live in `electron/CLAUDE.md` and `src/lib/CLAUDE.md`.
 
 ```bash
 npm ci                 # install (cloud sessions: prefix ELECTRON_SKIP_BINARY_DOWNLOAD=1)
-npm test               # Vitest — pure logic in src/lib (fast, <1 s)
+npm test               # Vitest — src/lib + electron modules, in Europe/Berlin time (vite.config.js) (fast, ~2 s)
 npm run lint           # ESLint (required by CI)
 npm run build:renderer # Vite build — proves the renderer compiles
 npm run dev            # Vite + Electron with hot reload (needs a display)
@@ -123,7 +123,9 @@ docs/                knowledge base (see above)
 6. **Customer data protection.** Text leaving the machine must be visible to and
    confirmed by the user first; no silent uploads.
 7. **Dates:** ISO strings `YYYY-MM-DD`, always parsed as local dates via
-   `parseISO()` — never `new Date('YYYY-MM-DD')` (UTC offset bug).
+   `parseISO()` — never `new Date('YYYY-MM-DD')` (UTC offset bug). Day
+   differences via `daysBetween()`, never milliseconds between local dates
+   (23/25-hour days at the DST switch).
 8. **"Easy to use" is a product principle:** download → install → it works. No
    mandatory extra installs (Python, Docker, Ollama …) for core features.
 
