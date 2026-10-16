@@ -166,8 +166,10 @@ anything new is built.
       falls back to the newest snapshot (2026-10-16; E-024; Electron: v10 file →
       daily + vor-update snapshot with the v10 state; browser mode: restore and
       import flows with a fake bridge)
-- [ ] 7.4 Error boundary around the views (title bar stays usable) + dialog on a
-      renderer crash
+- [x] 7.4 Error boundary around the views (title bar stays usable) + dialog on a
+      renderer crash (2026-10-16; browser mode: a hand-broken week → message in
+      the view, sidebar + window buttons work, Settings reachable; Electron:
+      `Page.crash` → native dialog)
 - [ ] 7.5 Small bugs, each with a test: training progress off by one after the
       DST switch, holiday name always from SH, toast timers restarting, undo
       of AI/WebUntis resetting the whole week, template date math via

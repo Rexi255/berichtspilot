@@ -16,6 +16,10 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- **An error in one view no longer blanks the whole window:** Berichtspilot
+  shows a message with "Neu laden" and "Fehlerdetails kopieren" instead; the
+  window buttons and the other views keep working (e.g. to restore a backup).
+  If the display crashes completely, a dialog offers to reload it.
 - **Closing right after typing no longer loses the last change:** the app now
   saves before the window closes. If saving fails, it asks before closing
   instead of silently dropping the change.

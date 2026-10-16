@@ -104,8 +104,9 @@ function createWindow() {
   // real. A failed save asks before anything is lost; a renderer that crashed
   // or doesn't answer in time doesn't block closing.
   let closeAllowed = false
+  let rendererGone = false
   win.on('close', (event) => {
-    if (closeAllowed || win.webContents.isCrashed()) return
+    if (closeAllowed || rendererGone || win.webContents.isCrashed()) return
     event.preventDefault()
     if (flushWaiter) return // already asking
     flushRenderer().then(async (result) => {
@@ -183,6 +184,30 @@ function createWindow() {
       menu.append(new MenuItem({ label: 'Kopieren', role: 'copy' }))
     }
     if (menu.items.length > 0) menu.popup()
+  })
+
+  // The renderer crashed or was killed (step 7.4): the frameless window would
+  // stay blank without a close button. Saved data is on disk; offer a reload.
+  win.webContents.on('render-process-gone', async (_ev, details) => {
+    if (details?.reason === 'clean-exit' || win.isDestroyed()) return
+    rendererGone = true
+    const { response } = await dialog.showMessageBox(win, {
+      type: 'error',
+      title: 'Berichtspilot',
+      message: 'Die Anzeige ist abgestürzt.',
+      detail: 'Deine gespeicherten Daten sind sicher — verloren ist höchstens die Eingabe der letzten Sekunde.',
+      buttons: ['Neu laden', 'Beenden'],
+      defaultId: 0,
+      cancelId: 1,
+      noLink: true,
+    })
+    if (win.isDestroyed()) return
+    if (response === 0) {
+      win.webContents.once('did-finish-load', () => (rendererGone = false))
+      win.reload()
+    } else {
+      win.close()
+    }
   })
 
   // Report the maximized state to the renderer (for the title bar icon)

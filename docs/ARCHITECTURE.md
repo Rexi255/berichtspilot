@@ -25,7 +25,8 @@ Keep this file in sync when changing process boundaries, IPC or networking.
 │ src/store.jsx  StoreProvider: loads on start, holds `data`, 400 ms autosave  │
 │ src/views/*    Overview · WeekEditor (+ PhrasingPanel, WebuntisPanel) ·      │
 │                Profiles · Settings · SetupWizard                             │
-│ src/ui/*       Titlebar · Sidebar · UpdateHint · basics · toast              │
+│ src/ui/*       Titlebar · Sidebar · UpdateHint · ErrorBoundary · basics ·    │
+│                toast                                                         │
 │ src/lib/*      pure logic: dates · holidays · format · model · notes ·       │
 │                phrasing · webuntis · update · setup · backups                │
 └──────────────────────────────────────────────────────────────────────────────┘
@@ -195,6 +196,17 @@ app (no app window, no IPC, daten.json untouched):
   token; then `webuntis-probe.json` is written next to daten.json containing only
   anonymised shapes (`electron/shape.js`: keys, types, string lengths, enum-like
   values; URLs with ids replaced).
+
+## Failure handling (step 7.4)
+
+- **Render errors:** `src/ui/ErrorBoundary.jsx` wraps each view (keyed with the
+  view, so switching views clears it — e.g. to restore a snapshot in Settings)
+  and, as an outer net, everything below the title bar (sidebar, setup wizard).
+  The title bar and the store stay outside: the window buttons keep working and
+  autosave goes on. "Neu laden" runs the store's `flush()` first.
+- **Renderer crash** (`render-process-gone`, not `clean-exit`): main shows
+  "Die Anzeige ist abgestürzt" with "Neu laden" / "Beenden"; the close
+  handshake is skipped for a gone renderer.
 
 ## Security model
 
