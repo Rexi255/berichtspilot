@@ -33,9 +33,9 @@ WebUntis "Lehrstoff" ─────────────┘    (daten.json) 
 ## Next step
 
 **Phase 7 (hardening) is done** on branch `claude/clever-mendel-psk8d2` — 7.1–7.5,
-one commit each, PR into `main` (see the Done log). Before continuing: the PR
-must be merged into `main` by the user (or with their explicit go); start the
-next step from the current `main`.
+one commit each, PR #5 into `main` (https://github.com/Rexi255/berichtspilot/pull/5,
+see the Done log). Before continuing: PR #5 must be merged into `main` by the
+user (or with their explicit go); start the next step from the current `main`.
 
 **Next: 8.1 — Electron + audit fixes** (no breaking changes expected):
 
@@ -314,3 +314,4 @@ anything new is built.
 | 2026-10-16 | 7.3: snapshots in `sicherungen/` + restore in Settings (E-024) | 5ef3ee4 |
 | 2026-10-16 | 7.4: error boundaries + renderer crash dialog | e8b054f |
 | 2026-10-16 | 7.5: DST progress, holiday state, scoped undo, toast timers, load errors (tests in Europe/Berlin) | 060447a |
+| 2026-10-16 | Phase 7 delivered | PR #5 |
