@@ -27,25 +27,17 @@ WebUntis "Lehrstoff" ─────────────┘    (daten.json) 
 - Nothing leaves the machine without the user seeing it (E-009 – E-011).
 - Without network/accounts everything works like v1.2 (every automation is optional).
 - Output format and `daten.json` safety stay untouched.
-- Release target **v2.0.0** (E-018). V2 is complete and prepared on
-  `claude/intelligent-curie-yxizss`; it only has to be merged into `main` and tagged.
+- V2 is released (v2.0.0 on 2026-10-10, E-018). Every further change goes via PR
+  into `main`; a release is a version bump + tag `vX.Y.Z` (E-017).
 
 ## Next step
 
-**v2.0.1 is released** (2026-10-10, https://github.com/Rexi255/berichtspilot/releases/tag/v2.0.1):
-PR #3 merged, tag `v2.0.1` on `main`, release workflow green, all five assets
-(incl. `latest.yml`) attached, release notes from the `[2.0.1]` CHANGELOG
-section. Work continues on branch `claude/intelligent-curie-yxizss`; deliver via
-PR into `main` (the user allowed `gh pr merge` for Claude Code).
+**Phase 7 — hardening (v2.0.2)** is in progress on branch
+`claude/clever-mendel-psk8d2` (from the code review of 2026-10-15, see the
+roadmap). Order: 7.1 → 7.5, one commit each, one PR into `main`.
 
-1. Real in-app update test by the user: in the installed 2.0.0, sidebar card /
-   Settings → "Updates" → download → install → restart on 2.0.1; data migrated
-   to schema v11 (profiles with 2 starter bullets now 1). If it fails: check
-   `latest.yml` on the release and the updater allowlist (E-017).
-2. Then ask the user what comes first: UI overhaul (v2.1, "Later / to-do"),
-   the parked dictation phase, WebUntis-assisted setup (fill school days +
-   subjects from the timetable, see E-020), or Enter jumping into an empty
-   bullet below instead of inserting one (E-021).
+Still open from v2.0.1: the user's real in-app update test (installed 2.0.0 →
+sidebar card / Settings → "Updates" → download → install → restart on 2.0.1).
 
 ## Open questions (for the user)
 
@@ -152,7 +144,67 @@ decision).
       `latest-linux.yml`; `/releases/latest/download/latest.yml` = 2.0.0 (2026-10-10)
 - [ ] Installed by hand once; real update test (see open questions)
 
+### Phase 7 — Hardening (v2.0.2) · from the code review of 2026-10-15
+The user asked for a review of the whole project and then for its "step 1":
+close the security gap in the main window and make saving loss-proof before
+anything new is built.
+- [ ] 7.1 Main window locked to the app: navigation (`will-navigate`) and
+      foreign IPC senders refused (`electron/guard.js`), permission requests
+      denied except clipboard writing, `data:save` checks the shape, dropped
+      files are ignored, dev flags (`--screenshot`) only unpackaged, production
+      CSP without `localhost`
+- [ ] 7.2 Save pipeline (`electron/storage.js`): one write at a time (queue, newest
+      state wins), rename retried on Windows lock errors, pending autosave
+      flushed on close (handshake `app:flush`), writes finish before quit
+- [ ] 7.3 Snapshots in `sicherungen/` next to `daten.json` (E-022): one per day
+      (30 kept), plus before an app update (schema change), an import
+      "Ersetzen" and a restore (10 each); restore in Settings → Daten; load
+      falls back to the newest snapshot
+- [ ] 7.4 Error boundary around the views (title bar stays usable) + dialog on a
+      renderer crash
+- [ ] 7.5 Small bugs, each with a test: training progress off by one after the
+      DST switch, holiday name always from SH, toast timers restarting, undo
+      of AI/WebUntis resetting the whole week, template date math via
+      `new Date('YYYY-MM-DD')`, load errors hanging at "Lade Daten …"
+- [ ] 7.6 Release v2.0.2: version bump in `package.json` + lock, CHANGELOG
+      section, PR, tag (needs the user's go)
+
+### Phase 8 — Maintenance automation
+- [ ] 8.1 Electron to the newest 43.x (lock is still on 43.0.0, `npm audit` lists a
+      high advisory about pop-up sandboxing — relevant for the WebUntis login
+      window) or 44.x after reading its breaking changes; `npm audit fix` (incl.
+      `js-yaml` inside electron-updater); Electron screenshot + updater test
+- [ ] 8.2 Node 22 LTS (Node 20 is EOL since 2026-04-30) in `ci.yml`, `release.yml`,
+      `.nvmrc`, `engines`, CONTRIBUTING; `npm run build:renderer` as a CI step
+- [ ] 8.3 `.github/dependabot.yml`: npm weekly (minor/patch grouped, Electron on its
+      own) + github-actions
+
+### Phase 9 — Release hardening (supply chain)
+- [ ] 9.1 `release.yml`: build jobs without write access; a separate release job
+      with `contents: write` downloads the artifacts and attaches them; all
+      actions pinned to commit SHAs (Dependabot keeps them current)
+- [ ] 9.2 Electron fuses in the electron-builder config (`runAsNode` off,
+      `enableNodeOptionsEnvironmentVariable` off, `enableNodeCliInspectArguments`
+      off, `onlyLoadAppFromAsar` on, asar integrity on); dev mode and the
+      WebUntis probe must still work
+- [ ] 9.3 Checklist for the user's GitHub settings (2FA/passkey, tag protection
+      `v*`, branch protection on `main`) in `CONTRIBUTING.md` → done by the user
+- [ ] 9.4 Code signing for the Windows installer — open question first (options:
+      SignPath Foundation, free for open source · Azure Artifact Signing ·
+      stay unsigned)
+
+### Phase 10 — Tests beyond `src/lib`
+- [ ] 10.1 Playwright smoke test against `vite preview` (browser mode via
+      `browserApi`): fresh start → skip wizard → create week → type a bullet →
+      exact text in output block 1; `npm run test:e2e`, runs in CI
+- [ ] 10.2 Optional: Electron end-to-end via Playwright `_electron` under xvfb
+      (save → restart → data back; close right after typing keeps the text)
+
 ### Later / to-do
+- [ ] Warning list for customer data: a local list of customer names / host
+      names that the "Mit KI formulieren" check warns about (the regex
+      patterns can't know names)
+- [ ] Export of the whole record as PDF/archive (e.g. for the exam registration)
 - [ ] Automatic entry into the IHK portal (deferred by the user, E-012)
 - [ ] Ideas from the old README roadmap: light theme, "copy all 3 blocks",
       full export/PDF, copy a single day from the previous week, character counter
