@@ -55,6 +55,11 @@ the bridge with `localStorage` stubs — handy for smoke tests.
 
 ## IPC channels
 
+Every handler is registered through `handle()` in `electron/main.js`: a call
+that doesn't come from the app page in the main window (its WebContents, top
+frame, app URL — `isTrustedSender()` in `electron/guard.js`) is refused with
+`{ ok: false, code: 'forbidden' }` before the handler runs.
+
 | Channel | preload function | Purpose / result |
 |---|---|---|
 | `data:load` | `loadData()` | read daten.json (or a backup) → `{ ok, data, path, fromBackup, error }` |
@@ -178,8 +183,27 @@ app (no app window, no IPC, daten.json untouched):
 ## Security model
 
 - Main window: `contextIsolation: true`, `nodeIntegration: false`, `sandbox: true`.
-- CSP in `index.html`: `default-src 'self'`, no external scripts/hosts.
-- Planned for the overhaul: secrets via `safeStorage` in a separate file (not in
-  daten.json); any third-party page only in its own `BrowserWindow` with a separate
-  session partition and a minimal preload; microphone permission granted only to
-  the app's own window.
+- **The main window only shows the app (E-022, step 7.1):** `will-navigate` /
+  `will-redirect` to anything but the app URL are cancelled (a dropped file, a
+  stray link — the preload would hand that page the full `window.api`),
+  `<webview>` is refused, external links go to the system browser through the
+  window open handler (https only). The app URL is the built `dist/index.html`
+  (compared as a file path) or, unpacked only, the Vite dev server origin from
+  `VITE_DEV_SERVER_URL` — a packaged app never loads a URL from the environment.
+- IPC only from the app page (`handle()` + `isTrustedSender()`, see "IPC
+  channels"); `data:save` additionally refuses anything that isn't shaped like
+  the record (`checkSaveData()`: object with integer `version`, `settings`,
+  `profiles`, `weeks`).
+- Permission requests of the main window: only `clipboard-sanitized-write`
+  (copying the output blocks), everything else is denied (`ALLOWED_PERMISSIONS`
+  in `electron/guard.js`; dictation will add `media` there, step 2.3). The
+  WebUntis login partition denies everything.
+- The renderer ignores files dragged onto the window (`src/main.jsx`).
+- CSP in `index.html`: `default-src 'self'`, no external scripts/hosts. The
+  dev server entries (`ws://` / `http://localhost:5173`) are removed from the
+  built `dist/index.html` by a Vite plugin (`vite.config.js`); the build fails if
+  they can't be found.
+- Dev flags (`--screenshot`, `--view`, `--scroll`) work in unpacked runs only.
+- Planned: secrets via `safeStorage` in a separate file (not in daten.json); any
+  third-party page only in its own `BrowserWindow` with a separate session
+  partition and a minimal preload.

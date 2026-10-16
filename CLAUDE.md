@@ -63,7 +63,7 @@ npm test               # Vitest — pure logic in src/lib (fast, <1 s)
 npm run lint           # ESLint (required by CI)
 npm run build:renderer # Vite build — proves the renderer compiles
 npm run dev            # Vite + Electron with hot reload (needs a display)
-electron . --screenshot=shot.png [--view=editor|profiles|settings] [--scroll=<css selector>]  # headless UI check
+electron . --screenshot=shot.png [--view=editor|profiles|settings] [--scroll=<css selector>]  # headless UI check (unpacked runs only)
 ```
 
 Dev mode keeps `daten.json` in the **current working directory** — run screenshot
@@ -91,6 +91,7 @@ AppImage + auto-update metadata (`latest*.yml`); the tag must match `package.jso
 ```
 electron/main.js     window, daten.json location, atomic save + backups, all IPC handlers
 electron/preload.js  contextBridge → window.api (the only bridge to the renderer)
+electron/guard.js    main window guard: app URL only, trusted IPC senders, save shape check (E-022)
 electron/net.js      network layer: host allowlist, timeout, German error texts (E-007)
 electron/updater.js  auto-update via electron-updater (E-017): check / download / install, allowlist on its session
 electron/webuntis-probe.js  dev spike `--webuntis-probe` (E-013); shape.js = JSON/URL anonymiser

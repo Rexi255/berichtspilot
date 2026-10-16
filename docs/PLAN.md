@@ -148,11 +148,13 @@ decision).
 The user asked for a review of the whole project and then for its "step 1":
 close the security gap in the main window and make saving loss-proof before
 anything new is built.
-- [ ] 7.1 Main window locked to the app: navigation (`will-navigate`) and
+- [x] 7.1 Main window locked to the app: navigation (`will-navigate`) and
       foreign IPC senders refused (`electron/guard.js`), permission requests
       denied except clipboard writing, `data:save` checks the shape, dropped
       files are ignored, dev flags (`--screenshot`) only unpackaged, production
-      CSP without `localhost`
+      CSP without `localhost` (2026-10-16; E-022; checked in Electron: navigation to
+      a file is cancelled, copying works, notifications/geolocation denied,
+      `saveData(null)` refused, dev server mode and `--screenshot` still work)
 - [ ] 7.2 Save pipeline (`electron/storage.js`): one write at a time (queue, newest
       state wins), rename retried on Windows lock errors, pending autosave
       flushed on close (handshake `app:flush`), writes finish before quit

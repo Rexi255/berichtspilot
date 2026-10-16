@@ -6,6 +6,14 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Security
+
+- **The app window only shows Berichtspilot:** a file dragged onto the window
+  (or any other page) can no longer replace the app — before, such a page could
+  have used the app's functions, including overwriting `daten.json`. Only the
+  app's own page may talk to the background process, and the window only gets
+  the permission it needs (copying to the clipboard).
+
 ## [2.0.1] - 2026-10-10
 
 ### Changed

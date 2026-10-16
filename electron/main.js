@@ -7,6 +7,7 @@ const fsp = fs.promises
 const { createWebUntisSession, cleanServer, PARTITION: WEBUNTIS_PARTITION } = require('./webuntis-session')
 const { fetchWeek } = require('./webuntis')
 const { createUpdater } = require('./updater')
+const { ALLOWED_PERMISSIONS, createAppUrlCheck, isTrustedSender, checkSaveData } = require('./guard')
 
 // ---------------------------------------------------------------------------
 // Location of daten.json. Goal: keep the file "portable" next to the
@@ -99,6 +100,25 @@ async function writeData(json) {
 
 let win = null
 
+// The app's own page (step 7.1): the dev server only in an unpacked dev run —
+// a packaged app never loads a URL from the environment
+const DEV_SERVER_URL = app.isPackaged ? null : process.env.VITE_DEV_SERVER_URL || null
+const INDEX_FILE = path.join(__dirname, '..', 'dist', 'index.html')
+const isAppUrl = createAppUrlCheck({ devServerUrl: DEV_SERVER_URL, indexFile: INDEX_FILE })
+
+/**
+ * ipcMain.handle for the app page only: calls from any other page (the window
+ * navigated away, an iframe, another window) are refused before `fn` runs.
+ */
+function handle(channel, fn) {
+  ipcMain.handle(channel, (event, ...args) => {
+    if (!isTrustedSender(event, { webContents: win?.webContents, isAppUrl })) {
+      return { ok: false, code: 'forbidden', error: 'Anfrage abgelehnt.' }
+    }
+    return fn(event, ...args)
+  })
+}
+
 function createWindow() {
   win = new BrowserWindow({
     width: 1280,
@@ -119,6 +139,24 @@ function createWindow() {
   })
 
   win.once('ready-to-show', () => win.show())
+
+  // The window shows the app and nothing else (step 7.1): no navigation away
+  // (a file dropped onto the window, a link without target), no <webview>.
+  // External links open in the browser via the window open handler below.
+  const stayOnApp = (event, url) => {
+    if (!isAppUrl(event.url ?? url)) event.preventDefault()
+  }
+  win.webContents.on('will-navigate', stayOnApp)
+  win.webContents.on('will-redirect', stayOnApp)
+  win.webContents.on('will-attach-webview', (event) => event.preventDefault())
+  // Only the permissions the app needs, only for its own page
+  win.webContents.session.setPermissionRequestHandler((contents, permission, callback, details) => {
+    callback(
+      contents === win.webContents &&
+        ALLOWED_PERMISSIONS.has(permission) &&
+        isAppUrl(details?.requestingUrl ?? contents.getURL())
+    )
+  })
 
   // German spell checking in input fields. May fail if the OS offers no German
   // dictionary — then we simply go without.
@@ -174,16 +212,17 @@ function createWindow() {
     return { action: 'deny' }
   })
 
-  if (process.env.VITE_DEV_SERVER_URL) {
-    win.loadURL(process.env.VITE_DEV_SERVER_URL)
+  if (DEV_SERVER_URL) {
+    win.loadURL(DEV_SERVER_URL)
   } else {
-    win.loadFile(path.join(__dirname, '..', 'dist', 'index.html'))
+    win.loadFile(INDEX_FILE)
   }
 
   // Dev helper: `electron . --screenshot=path.png [--view=editor] [--scroll=selector]`
   // renders the app, saves a screenshot and quits (for UI checks without a
   // display). `--scroll` brings an element below the fold into view first.
-  const shotArg = process.argv.find((a) => a.startsWith('--screenshot='))
+  // Unpacked runs only — the installed app ignores these flags.
+  const shotArg = !app.isPackaged && process.argv.find((a) => a.startsWith('--screenshot='))
   if (shotArg) {
     const targetPath = shotArg.slice('--screenshot='.length)
     const viewArg = process.argv.find((a) => a.startsWith('--view='))
@@ -191,10 +230,8 @@ function createWindow() {
     win.webContents.once('did-finish-load', () => {
       setTimeout(async () => {
         if (viewArg) {
-          const view = viewArg.split('=')[1]
-          await win.webContents.executeJavaScript(
-            `document.querySelector('[data-nav="${view}"]')?.click()`
-          )
+          const selector = JSON.stringify(`[data-nav="${viewArg.split('=')[1].replace(/[^\w-]/g, '')}"]`)
+          await win.webContents.executeJavaScript(`document.querySelector(${selector})?.click()`)
           await new Promise((r) => setTimeout(r, 900))
         }
         if (scrollArg) {
@@ -215,7 +252,7 @@ function createWindow() {
 // ---------------------------------------------------------------------------
 // IPC: persistence (load/save) + export/import via native dialogs
 // ---------------------------------------------------------------------------
-ipcMain.handle('data:load', async () => {
+handle('data:load', async () => {
   // daten.json first, then the backups in order. If the main file is corrupt
   // (JSON error after an aborted write), the newest readable backup is used.
   const candidates = [DATA_PATH]
@@ -238,7 +275,9 @@ ipcMain.handle('data:load', async () => {
   return { ok: false, error: String(lastError), path: DATA_PATH }
 })
 
-ipcMain.handle('data:save', async (_ev, data) => {
+handle('data:save', async (_ev, data) => {
+  const invalid = checkSaveData(data)
+  if (invalid) return { ok: false, error: invalid }
   try {
     await writeData(JSON.stringify(data, null, 2))
     return { ok: true }
@@ -247,7 +286,7 @@ ipcMain.handle('data:save', async (_ev, data) => {
   }
 })
 
-ipcMain.handle('data:export', async (_ev, data) => {
+handle('data:export', async (_ev, data) => {
   const { canceled, filePath } = await dialog.showSaveDialog(win, {
     title: 'Daten exportieren',
     defaultPath: `berichtspilot-backup-${new Date().toISOString().slice(0, 10)}.json`,
@@ -262,7 +301,7 @@ ipcMain.handle('data:export', async (_ev, data) => {
   }
 })
 
-ipcMain.handle('data:import', async () => {
+handle('data:import', async () => {
   const { canceled, filePaths } = await dialog.showOpenDialog(win, {
     title: 'Daten importieren',
     filters: [{ name: 'JSON', extensions: ['json'] }],
@@ -279,7 +318,7 @@ ipcMain.handle('data:import', async () => {
 })
 
 // Export a single text block as .txt
-ipcMain.handle('text:export', async (_ev, { fileName, content }) => {
+handle('text:export', async (_ev, { fileName, content }) => {
   const { canceled, filePath } = await dialog.showSaveDialog(win, {
     title: 'Als .txt exportieren',
     defaultPath: fileName,
@@ -296,14 +335,14 @@ ipcMain.handle('text:export', async (_ev, { fileName, content }) => {
 
 // Read the clipboard (for "Aus Zwischenablage" in the editor) — the sandboxed
 // renderer has no reliable clipboard read access.
-ipcMain.handle('clipboard:read', () => clipboard.readText())
+handle('clipboard:read', () => clipboard.readText())
 
 // Show daten.json in the file manager (Settings -> Daten)
-ipcMain.handle('path:reveal', () => shell.showItemInFolder(DATA_PATH))
+handle('path:reveal', () => shell.showItemInFolder(DATA_PATH))
 
 // Generic native question dialog (e.g. import: merge/replace).
 // Returns the index of the clicked button.
-ipcMain.handle('dialog:ask', async (_ev, { title, message, detail, buttons, cancelId }) => {
+handle('dialog:ask', async (_ev, { title, message, detail, buttons, cancelId }) => {
   const { response } = await dialog.showMessageBox(win, {
     type: 'question',
     title,
@@ -322,13 +361,13 @@ ipcMain.handle('dialog:ask', async (_ev, { title, message, detail, buttons, canc
 // (checked by cleanServer(): only *.webuntis.com hosts, E-019) and a Monday date
 // (validated in fetchWeek).
 const webuntis = createWebUntisSession()
-ipcMain.handle('webuntis:status', () => webuntis.status())
-ipcMain.handle('webuntis:login', () => webuntis.openLogin({ parent: win }))
-ipcMain.handle('webuntis:logout', () => webuntis.logout())
-ipcMain.handle('webuntis:configure', (_e, config) =>
+handle('webuntis:status', () => webuntis.status())
+handle('webuntis:login', () => webuntis.openLogin({ parent: win }))
+handle('webuntis:logout', () => webuntis.logout())
+handle('webuntis:configure', (_e, config) =>
   webuntis.configure({ enabled: config?.enabled === true, host: config?.host, school: config?.school })
 )
-ipcMain.handle('webuntis:week', (_e, mondayISO) =>
+handle('webuntis:week', (_e, mondayISO) =>
   fetchWeek(webuntis, mondayISO, { ses: session.fromPartition(WEBUNTIS_PARTITION) })
 )
 
@@ -341,18 +380,18 @@ const updater = createUpdater({
     if (win && !win.isDestroyed()) win.webContents.send('update:changed', status)
   },
 })
-ipcMain.handle('update:status', () => updater.status())
-ipcMain.handle('update:check', () => updater.check())
-ipcMain.handle('update:download', () => updater.download())
-ipcMain.handle('update:install', () => updater.install())
+handle('update:status', () => updater.status())
+handle('update:check', () => updater.check())
+handle('update:download', () => updater.download())
+handle('update:install', () => updater.install())
 
 // Window controls for the custom title bar
-ipcMain.handle('window:minimize', () => win?.minimize())
-ipcMain.handle('window:maximize', () => {
+handle('window:minimize', () => win?.minimize())
+handle('window:maximize', () => {
   if (!win) return
   win.isMaximized() ? win.unmaximize() : win.maximize()
 })
-ipcMain.handle('window:close', () => win?.close())
+handle('window:close', () => win?.close())
 
 // Dev spike: `electron . --webuntis-probe` runs the WebUntis probe instead of
 // the app (DECISIONS E-013). It only reads the WebUntis address from

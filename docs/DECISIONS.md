@@ -437,3 +437,28 @@ reason to pick, so it is treated as "not chosen"; any other value is kept.
 Weeks that already exist are left alone. Considered: Enter jumping into an
 empty bullet below instead of inserting — possible later, but one bullet
 already removes the problem.
+
+### E-022 · The main window only shows the app; IPC only from the app page · accepted
+Code review (2026-10-15, user asked for it): the main window had no navigation
+guard and the IPC handlers didn't check the caller. A page the window navigated
+to — Chromium opens a file dropped onto the window in place — got the full
+`window.api` from the preload; a test page overwrote `daten.json` with
+`saveData()` (shown in a scratch folder), and three more saves would have
+rotated every `.bak` out. Fix (step 7.1):
+
+- `will-navigate` / `will-redirect` only to the app URL (`createAppUrlCheck()`:
+  the built `index.html` compared as a file path — Windows drive-letter case and
+  percent-encoding can't cause a mismatch — or the dev server origin when
+  unpacked); no `<webview>`.
+- Every IPC handler goes through `handle()`: sender must be the main window's
+  WebContents, top frame, app URL (`isTrustedSender()`), else `code: 'forbidden'`.
+- `data:save` checks the record's shape (`checkSaveData()`), schema-version
+  agnostic so a schema bump never needs a main-process change.
+- Permission requests: only `clipboard-sanitized-write`; dictation adds `media`
+  later. Checked in Electron: copying works, notifications/geolocation denied.
+- Smaller items from the same review: the renderer ignores dropped files, the
+  production CSP drops the dev server hosts, `VITE_DEV_SERVER_URL` and the
+  screenshot flags only count in unpacked runs.
+
+Considered: a navigation guard alone — rejected, the sender check is the safety
+net if a navigation path is ever missed (iframes, future features).
