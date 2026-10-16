@@ -36,6 +36,7 @@ const browserApi = {
     localStorage.setItem('daten', JSON.stringify(d))
     return { ok: true }
   },
+  onFlushRequest: () => () => {},
   exportData: async () => ({ ok: false, error: DESKTOP_ONLY }),
   importData: async () => ({ ok: false, error: DESKTOP_ONLY }),
   exportText: async () => ({ ok: false, error: DESKTOP_ONLY }),
@@ -78,7 +79,10 @@ export function StoreProvider({ children }) {
   // settings.setupDone === false). UI state only, never saved.
   const [setupRequested, setSetupRequested] = useState(false)
   const installingRef = useRef(false)
+  // Pending autosave (timer id, null = nothing waiting) and whether the last
+  // save failed — both mean "the state on screen isn't on disk yet"
   const timerRef = useRef(null)
+  const saveFailedRef = useRef(false)
   const loadedRef = useRef(false)
   // Current state for mutations that must read it BEFORE setData (undo)
   const dataRef = useRef(null)
@@ -142,7 +146,13 @@ export function StoreProvider({ children }) {
 
   const saveNow = useCallback(async (d) => {
     setSaveStatus('saving')
-    const res = await api.saveData(d)
+    let res
+    try {
+      res = await api.saveData(d)
+    } catch (error) {
+      res = { ok: false, error: String(error) }
+    }
+    saveFailedRef.current = !res.ok
     setSaveStatus(res.ok ? 'saved' : 'error')
     return res
   }, [])
@@ -151,9 +161,24 @@ export function StoreProvider({ children }) {
   useEffect(() => {
     if (!data || !loadedRef.current) return
     clearTimeout(timerRef.current)
-    timerRef.current = setTimeout(() => saveNow(data), 400)
+    timerRef.current = setTimeout(() => {
+      timerRef.current = null
+      saveNow(data)
+    }, 400)
     return () => clearTimeout(timerRef.current)
   }, [data, saveNow])
+
+  // Write what isn't on disk yet right now — before the window closes (main
+  // asks via onFlushRequest, step 7.2) or the page reloads. → { ok, error? }
+  const flush = useCallback(async () => {
+    if (!dataRef.current || !loadedRef.current) return { ok: true }
+    if (timerRef.current === null && !saveFailedRef.current) return { ok: true }
+    clearTimeout(timerRef.current)
+    timerRef.current = null
+    return saveNow(dataRef.current)
+  }, [saveNow])
+
+  useEffect(() => api.onFlushRequest(flush), [flush])
 
   // The main process enforces the WebUntis switch and address (off or no
   // address = no request at all; switching off or changing the address logs
@@ -340,6 +365,7 @@ export function StoreProvider({ children }) {
     installingRef.current = true
     setInstallingUpdate(true)
     clearTimeout(timerRef.current)
+    timerRef.current = null
     let res
     try {
       const saved = dataRef.current ? await saveNow(dataRef.current) : { ok: true }
@@ -411,7 +437,7 @@ export function StoreProvider({ children }) {
     completeSetup,
     skipSetup,
     openSetup,
-    saveNow: () => data && saveNow(data),
+    flush,
     update,
     checkForUpdate,
     downloadUpdate,

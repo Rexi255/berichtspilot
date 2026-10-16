@@ -8,6 +8,7 @@ const { createWebUntisSession, cleanServer, PARTITION: WEBUNTIS_PARTITION } = re
 const { fetchWeek } = require('./webuntis')
 const { createUpdater } = require('./updater')
 const { ALLOWED_PERMISSIONS, createAppUrlCheck, isTrustedSender, checkSaveData } = require('./guard')
+const { createStorage } = require('./storage')
 
 // ---------------------------------------------------------------------------
 // Location of daten.json. Goal: keep the file "portable" next to the
@@ -53,50 +54,8 @@ function resolveDataDir() {
 // The file name stays German for compatibility with existing installs (DECISIONS E-014)
 const DATA_PATH = path.join(resolveDataDir(), 'daten.json')
 
-// How many rolling backups (daten.json.bak1 … .bakN) we keep.
-const MAX_BACKUPS = 3
-
-/**
- * Back up the previous state, rolling, BEFORE daten.json is overwritten:
- * .bak2 -> .bak3, .bak1 -> .bak2, daten.json -> .bak1 (copy). We copy instead
- * of moving so daten.json keeps existing until the final atomic rename. That
- * way the last MAX_BACKUPS states survive and a corrupted daten.json can be
- * restored from them.
- */
-async function rotateBackups() {
-  try {
-    await fsp.access(DATA_PATH) // no daten.json yet -> nothing to back up
-  } catch {
-    return
-  }
-  await fsp.rm(`${DATA_PATH}.bak${MAX_BACKUPS}`, { force: true }).catch(() => {})
-  for (let i = MAX_BACKUPS - 1; i >= 1; i--) {
-    await fsp.rename(`${DATA_PATH}.bak${i}`, `${DATA_PATH}.bak${i + 1}`).catch(() => {})
-  }
-  await fsp.copyFile(DATA_PATH, `${DATA_PATH}.bak1`).catch(() => {})
-}
-
-/**
- * Write atomically and safely. A crash/power failure must never destroy a
- * training record that grew over years:
- *  1. Write the new data completely into a temp file and force it to disk
- *     via fsync — the old daten.json stays untouched meanwhile.
- *  2. Back up the previous state, rolling (.bak1 … .bakN).
- *  3. Atomically rename the temp file into place (rename is atomic within one
- *     partition — daten.json never exists half-written).
- */
-async function writeData(json) {
-  const tmp = DATA_PATH + '.tmp'
-  const fh = await fsp.open(tmp, 'w')
-  try {
-    await fh.writeFile(json, 'utf8')
-    await fh.sync() // buffers guaranteed on disk
-  } finally {
-    await fh.close()
-  }
-  await rotateBackups()
-  await fsp.rename(tmp, DATA_PATH)
-}
+// Loading, atomic saving and backups: electron/storage.js (E-003, step 7.2)
+const storage = createStorage({ dataPath: DATA_PATH })
 
 let win = null
 
@@ -139,6 +98,35 @@ function createWindow() {
   })
 
   win.once('ready-to-show', () => win.show())
+
+  // Closing writes the renderer's pending autosave first (step 7.2): the close
+  // is held back, the renderer flushes and answers, then the window closes for
+  // real. A failed save asks before anything is lost; a renderer that crashed
+  // or doesn't answer in time doesn't block closing.
+  let closeAllowed = false
+  win.on('close', (event) => {
+    if (closeAllowed || win.webContents.isCrashed()) return
+    event.preventDefault()
+    if (flushWaiter) return // already asking
+    flushRenderer().then(async (result) => {
+      if (win.isDestroyed()) return
+      if (result.ok === false) {
+        const { response } = await dialog.showMessageBox(win, {
+          type: 'warning',
+          title: 'Nicht gespeichert',
+          message: 'Die letzten Änderungen konnten nicht gespeichert werden.',
+          detail: `${result.error || ''}\n\nBeim Schließen gehen sie verloren.`.trim(),
+          buttons: ['Trotzdem schließen', 'Abbrechen'],
+          defaultId: 1,
+          cancelId: 1,
+          noLink: true,
+        })
+        if (response !== 0) return
+      }
+      closeAllowed = true
+      win.close()
+    })
+  })
 
   // The window shows the app and nothing else (step 7.1): no navigation away
   // (a file dropped onto the window, a link without target), no <webview>.
@@ -250,40 +238,40 @@ function createWindow() {
 }
 
 // ---------------------------------------------------------------------------
+// Flush on close (step 7.2): main asks with `app:flush`, the preload answers
+// with `app:flushed` once the renderer's pending save is written
+// ---------------------------------------------------------------------------
+const FLUSH_TIMEOUT_MS = 3000
+let flushWaiter = null
+
+/** Ask the renderer to save now → `{ ok, error? }` (`ok` also on timeout). */
+function flushRenderer() {
+  return new Promise((resolve) => {
+    const timer = setTimeout(() => finish({ ok: true, timedOut: true }), FLUSH_TIMEOUT_MS)
+    function finish(result) {
+      clearTimeout(timer)
+      flushWaiter = null
+      resolve(result && typeof result === 'object' ? result : { ok: true })
+    }
+    flushWaiter = finish
+    win.webContents.send('app:flush')
+  })
+}
+
+handle('app:flushed', (_ev, result) => {
+  flushWaiter?.({ ok: result?.ok !== false, error: typeof result?.error === 'string' ? result.error : undefined })
+  return { ok: true }
+})
+
+// ---------------------------------------------------------------------------
 // IPC: persistence (load/save) + export/import via native dialogs
 // ---------------------------------------------------------------------------
-handle('data:load', async () => {
-  // daten.json first, then the backups in order. If the main file is corrupt
-  // (JSON error after an aborted write), the newest readable backup is used.
-  const candidates = [DATA_PATH]
-  for (let i = 1; i <= MAX_BACKUPS; i++) candidates.push(`${DATA_PATH}.bak${i}`)
-
-  let lastError = null
-  for (const file of candidates) {
-    try {
-      const content = await fsp.readFile(file, 'utf8')
-      const data = JSON.parse(content) // throws for a corrupt file
-      return { ok: true, data, path: DATA_PATH, fromBackup: file !== DATA_PATH }
-    } catch (error) {
-      if (error.code === 'ENOENT') continue // file doesn't exist -> next one
-      lastError = error // exists but is broken -> try a backup
-    }
-  }
-  // None of the files existed -> genuine first start (not an error)
-  if (!lastError) return { ok: true, data: null, path: DATA_PATH }
-  // Existing files are all unreadable/corrupt
-  return { ok: false, error: String(lastError), path: DATA_PATH }
-})
+handle('data:load', () => storage.load())
 
 handle('data:save', async (_ev, data) => {
   const invalid = checkSaveData(data)
   if (invalid) return { ok: false, error: invalid }
-  try {
-    await writeData(JSON.stringify(data, null, 2))
-    return { ok: true }
-  } catch (error) {
-    return { ok: false, error: String(error) }
-  }
+  return storage.save(JSON.stringify(data, null, 2))
 })
 
 handle('data:export', async (_ev, data) => {
@@ -444,4 +432,12 @@ if (!app.requestSingleInstanceLock()) {
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit()
+})
+
+// A write still running when the last window closed finishes before the app
+// exits (step 7.2) — quitting mid-write would drop the newest state
+app.on('will-quit', (event) => {
+  if (!storage.busy()) return
+  event.preventDefault()
+  storage.idle().then(() => app.quit())
 })

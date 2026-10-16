@@ -6,6 +6,22 @@ contextBridge.exposeInMainWorld('api', {
   // Persistence (daten.json, location resolved in main)
   loadData: () => ipcRenderer.invoke('data:load'),
   saveData: (data) => ipcRenderer.invoke('data:save', data),
+  // Main asks before the window closes: `callback` writes the pending autosave
+  // (→ { ok, error? }); the answer goes back even if it throws, so closing
+  // never hangs
+  onFlushRequest: (callback) => {
+    const handler = async () => {
+      let result = { ok: true }
+      try {
+        result = (await callback()) ?? result
+      } catch (error) {
+        result = { ok: false, error: String(error) }
+      }
+      ipcRenderer.invoke('app:flushed', { ok: result.ok !== false, error: result.error })
+    }
+    ipcRenderer.on('app:flush', handler)
+    return () => ipcRenderer.removeListener('app:flush', handler)
+  },
 
   // Backup via native dialogs
   exportData: (data) => ipcRenderer.invoke('data:export', data),

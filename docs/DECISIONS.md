@@ -462,3 +462,25 @@ rotated every `.bak` out. Fix (step 7.1):
 
 Considered: a navigation guard alone — rejected, the sender check is the safety
 net if a navigation path is ever missed (iframes, future features).
+
+### E-023 · Saving: one write at a time, flush before closing · accepted
+Code review (2026-10-15): two overlapping saves (a save slower than the 400 ms
+autosave delay — virus scanner, USB stick — or the save before an update
+install) shared `daten.json.tmp`; in a simulation one of each pair failed with
+`ENOENT` ("Fehler beim Speichern!") and `daten.json` briefly pointed at a file
+still being written. Closing the window within 400 ms of the last keystroke
+dropped that change (reproduced in Electron: typed, closed at once → text
+missing). Extends E-003, nothing weakened (step 7.2):
+
+- `electron/storage.js` (`createStorage()`, tested against a temp folder) owns
+  load + save. Writes run one after another; while one runs, only the newest
+  waiting state is kept, and superseded callers get the newer result. The
+  steps stay tmp + fsync → `.bak1–3` → atomic rename.
+- The final rename is retried on `EPERM`/`EBUSY`/`EACCES` (Windows scanners and
+  indexers lock fresh files briefly): 50, 100, 200, 400, 800 ms, then error.
+- Close handshake: the window's `close` is held, main sends `app:flush`, the
+  store's `flush()` writes a pending (or previously failed) save, the preload
+  answers `app:flushed`. A failed save asks "Trotzdem schließen?"; a crashed
+  renderer or no answer within 3 s doesn't block closing. `will-quit` waits for a
+  running write. Checked in Electron: typed + closed at once → saved; failing
+  write → window stays open with the question.

@@ -155,9 +155,11 @@ anything new is built.
       CSP without `localhost` (2026-10-16; E-022; checked in Electron: navigation to
       a file is cancelled, copying works, notifications/geolocation denied,
       `saveData(null)` refused, dev server mode and `--screenshot` still work)
-- [ ] 7.2 Save pipeline (`electron/storage.js`): one write at a time (queue, newest
+- [x] 7.2 Save pipeline (`electron/storage.js`): one write at a time (queue, newest
       state wins), rename retried on Windows lock errors, pending autosave
       flushed on close (handshake `app:flush`), writes finish before quit
+      (2026-10-16; E-023; Electron: typed + closed at once → saved, the commit
+      before lost it; failing write → window stays open and asks)
 - [ ] 7.3 Snapshots in `sicherungen/` next to `daten.json` (E-022): one per day
       (30 kept), plus before an app update (schema change), an import
       "Ersetzen" and a restore (10 each); restore in Settings → Daten; load

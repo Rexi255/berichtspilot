@@ -39,8 +39,13 @@ Keep this file in sync when changing process boundaries, IPC or networking.
    `SetupWizard` instead of the shell (also when opened from Settings, store
    flag `setupOpen`); the current week is auto-created only after it (E-020).
 2. Every store mutation produces a new `data` object (immutable updates).
-3. A debounced effect (400 ms) → `api.saveData(data)` → main writes
-   `daten.json.tmp` + fsync → rotates backups → `rename` onto `daten.json`.
+3. A debounced effect (400 ms) → `api.saveData(data)` → main checks the shape and
+   queues it in `electron/storage.js` (E-023): one write at a time, a newer state
+   supersedes a waiting one → `daten.json.tmp` + fsync → rotates backups →
+   `rename` onto `daten.json` (retried on Windows file locks).
+   Closing the window first asks the renderer to write its pending change
+   (`app:flush` → `flush()` in the store → `app:flushed`; 3 s timeout, a failed
+   save asks "Trotzdem schließen?"); `will-quit` waits for a running write.
 4. Output: `WeekEditor` calls `formatAll(week)` from `src/lib/format.js` → copy via
    `navigator.clipboard.writeText`.
 5. AI phrasing (clipboard bridge, E-011): `PhrasingPanel` builds a prompt from the
@@ -63,7 +68,9 @@ frame, app URL — `isTrustedSender()` in `electron/guard.js`) is refused with
 | Channel | preload function | Purpose / result |
 |---|---|---|
 | `data:load` | `loadData()` | read daten.json (or a backup) → `{ ok, data, path, fromBackup, error }` |
-| `data:save` | `saveData(data)` | atomic write → `{ ok, error }` |
+| `data:save` | `saveData(data)` | shape check (`checkSaveData()`), then queued atomic write → `{ ok, error }` |
+| `app:flush` (event main → renderer) | `onFlushRequest(cb)` | the window is closing: `cb` (the store's `flush()`) writes a pending autosave; the preload answers with `app:flushed` `{ ok, error? }` even if `cb` throws |
+| `app:flushed` | (preload, from `onFlushRequest`) | answer to `app:flush` — main closes the window, or asks first if `ok` is false |
 | `data:export` | `exportData(data)` | save dialog, write JSON → `{ ok, path, canceled, error }` |
 | `data:import` | `importData()` | open dialog, read JSON (validated in renderer) → `{ ok, data, canceled, error }` |
 | `text:export` | `exportText(fileName, content)` | save one output block as .txt |

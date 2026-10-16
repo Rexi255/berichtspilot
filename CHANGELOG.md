@@ -6,6 +6,14 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **Closing right after typing no longer loses the last change:** the app now
+  saves before the window closes. If saving fails, it asks before closing
+  instead of silently dropping the change.
+- **"Fehler beim Speichern!" from two saves at once:** saves now run one after
+  another, and a file briefly locked by a virus scanner (Windows) is retried.
+
 ### Security
 
 - **The app window only shows Berichtspilot:** a file dragged onto the window

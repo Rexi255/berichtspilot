@@ -28,10 +28,12 @@ may only do what `preload.js` exposes.
 
 ## Storage logic (do not weaken)
 
-`resolveDataDir()` (dev → CWD, portable → next to the executable if writable,
-otherwise `userData`) and `writeData()` (tmp + fsync → rotate backups → atomic
-rename) are acceptance criteria. Change them only with a written rationale in
-`docs/DECISIONS.md`.
+`resolveDataDir()` in `main.js` (dev → CWD, portable → next to the executable if
+writable, otherwise `userData`) and `createStorage()` in `storage.js` (writes one
+at a time; tmp + fsync → rotate backups → atomic rename, retried on Windows file
+locks) are acceptance criteria. Change them only with a written rationale in
+`docs/DECISIONS.md` (E-003, E-023). The close flush (`app:flush` → renderer saves
+→ `app:flushed`) and the `will-quit` wait for running writes belong to it.
 
 ## Testing
 

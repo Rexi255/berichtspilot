@@ -89,7 +89,8 @@ AppImage + auto-update metadata (`latest*.yml`); the tag must match `package.jso
 ## Project map
 
 ```
-electron/main.js     window, daten.json location, atomic save + backups, all IPC handlers
+electron/main.js     window, daten.json location, close flush, all IPC handlers
+electron/storage.js  daten.json load + atomic save + backups, one write at a time (E-003, E-023)
 electron/preload.js  contextBridge → window.api (the only bridge to the renderer)
 electron/guard.js    main window guard: app URL only, trusted IPC senders, save shape check (E-022)
 electron/net.js      network layer: host allowlist, timeout, German error texts (E-007)
@@ -110,7 +111,7 @@ docs/                knowledge base (see above)
    holds real IHK examples — never edit those expectations to make tests pass.
 2. **No data loss.** `daten.json` holds the user's entire training record.
    Schema change ⇒ bump `DATA_VERSION` + migration step + test. Never weaken the
-   atomic write/backup logic in `electron/main.js`.
+   atomic write/backup logic in `electron/storage.js`.
 3. **Electron security.** `contextIsolation: true`, `nodeIntegration: false`,
    `sandbox: true`, strict CSP. The renderer never gets Node/`fs`/network directly —
    everything goes through a named IPC channel exposed in `preload.js`.
