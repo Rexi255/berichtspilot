@@ -539,7 +539,9 @@ merged into `main` only with a release.
   into `development` right away. Same for a hotfix made directly on `main`.
 - Branch deletion and **tag pushes** are done by the user: the cloud git
   proxy refuses both (HTTP 403; tag refused when releasing 2.0.2). Pushing to
-  `development` works. A manual release dry run (`workflow_dispatch` on
+  `development` works. Local sessions (VS Code, since 2026-10-17) use the
+  user's own git credentials and can push the tag — only after the user's go
+  (done that way for `v2.0.2`). A manual release dry run (`workflow_dispatch` on
   `development`) builds both installers without publishing — run it before
   the release merge.
 
@@ -565,3 +567,26 @@ Checked: clean `npm ci` with Node 24.22 + npm 11.21 → lint, 290 tests and the
 renderer build green. npm 11's install-script approval does not affect
 Electron: since 43 it has no install script and downloads its binary on the
 first start (`electron/index.js`).
+Electron 44.7 (2026-10-17) runs on Node 24.21 — CI stays on 24.
+
+### E-027 · Dependabot: majors by hand, except Electron · accepted
+Its first run (2026-10-17) opened six PRs at once, three of them majors of dev
+tools (`eslint` 10 failed CI: it needs a config migration together with
+`@eslint/js` and the plugins). The user picked "calmer" over switching it off.
+
+- `.github/dependabot.yml` **ignores semver-major updates of every npm
+  package except `electron`**. `ignore` has no exceptions, so the patterns
+  (`@*`, `electron-*`, `eslint*`, `react*`, `vite*` + single names) cover all
+  other packages; a new dependency has to be added there. A major is done by
+  hand when we decide to, with its migration in the same commit.
+- **Electron's majors stay on:** only the newest three majors get security
+  fixes, so falling behind is the bigger risk. Before merging: read
+  https://www.electronjs.org/docs/latest/breaking-changes, then check in
+  Electron (views, clipboard, save + close, navigation/permission guards) and
+  the update check — see the 44.7 check in PLAN 8.6.
+- GitHub Actions keep their majors (one grouped PR; they rarely break inputs).
+- Dependabot reads its config from `main` only, so a change here takes effect
+  with the next release; PRs it opens before that are closed by hand.
+
+Considered: switching Dependabot off — rejected, Electron's security
+releases would then depend on someone remembering them.

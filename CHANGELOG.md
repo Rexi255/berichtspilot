@@ -6,6 +6,14 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- **Electron 44.7 instead of 43.8:** the app's built-in browser engine
+  (Chromium 152) and Electron itself move to the next major version, which
+  stays supported with security fixes for longer. Copying, pasting from the
+  clipboard, saving and the in-app update work as before. Libraries of the
+  interface (React, Vite, Tailwind) were updated as well.
+
 ## [2.0.2] - 2026-10-17
 
 The safety release: daily backups you can restore, no lost changes when

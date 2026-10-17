@@ -6,7 +6,7 @@ improvements to the holiday/format logic.
 ## Setup
 
 Requires **Node.js ≥ 22.12**; recommended is **24 LTS** (`.nvmrc`) — CI and the
-release builds use it, and it is the Node inside Electron 43. Change
+release builds use it, and it is the Node inside Electron 44. Change
 dependencies with **npm 11** (bundled with Node 24; on Node 22 use
 `npx -y npm@11 install …`): the lockfile carries npm 11's `libc` fields, which
 npm 10 strips. `npm ci` works with both.
