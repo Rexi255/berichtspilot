@@ -35,41 +35,39 @@ WebUntis "Lehrstoff" ─────────────┘    (daten.json) 
 
 **Branch workflow since 2026-10-17 (E-025):** every session works on
 `development` (`git fetch origin development && git checkout development`, even
-if the session names a `claude/…` branch) and pushes there. No PR until the
-release step 8.4. 8.1–8.3 are on `development` (CI green there).
+if the session names a `claude/…` branch) and pushes there. No PR between
+releases; a release step opens the PR `development` → `main`.
 
-**Next: 8.4 — release v2.0.2** (phase 7 + 8.1–8.3; the user decided on
-2026-10-17 to release with this step — still get their explicit go in the
-session before merging into `main` and tagging):
+**Next: finish 8.4 — the tag `v2.0.2`.** Done on 2026-10-17: version bump +
+CHANGELOG `## [2.0.2] - 2026-10-17` (b6b57a6), release notes from the CHANGELOG
+in `release.yml` (9befff8), two release dry runs via `workflow_dispatch` on
+`development` green (Windows installer + AppImage), PR #6
+(https://github.com/Rexi255/berichtspilot/pull/6) merged into `main` as merge
+commit **885a4ca**, `development` fast-forwarded to it. **Missing: the tag** —
+the cloud git proxy refuses tag pushes (HTTP 403, like branch deletion), so
+the user pushes it from their clone:
 
-1. CI on the newest `development` push is green (GitHub Actions → CI, branch
-   `development`).
-2. `npx -y npm@11 version 2.0.2 --no-git-tag-version` (`package.json` + both
-   `version` fields in the lock). CHANGELOG: `## [Unreleased]` →
-   `## [2.0.2] - <date>` with a one-line intro like 2.0.0's (hardening: backups,
-   loss-proof saving, locked window; Electron 43.8). Tick 8.4 + Done log, commit
-   `chore: release 2.0.2`, push `development`, CI green.
-3. PR `development` → `main` following `.github/pull_request_template.md`
-   (title "Release 2.0.2: …", body = the CHANGELOG section + checks). Merge as
-   a **merge commit** (E-025) — by the user or, with their go, via the GitHub
-   tools (`merge_method: merge`).
-4. Tag on the merge commit: `git fetch origin main && git tag v2.0.2 origin/main
-   && git push origin v2.0.2`. The cloud proxy refused branch deletions
-   (HTTP 403) — if it refuses the tag too, the user runs the same three
-   commands in their local clone (a tag pushed from there starts the release
-   workflow just the same).
-5. Release workflow green (the tag guard checks `package.json` = 2.0.2);
-   assets: `Berichtspilot-Setup-2.0.2.exe` + `.exe.blockmap` + `latest.yml`,
-   `Berichtspilot-2.0.2.AppImage` + `latest-linux.yml`; release notes = the
-   CHANGELOG section; `/releases/latest/download/latest.yml` says 2.0.2.
-6. The user's real update test 2.0.1 → 2.0.2 (sidebar card → download →
+```bash
+git fetch origin
+git tag -a v2.0.2 885a4ca -m "Berichtspilot 2.0.2"
+git push origin v2.0.2
+```
+
+Then check (any session can, read-only via the GitHub tools):
+1. Release workflow on the tag green; the release "v2.0.2" (Latest, not draft)
+   has `Berichtspilot-Setup-2.0.2.exe`, `.exe.blockmap`, `latest.yml`,
+   `Berichtspilot-2.0.2.AppImage`, `latest-linux.yml`, and the CHANGELOG
+   section as its text.
+2. `https://github.com/Rexi255/berichtspilot/releases/latest/download/latest.yml`
+   says `version: 2.0.2`.
+3. The user's real update test 2.0.1 → 2.0.2 (sidebar card → download →
    restart): data still there, `sicherungen/` holds today's daily snapshot
    (no `…-vor-update.json` — the schema didn't change).
-7. Afterwards: phase 9 (release hardening) on `development`.
+4. Tick 8.4, Done log row with the tag. Then phase 9 (release hardening) —
+   first the open question below.
 
-Dependabot (8.3) reads `.github/dependabot.yml` from the default branch, so it
-starts after the 8.4 merge into `main`. Then it opens its PRs against
-`development` on Mondays; merge them there when CI is green — Electron/electron-builder/electron-updater PRs
+Dependabot (8.3) is active since the 8.4 merge (it reads its config from
+`main`). It opens its PRs against `development` on Mondays; merge them there when CI is green — Electron/electron-builder/electron-updater PRs
 only after the checks named in `.github/dependabot.yml`.
 
 Electron support window: 43.x stays supported until Electron 46 is out (45 is in
@@ -84,8 +82,17 @@ changed (it doesn't in 2.0.2 — expect just the daily snapshot).
 
 ## Open questions (for the user)
 
-None right now. (Answered 2026-10-17: v2.0.2 is released with 8.4 — phase 7
-plus 8.1–8.3.)
+- **Release tags from cloud sessions?** The proxy refuses tag pushes, so
+  every release needs the user's three commands above. Option A: keep it so
+  (the tag is the user's "go", which E-017 wants anyway). Option B: `release.yml`
+  gets a manual start with an input (e.g. `publish: true`) that creates tag +
+  release itself (`softprops/action-gh-release` with `tag_name` on the merge
+  commit) — a session could then release on the user's word alone. Fits 9.1,
+  which rebuilds `release.yml` anyway. Recommendation: B together with 9.1, the
+  release job keeps the version guard (`package.json` = tag) and only runs on
+  `main`. Ask before 9.1.
+
+(Answered 2026-10-17: v2.0.2 is released with 8.4 — phase 7 plus 8.1–8.3.)
 
 Parked by the user (2026-10-10), not to be asked now: which speech model to
 bundle (E-010 has the measurements; real-voice recordings belong to that
@@ -244,7 +251,8 @@ anything new is built.
       (majors too), electron-builder, electron-updater (pinned, E-017) each on
       their own, everything else minor + patch together (2026-10-17; valid
       against the SchemaStore `dependabot-2.0` schema, a typo'd key fails it)
-- [ ] 8.4 Release v2.0.2 (phase 7 + 8.1–8.3, user 2026-10-17): `npm version 2.0.2 --no-git-tag-version`,
+- [ ] 8.4 Release v2.0.2 (phase 7 + 8.1–8.3, user 2026-10-17) — merged (PR #6,
+      885a4ca), tag pending (pushed by the user): `npm version 2.0.2 --no-git-tag-version`,
       CHANGELOG `[Unreleased]` → `## [2.0.2] - <date>`, PR `development` → `main`
       (merge commit, E-025), after the merge tag `v2.0.2` on `main` → release workflow green, assets incl. `latest.yml` +
       `latest-linux.yml`, release notes from the CHANGELOG section (needs the
@@ -349,4 +357,5 @@ anything new is built.
 | 2026-10-17 | 8.1: Electron 43.8.0 + `npm audit fix` (prod audit clean) | cd102cb |
 | 2026-10-17 | E-025: long-lived `development` branch, `main` only per release; CI on `development` pushes; old `claude/…` branches merged → to be deleted by the user | 4209df9 |
 | 2026-10-17 | 8.2: Node 24 in CI/release, CI builds the renderer (E-026) | 9a8bcad |
-| 2026-10-17 | 8.3: Dependabot against `development` | `development` |
+| 2026-10-17 | 8.3: Dependabot against `development` | bf13fce |
+| 2026-10-17 | 8.4: v2.0.2 bump, release notes from CHANGELOG, dry runs green, PR #6 merged (tag pending) | 885a4ca |

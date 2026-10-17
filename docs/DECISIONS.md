@@ -537,8 +537,11 @@ merged into `main` only with a release.
 - **Dependabot** targets `development` (`target-branch`). GitHub's security
   updates always target `main` — if one is merged there, merge `main` back
   into `development` right away. Same for a hotfix made directly on `main`.
-- Branch deletion on GitHub is done by the user: the cloud git proxy refuses
-  deleting refs (HTTP 403).
+- Branch deletion and **tag pushes** are done by the user: the cloud git
+  proxy refuses both (HTTP 403; tag refused when releasing 2.0.2). Pushing to
+  `development` works. A manual release dry run (`workflow_dispatch` on
+  `development`) builds both installers without publishing — run it before
+  the release merge.
 
 Considered: one branch + PR per step (the old way) — rejected by the user,
 every chat left another `claude/…` branch behind. A permanently open draft PR
