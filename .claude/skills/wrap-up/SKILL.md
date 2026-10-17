@@ -22,7 +22,9 @@ Goal: a fresh chat with zero context can continue seamlessly using only the repo
    IPC/network → `ARCHITECTURE.md`; new commands/rules → `CLAUDE.md`.
 5. **`CHANGELOG.md`:** user-facing changes under `## [Unreleased]`
    (Added / Changed / Fixed).
-6. **Commit** (English, Conventional Commits), **push**, and — if the user wants
-   it — open a **PR against `main`** following `.github/pull_request_template.md`.
+6. **Commit** (English, Conventional Commits) and **push to `development`**
+   (E-025). No PR between releases; only a release step opens the PR
+   `development` → `main` (following `.github/pull_request_template.md`, merged
+   as a merge commit) — and only with the user's go.
 7. **Short report to the user (German):** what's done, what comes next, which
    questions are open.

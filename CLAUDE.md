@@ -154,8 +154,13 @@ docs/                knowledge base (see above)
 
 ## Git workflow
 
-- Work on a feature branch; deliver via **pull request** against `main`; CI must be green.
-  If the session names a branch, use it.
+- **All work goes to the long-lived branch `development`** (user, E-025) — also
+  when the session names its own `claude/…` branch: `git fetch origin development
+  && git checkout development`, commit and push there (this is the user's
+  standing permission). Never create a new branch per chat.
+- `main` holds the released state. Only a release step merges: PR `development`
+  → `main` (CI green, **merge commit**, not squash), then the tag. No PR between
+  releases — CI runs on every push to `development`.
 - Conventional Commits in English (`feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:`).
 - Small, self-contained steps — ideally one PR (or at least one commit) per plan step.
 

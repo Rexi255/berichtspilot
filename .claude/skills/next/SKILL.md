@@ -12,8 +12,9 @@ description: Implement the next step from docs/PLAN.md (Berichtspilot overhaul).
    with status "proposed"? → ask the user precisely (concrete options +
    recommendation, in German), don't guess. If blocked, propose the next unblocked
    roadmap step.
-3. **Branch:** use the branch the session names; otherwise
-   `feat/<short-step-name>` from current `main`.
+3. **Branch:** always `development` (E-025) — `git fetch origin development &&
+   git checkout development`, even if the session names a `claude/…` branch.
+   Never start a new branch.
 4. **Plan briefly:** affected files + test strategy in 3–6 points. Split large
    steps and implement only the first part.
 5. **Implement:** follow `CLAUDE.md` and the folder `CLAUDE.md` files. Pure logic

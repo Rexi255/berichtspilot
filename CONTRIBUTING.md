@@ -74,6 +74,8 @@ sharing it.
 
 ## Pull requests
 
+- Work happens on the branch `development`; `main` holds the released state
+  and only receives a merge per release. Open PRs against `development`.
 - Small, focused PRs with a meaningful description.
 - Run `npm run lint`, `npm test` and `npm run build:renderer` before opening a PR.
 - For UI changes, a screenshot is appreciated.

@@ -519,3 +519,27 @@ browser mode with a fake bridge: restore = read → ask → snapshot → replace
 cancel changes nothing, import snapshots before replacing.
 Considered: snapshots on every app start — rejected, a day is the unit the user
 thinks in ("gestern war noch alles da"), and starts can be many per day.
+
+### E-025 · One long-lived `development` branch; `main` only at a release · accepted
+The user (2026-10-17): no new branch per chat; all work goes to `development`,
+merged into `main` only with a release.
+
+- **Every session works on `development`** — also when the cloud session names
+  its own `claude/…` branch: `git fetch origin development && git checkout
+  development`, commit and push there. The user's standing instruction is the
+  permission to push to `development`; the session's own branch is not pushed.
+- **`main` = the released state.** A release step (e.g. 8.4) opens one PR
+  `development` → `main`, CI green, merged as a **merge commit** (not squash,
+  so `development` stays an ancestor of `main` and the next release PR shows
+  only new commits — like PR #5); then the tag `vX.Y.Z` on `main` (E-017).
+- **No PR between releases.** CI therefore also runs on pushes to
+  `development` (`.github/workflows/ci.yml`).
+- **Dependabot** targets `development` (`target-branch`). GitHub's security
+  updates always target `main` — if one is merged there, merge `main` back
+  into `development` right away. Same for a hotfix made directly on `main`.
+- Branch deletion on GitHub is done by the user: the cloud git proxy refuses
+  deleting refs (HTTP 403).
+
+Considered: one branch + PR per step (the old way) — rejected by the user,
+every chat left another `claude/…` branch behind. A permanently open draft PR
+`development` → `main` for CI — not needed once CI runs on the branch push.

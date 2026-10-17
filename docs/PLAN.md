@@ -27,17 +27,18 @@ WebUntis "Lehrstoff" ─────────────┘    (daten.json) 
 - Nothing leaves the machine without the user seeing it (E-009 – E-011).
 - Without network/accounts everything works like v1.2 (every automation is optional).
 - Output format and `daten.json` safety stay untouched.
-- V2 is released (v2.0.0 on 2026-10-10, E-018). Every further change goes via PR
-  into `main`; a release is a version bump + tag `vX.Y.Z` (E-017).
+- V2 is released (v2.0.0 on 2026-10-10, E-018). All work goes to the branch
+  `development`; `main` only receives a merge per release (E-025); a release is
+  a version bump + PR `development` → `main` + tag `vX.Y.Z` (E-017).
 
 ## Next step
 
-**8.1 (Electron 43.8 + audit fixes) is done** on branch
-`claude/eloquent-curie-xwd738` — one commit, PR into `main` (see the Done log).
-Before continuing: that PR must be merged into `main` by the user (or with their
-explicit go); start the next step from the current `main`.
+**Branch workflow since 2026-10-17 (E-025):** every session works on
+`development` (`git fetch origin development && git checkout development`, even
+if the session names a `claude/…` branch) and pushes there. No PR until the
+release step 8.4. 8.1 (Electron 43.8 + audit fixes) is on `development`.
 
-**Next: 8.2 + 8.3 — Node 22 and Dependabot** (small, one PR, one commit each):
+**Next: 8.2 + 8.3 — Node 22 and Dependabot** (small, one commit each):
 
 1. **8.2 Node 22 LTS:** `node-version: 22` in `.github/workflows/ci.yml` and
    `release.yml`; `.nvmrc` → `22`; `package.json` `engines.node` → `>=22.12.0`;
@@ -50,12 +51,15 @@ explicit go); start the next step from the current `main`.
    `electron` in its own group (and its major updates: read
    https://www.electronjs.org/docs/latest/breaking-changes before merging),
    `electron-builder` on its own too (it builds the release); `github-actions`
-   weekly (checkout/setup-node are still on `@v4`).
+   weekly (checkout/setup-node are still on `@v4`). Both with
+   `target-branch: development` (E-025).
 3. Verify: lint/test/build; YAML parses (`node -e` with a tiny parser or
-   `npx -y yaml-lint`); CI on the PR is green with Node 22.
+   `npx -y yaml-lint`); CI on the push to `development` is green with Node 22.
 4. CHANGELOG: nothing user-facing (maintenance only) — skip unless the user
    wants an "Internal" note.
-5. Then 8.4 (release v2.0.2) — ask the open question below first.
+5. Then 8.4 (release v2.0.2) — the user decided on 2026-10-17 to release
+   v2.0.2 with 8.4 (phase 7 + 8.1–8.3); still get their go before merging into
+   `main` and tagging.
 
 Electron support window: 43.x stays supported until Electron 46 is out (45 is in
 beta on 2026-10-17); move to 44.x (newest: 44.9.0) via Dependabot before that,
@@ -69,10 +73,8 @@ changed (it doesn't in 2.0.2 — expect just the daily snapshot).
 
 ## Open questions (for the user)
 
-- **When to release v2.0.2?** Recommendation: after 8.1–8.3 (8.4), so the
-  release carries the hardening *and* the Electron security update. Alternative:
-  release phase 7 right after its PR is merged and ship the Electron update as
-  v2.0.3. Ask before 8.4 (or earlier if the user brings it up).
+None right now. (Answered 2026-10-17: v2.0.2 is released with 8.4 — phase 7
+plus 8.1–8.3.)
 
 Parked by the user (2026-10-10), not to be asked now: which speech model to
 bundle (E-010 has the measurements; real-voice recordings belong to that
@@ -225,9 +227,9 @@ anything new is built.
       `.nvmrc`, `engines`, CONTRIBUTING; `npm run build:renderer` as a CI step
 - [ ] 8.3 `.github/dependabot.yml`: npm weekly (minor/patch grouped, Electron on its
       own) + github-actions
-- [ ] 8.4 Release v2.0.2 (phase 7 + 8.1–8.3): `npm version 2.0.2 --no-git-tag-version`,
-      CHANGELOG `[Unreleased]` → `## [2.0.2] - <date>`, PR into `main`, after the
-      merge tag `v2.0.2` → release workflow green, assets incl. `latest.yml` +
+- [ ] 8.4 Release v2.0.2 (phase 7 + 8.1–8.3, user 2026-10-17): `npm version 2.0.2 --no-git-tag-version`,
+      CHANGELOG `[Unreleased]` → `## [2.0.2] - <date>`, PR `development` → `main`
+      (merge commit, E-025), after the merge tag `v2.0.2` on `main` → release workflow green, assets incl. `latest.yml` +
       `latest-linux.yml`, release notes from the CHANGELOG section (needs the
       user's go, like every release)
 
@@ -327,4 +329,5 @@ anything new is built.
 | 2026-10-16 | 7.4: error boundaries + renderer crash dialog | e8b054f |
 | 2026-10-16 | 7.5: DST progress, holiday state, scoped undo, toast timers, load errors (tests in Europe/Berlin) | 060447a |
 | 2026-10-16 | Phase 7 delivered | PR #5 (merged, 3bdf5a3) |
-| 2026-10-17 | 8.1: Electron 43.8.0 + `npm audit fix` (prod audit clean) | branch `claude/eloquent-curie-xwd738` |
+| 2026-10-17 | 8.1: Electron 43.8.0 + `npm audit fix` (prod audit clean) | cd102cb |
+| 2026-10-17 | E-025: long-lived `development` branch, `main` only per release; CI on `development` pushes; old `claude/…` branches merged → to be deleted by the user | `development` |
