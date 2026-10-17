@@ -32,30 +32,34 @@ WebUntis "Lehrstoff" ─────────────┘    (daten.json) 
 
 ## Next step
 
-**Phase 7 (hardening) is done** on branch `claude/clever-mendel-psk8d2` — 7.1–7.5,
-one commit each, PR #5 into `main` (https://github.com/Rexi255/berichtspilot/pull/5,
-see the Done log). Before continuing: PR #5 must be merged into `main` by the
-user (or with their explicit go); start the next step from the current `main`.
+**8.1 (Electron 43.8 + audit fixes) is done** on branch
+`claude/eloquent-curie-xwd738` — one commit, PR into `main` (see the Done log).
+Before continuing: that PR must be merged into `main` by the user (or with their
+explicit go); start the next step from the current `main`.
 
-**Next: 8.1 — Electron + audit fixes** (no breaking changes expected):
+**Next: 8.2 + 8.3 — Node 22 and Dependabot** (small, one PR, one commit each):
 
-1. `npm install --save-dev electron@^43` → lock on the newest 43.x (was 43.0.0);
-   44.x only after reading https://www.electronjs.org/docs/latest/breaking-changes
-   (otherwise leave it to Dependabot, 8.3).
-2. `npm audit fix` (never `--force`); afterwards `npm audit --omit=dev` must show
-   no high/critical (it listed `js-yaml` inside `electron-updater`); note what
-   remains in dev-only tools in the PR.
-3. Verify: `npm run lint && npm test && npm run build:renderer`; Electron smoke
-   test in the cloud: `node node_modules/electron/install.js`, then from a
-   scratch folder `xvfb-run -a <repo>/node_modules/electron/dist/electron
-   --no-sandbox --remote-debugging-port=9333 <repo>` and drive it via CDP
-   (`Runtime.evaluate`, `Input.insertText`, `Page.captureScreenshot`): app loads,
-   every view opens, typing + closing at once still saves (E-023), a navigation
-   to a file is still cancelled (E-022). Optionally `npm run build:linux` →
-   AppImage starts.
-4. CHANGELOG `[Unreleased]` → "Changed: Electron 43.x (security fixes)".
-5. Then 8.2 (Node 22 in CI/release/`.nvmrc`/`engines`/CONTRIBUTING, CI also runs
-   `npm run build:renderer`) and 8.3 (Dependabot) — small, can share one PR.
+1. **8.2 Node 22 LTS:** `node-version: 22` in `.github/workflows/ci.yml` and
+   `release.yml`; `.nvmrc` → `22`; `package.json` `engines.node` → `>=22.12.0`;
+   CONTRIBUTING "Requires Node.js ≥ 20.19" → 22. `ci.yml` gets a step
+   `npm run build:renderer` after the tests. Mention in CONTRIBUTING that
+   lockfile changes are made with **npm 11** (`npx -y npm@11 install …`): the
+   lock carries npm 11's `libc` fields, npm 10 (bundled with Node 22) strips
+   them and produces a noisy diff; `npm ci` works with both.
+2. **8.3 `.github/dependabot.yml`:** `npm` weekly — minor + patch grouped,
+   `electron` in its own group (and its major updates: read
+   https://www.electronjs.org/docs/latest/breaking-changes before merging),
+   `electron-builder` on its own too (it builds the release); `github-actions`
+   weekly (checkout/setup-node are still on `@v4`).
+3. Verify: lint/test/build; YAML parses (`node -e` with a tiny parser or
+   `npx -y yaml-lint`); CI on the PR is green with Node 22.
+4. CHANGELOG: nothing user-facing (maintenance only) — skip unless the user
+   wants an "Internal" note.
+5. Then 8.4 (release v2.0.2) — ask the open question below first.
+
+Electron support window: 43.x stays supported until Electron 46 is out (45 is in
+beta on 2026-10-17); move to 44.x (newest: 44.9.0) via Dependabot before that,
+after reading its breaking changes.
 
 Still open from v2.0.1: the user's real in-app update test (installed 2.0.0 →
 sidebar card / Settings → "Updates" → download → install → restart on 2.0.1).
@@ -208,10 +212,15 @@ anything new is built.
       update (see "Open questions" for an earlier release)
 
 ### Phase 8 — Maintenance automation
-- [ ] 8.1 Electron to the newest 43.x (lock is still on 43.0.0, `npm audit` lists a
-      high advisory about pop-up sandboxing — relevant for the WebUntis login
-      window) or 44.x after reading its breaking changes; `npm audit fix` (incl.
-      `js-yaml` inside electron-updater); Electron screenshot + updater test
+- [x] 8.1 Electron 43.0.0 → 43.8.0 (four Electron advisories, all fixed from
+      43.4.2 on); `npm audit fix` without `--force`: `js-yaml` 4.3.2 inside
+      electron-updater (prod audit now clean), electron-builder 26.17.0 and
+      dev tools in the lock. Left: 8 moderate advisories in dev-only
+      `sprintf-js` (electron-builder → `@electron/get` → `global-agent` →
+      `roarr`), only "fixable" by downgrading electron-builder (2026-10-17;
+      Electron via CDP: all views, file navigation cancelled, `window.open`
+      denied, typed + closed at once → saved, restart → text back; `build:linux`
+      → AppImage starts on 43.8.0, real update check → `none`)
 - [ ] 8.2 Node 22 LTS (Node 20 is EOL since 2026-04-30) in `ci.yml`, `release.yml`,
       `.nvmrc`, `engines`, CONTRIBUTING; `npm run build:renderer` as a CI step
 - [ ] 8.3 `.github/dependabot.yml`: npm weekly (minor/patch grouped, Electron on its
@@ -249,6 +258,9 @@ anything new is built.
       patterns can't know names)
 - [ ] Export of the whole record as PDF/archive (e.g. for the exam registration)
 - [ ] Automatic entry into the IHK portal (deferred by the user, E-012)
+- [ ] Linux: set `desktopName` + `linux.syncDesktopName: true` in the
+      electron-builder config so desktops link the running window to the
+      AppImage's `.desktop` entry (hint printed by electron-builder 26.17)
 - [ ] Ideas from the old README roadmap: light theme, "copy all 3 blocks",
       full export/PDF, copy a single day from the previous week, character counter
 - [ ] **UI overhaul — planned for v2.1, not part of V2** (user, 2026-10-10).
@@ -314,4 +326,5 @@ anything new is built.
 | 2026-10-16 | 7.3: snapshots in `sicherungen/` + restore in Settings (E-024) | 5ef3ee4 |
 | 2026-10-16 | 7.4: error boundaries + renderer crash dialog | e8b054f |
 | 2026-10-16 | 7.5: DST progress, holiday state, scoped undo, toast timers, load errors (tests in Europe/Berlin) | 060447a |
-| 2026-10-16 | Phase 7 delivered | PR #5 |
+| 2026-10-16 | Phase 7 delivered | PR #5 (merged, 3bdf5a3) |
+| 2026-10-17 | 8.1: Electron 43.8.0 + `npm audit fix` (prod audit clean) | branch `claude/eloquent-curie-xwd738` |

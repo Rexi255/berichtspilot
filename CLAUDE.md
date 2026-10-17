@@ -60,6 +60,7 @@ Folder-specific rules live in `electron/CLAUDE.md` and `src/lib/CLAUDE.md`.
 
 ```bash
 npm ci                 # install (cloud sessions: prefix ELECTRON_SKIP_BINARY_DOWNLOAD=1)
+npx -y npm@11 install … # lockfile changes: the lock has npm 11 `libc` fields, npm 10 strips them
 npm test               # Vitest — src/lib + electron modules, in Europe/Berlin time (vite.config.js) (fast, ~2 s)
 npm run lint           # ESLint (required by CI)
 npm run build:renderer # Vite build — proves the renderer compiles
@@ -81,6 +82,9 @@ target from `http://127.0.0.1:9333/json` (Node 22 has `WebSocket` built in):
 `Runtime.evaluate` (clicks, `window.api` calls), `Input.insertText` (typing),
 `Page.captureScreenshot`. Native dialogs are invisible to CDP — start `Xvfb :99`
 yourself and capture them with `import -display :99 -window root shot.png`.
+`npm run build:linux` works in the cloud too; start the AppImage (no FUSE) with
+`APPIMAGE_EXTRACT_AND_RUN=1 xvfb-run -a ./Berichtspilot-*.AppImage --no-sandbox`
+from a scratch folder — it keeps `daten.json` next to the AppImage.
 
 Without an Electron binary (cloud), the renderer also runs in a plain browser:
 `npx vite preview` serves `dist/`, and `browserApi` in `src/store.jsx` swaps the

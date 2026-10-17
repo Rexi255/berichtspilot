@@ -45,6 +45,9 @@ versioning follows [Semantic Versioning](https://semver.org/).
   have used the app's functions, including overwriting `daten.json`. Only the
   app's own page may talk to the background process, and the window only gets
   the permission it needs (copying to the clipboard).
+- **Electron 43.8 instead of 43.0:** brings the security fixes of the last
+  months for the app's built-in browser engine (Chromium) and Electron itself.
+  A library used by the in-app updater was updated as well.
 
 ## [2.0.1] - 2026-10-10
 
