@@ -38,7 +38,18 @@ WebUntis "Lehrstoff" ─────────────┘    (daten.json) 
 if the session names a `claude/…` branch) and pushes there. No PR between
 releases; a release step opens the PR `development` → `main`.
 
-**Next: finish 8.4 — the tag `v2.0.2`.** Done on 2026-10-17: version bump +
+**The user continues locally in VS Code (Claude Code extension) from
+2026-10-17.** Locally git uses the user's own credentials — tag pushes and
+branch deletions work there (the 403s below were the cloud proxy only).
+Before pushing a tag or merging, still ask the user.
+
+**Next, in this order:**
+1. **Tag `v2.0.2`** (see below) — ask the user, then push it; then the checks
+   1–3 below.
+2. **Dependabot decision** (open question below) — the first run opened
+   PRs #7–#12 against `development`; handle them per the user's answer.
+
+**Finish 8.4 — the tag `v2.0.2`.** Done on 2026-10-17: version bump +
 CHANGELOG `## [2.0.2] - 2026-10-17` (b6b57a6), release notes from the CHANGELOG
 in `release.yml` (9befff8), two release dry runs via `workflow_dispatch` on
 `development` green (Windows installer + AppImage), PR #6
@@ -82,6 +93,19 @@ changed (it doesn't in 2.0.2 — expect just the daily snapshot).
 
 ## Open questions (for the user)
 
+- **Dependabot: calmer or off?** Its first run (2026-10-17, right after the
+  merge) opened 6 PRs, each with its own `dependabot/…` branch, which
+  surprised the user: #7 actions group (3), #9 npm minor/patch group (9),
+  #8 Electron 43.8 → 44.7 (major, own group by design), #10 `@eslint/js` 10,
+  #11 `eslint` 10, #12 `vitest` 5 (dev-tool majors, ungrouped). Explained to
+  the user what Dependabot is; their answer is pending. Recommendation:
+  (a) `ignore` semver-major updates of everything except `electron` in
+  `.github/dependabot.yml` (dev-tool majors are done deliberately, e.g. ESLint
+  10 needs a config migration); (b) close #10–#12; (c) merge #7 and #9 into
+  `development` when CI is green; #8 only after reading Electron 44's breaking
+  changes; (d) the user turns on Settings → General → "Automatically delete
+  head branches". Alternative: switch Dependabot off (delete the file). Expect
+  ~1–3 PRs a week afterwards.
 - **Release tags from cloud sessions?** The proxy refuses tag pushes, so
   every release needs the user's three commands above. Option A: keep it so
   (the tag is the user's "go", which E-017 wants anyway). Option B: `release.yml`
