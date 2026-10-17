@@ -55,15 +55,11 @@ blocked — the release-tag question is settled (see below). Read
 `workflow_dispatch` dry run on `development` (builds, publishes nothing).
 Pinned SHAs need a `# vX.Y.Z` comment so Dependabot keeps updating them.
 
-**Waiting on the user:** the real in-app update test from the installed
-version to 2.0.2 (sidebar card / Settings → "Updates" → download → install →
-restart): data still there, `sicherungen/` holds today's daily snapshot and no
-`…-vor-update.json` (the schema didn't change). The update check against the
-real 2.0.2 release was already proven in Electron 44 (8.6: as 2.0.1 →
-`available 2.0.2`).
+The user's real in-app update test to 2.0.2 works (user, 2026-10-17).
 
 **Dependabot** (E-027) opens its PRs against `development` on Mondays. Merge
-green ones with `gh pr merge <n> --squash --delete-branch`; Electron PRs only
+green ones with `gh pr merge <n> --squash` (the repo deletes merged branches
+itself since 2026-10-17); Electron PRs only
 after the checks in E-027, electron-builder/-updater after the checks named in
 `.github/dependabot.yml`. Its config is read from `main`: until the next
 release merge the old one applies, so new dev-tool majors may still show up —
@@ -76,10 +72,9 @@ Electron support window: 44.x stays supported until Electron 47 is out; 45
 
 - **Code signing (9.4)** — ask before 9.4: SignPath Foundation (free for open
   source) · Azure Artifact Signing · stay unsigned.
-- Optional for the user: GitHub → Settings → General → "Automatically delete
-  head branches" (sessions already merge with `--delete-branch`).
-
-(Answered 2026-10-17: v2.0.2 is released with 8.4 — phase 7 plus 8.1–8.3.
+(Answered 2026-10-17: v2.0.2 is released with 8.4 — phase 7 plus 8.1–8.3;
+the user's update test to 2.0.2 works and "Automatically delete head
+branches" is on (checked: `deleteBranchOnMerge: true`).
 Dependabot: "calmer, and Electron 44 now" → E-027, 8.5, 8.6. Release tags from
 cloud sessions: overtaken by the move to local sessions, which can push the
 tag after the user's go — so 9.1 needs no tag-creating manual start; that
@@ -184,7 +179,8 @@ decision).
 - [x] Tag `v2.0.0` → release workflow green → GitHub release "Berichtspilot 2.0.0"
       (Latest, not draft) with installer, `.blockmap`, AppImage, `latest.yml`,
       `latest-linux.yml`; `/releases/latest/download/latest.yml` = 2.0.0 (2026-10-10)
-- [ ] Installed by hand once; real update test (see "Next step" — now to 2.0.2)
+- [x] Installed by hand once; real in-app update test — done with 2.0.2
+      (user, 2026-10-17)
 
 ### Phase 7 — Hardening (v2.0.2) · from the code review of 2026-10-15
 The user asked for a review of the whole project and then for its "step 1":
@@ -248,7 +244,7 @@ anything new is built.
       on the user's go → release workflow green, release "v2.0.2" Latest with
       installer, `.blockmap`, AppImage, `latest.yml`, `latest-linux.yml`;
       `/releases/latest/download/latest.yml` = 2.0.2 (2026-10-17; the user's real
-      update test is still open, see "Next step")
+      in-app update to 2.0.2 works)
 - [x] 8.5 Dependabot calmer (user, E-027): semver majors ignored for every npm
       package except `electron` (pattern coverage checked against
       `package.json`, config valid against the SchemaStore schema); #10–#12
