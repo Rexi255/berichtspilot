@@ -27,35 +27,54 @@ WebUntis "Lehrstoff" ─────────────┘    (daten.json) 
 - Nothing leaves the machine without the user seeing it (E-009 – E-011).
 - Without network/accounts everything works like v1.2 (every automation is optional).
 - Output format and `daten.json` safety stay untouched.
-- V2 is released (v2.0.0 on 2026-10-10, E-018). Every further change goes via PR
-  into `main`; a release is a version bump + tag `vX.Y.Z` (E-017).
+- V2 is released (v2.0.0 on 2026-10-10, E-018). All work goes to the branch
+  `development`; `main` only receives a merge per release (E-025); a release is
+  a version bump + PR `development` → `main` + tag `vX.Y.Z` (E-017).
 
 ## Next step
 
-**Phase 7 (hardening) is done** on branch `claude/clever-mendel-psk8d2` — 7.1–7.5,
-one commit each, PR #5 into `main` (https://github.com/Rexi255/berichtspilot/pull/5,
-see the Done log). Before continuing: PR #5 must be merged into `main` by the
-user (or with their explicit go); start the next step from the current `main`.
+**Branch workflow since 2026-10-17 (E-025):** every session works on
+`development` (`git fetch origin development && git checkout development`, even
+if the session names a `claude/…` branch) and pushes there. No PR until the
+release step 8.4. 8.1–8.3 are on `development` (CI green there).
 
-**Next: 8.1 — Electron + audit fixes** (no breaking changes expected):
+**Next: 8.4 — release v2.0.2** (phase 7 + 8.1–8.3; the user decided on
+2026-10-17 to release with this step — still get their explicit go in the
+session before merging into `main` and tagging):
 
-1. `npm install --save-dev electron@^43` → lock on the newest 43.x (was 43.0.0);
-   44.x only after reading https://www.electronjs.org/docs/latest/breaking-changes
-   (otherwise leave it to Dependabot, 8.3).
-2. `npm audit fix` (never `--force`); afterwards `npm audit --omit=dev` must show
-   no high/critical (it listed `js-yaml` inside `electron-updater`); note what
-   remains in dev-only tools in the PR.
-3. Verify: `npm run lint && npm test && npm run build:renderer`; Electron smoke
-   test in the cloud: `node node_modules/electron/install.js`, then from a
-   scratch folder `xvfb-run -a <repo>/node_modules/electron/dist/electron
-   --no-sandbox --remote-debugging-port=9333 <repo>` and drive it via CDP
-   (`Runtime.evaluate`, `Input.insertText`, `Page.captureScreenshot`): app loads,
-   every view opens, typing + closing at once still saves (E-023), a navigation
-   to a file is still cancelled (E-022). Optionally `npm run build:linux` →
-   AppImage starts.
-4. CHANGELOG `[Unreleased]` → "Changed: Electron 43.x (security fixes)".
-5. Then 8.2 (Node 22 in CI/release/`.nvmrc`/`engines`/CONTRIBUTING, CI also runs
-   `npm run build:renderer`) and 8.3 (Dependabot) — small, can share one PR.
+1. CI on the newest `development` push is green (GitHub Actions → CI, branch
+   `development`).
+2. `npx -y npm@11 version 2.0.2 --no-git-tag-version` (`package.json` + both
+   `version` fields in the lock). CHANGELOG: `## [Unreleased]` →
+   `## [2.0.2] - <date>` with a one-line intro like 2.0.0's (hardening: backups,
+   loss-proof saving, locked window; Electron 43.8). Tick 8.4 + Done log, commit
+   `chore: release 2.0.2`, push `development`, CI green.
+3. PR `development` → `main` following `.github/pull_request_template.md`
+   (title "Release 2.0.2: …", body = the CHANGELOG section + checks). Merge as
+   a **merge commit** (E-025) — by the user or, with their go, via the GitHub
+   tools (`merge_method: merge`).
+4. Tag on the merge commit: `git fetch origin main && git tag v2.0.2 origin/main
+   && git push origin v2.0.2`. The cloud proxy refused branch deletions
+   (HTTP 403) — if it refuses the tag too, the user runs the same three
+   commands in their local clone (a tag pushed from there starts the release
+   workflow just the same).
+5. Release workflow green (the tag guard checks `package.json` = 2.0.2);
+   assets: `Berichtspilot-Setup-2.0.2.exe` + `.exe.blockmap` + `latest.yml`,
+   `Berichtspilot-2.0.2.AppImage` + `latest-linux.yml`; release notes = the
+   CHANGELOG section; `/releases/latest/download/latest.yml` says 2.0.2.
+6. The user's real update test 2.0.1 → 2.0.2 (sidebar card → download →
+   restart): data still there, `sicherungen/` holds today's daily snapshot
+   (no `…-vor-update.json` — the schema didn't change).
+7. Afterwards: phase 9 (release hardening) on `development`.
+
+Dependabot (8.3) reads `.github/dependabot.yml` from the default branch, so it
+starts after the 8.4 merge into `main`. Then it opens its PRs against
+`development` on Mondays; merge them there when CI is green — Electron/electron-builder/electron-updater PRs
+only after the checks named in `.github/dependabot.yml`.
+
+Electron support window: 43.x stays supported until Electron 46 is out (45 is in
+beta on 2026-10-17); move to 44.x (newest: 44.9.0) via Dependabot before that,
+after reading its breaking changes.
 
 Still open from v2.0.1: the user's real in-app update test (installed 2.0.0 →
 sidebar card / Settings → "Updates" → download → install → restart on 2.0.1).
@@ -65,10 +84,8 @@ changed (it doesn't in 2.0.2 — expect just the daily snapshot).
 
 ## Open questions (for the user)
 
-- **When to release v2.0.2?** Recommendation: after 8.1–8.3 (8.4), so the
-  release carries the hardening *and* the Electron security update. Alternative:
-  release phase 7 right after its PR is merged and ship the Electron update as
-  v2.0.3. Ask before 8.4 (or earlier if the user brings it up).
+None right now. (Answered 2026-10-17: v2.0.2 is released with 8.4 — phase 7
+plus 8.1–8.3.)
 
 Parked by the user (2026-10-10), not to be asked now: which speech model to
 bundle (E-010 has the measurements; real-voice recordings belong to that
@@ -208,17 +225,28 @@ anything new is built.
       update (see "Open questions" for an earlier release)
 
 ### Phase 8 — Maintenance automation
-- [ ] 8.1 Electron to the newest 43.x (lock is still on 43.0.0, `npm audit` lists a
-      high advisory about pop-up sandboxing — relevant for the WebUntis login
-      window) or 44.x after reading its breaking changes; `npm audit fix` (incl.
-      `js-yaml` inside electron-updater); Electron screenshot + updater test
-- [ ] 8.2 Node 22 LTS (Node 20 is EOL since 2026-04-30) in `ci.yml`, `release.yml`,
-      `.nvmrc`, `engines`, CONTRIBUTING; `npm run build:renderer` as a CI step
-- [ ] 8.3 `.github/dependabot.yml`: npm weekly (minor/patch grouped, Electron on its
-      own) + github-actions
-- [ ] 8.4 Release v2.0.2 (phase 7 + 8.1–8.3): `npm version 2.0.2 --no-git-tag-version`,
-      CHANGELOG `[Unreleased]` → `## [2.0.2] - <date>`, PR into `main`, after the
-      merge tag `v2.0.2` → release workflow green, assets incl. `latest.yml` +
+- [x] 8.1 Electron 43.0.0 → 43.8.0 (four Electron advisories, all fixed from
+      43.4.2 on); `npm audit fix` without `--force`: `js-yaml` 4.3.2 inside
+      electron-updater (prod audit now clean), electron-builder 26.17.0 and
+      dev tools in the lock. Left: 8 moderate advisories in dev-only
+      `sprintf-js` (electron-builder → `@electron/get` → `global-agent` →
+      `roarr`), only "fixable" by downgrading electron-builder (2026-10-17;
+      Electron via CDP: all views, file navigation cancelled, `window.open`
+      denied, typed + closed at once → saved, restart → text back; `build:linux`
+      → AppImage starts on 43.8.0, real update check → `none`)
+- [x] 8.2 Node 24 LTS instead of the planned 22 (E-026: 22 is EOL 2027-04-30,
+      Electron 43 runs Node 24, npm 11 matches the lock) in `ci.yml`,
+      `release.yml`, `.nvmrc`; `engines` ≥ 22.12; CONTRIBUTING + README; CI also
+      runs `npm run build:renderer` (2026-10-17; clean `npm ci` + lint/tests/build
+      with Node 24.22 / npm 11.21)
+- [x] 8.3 `.github/dependabot.yml`: npm + github-actions weekly (Monday,
+      Europe/Berlin) against `development`, 7-day cooldown; groups: Electron
+      (majors too), electron-builder, electron-updater (pinned, E-017) each on
+      their own, everything else minor + patch together (2026-10-17; valid
+      against the SchemaStore `dependabot-2.0` schema, a typo'd key fails it)
+- [ ] 8.4 Release v2.0.2 (phase 7 + 8.1–8.3, user 2026-10-17): `npm version 2.0.2 --no-git-tag-version`,
+      CHANGELOG `[Unreleased]` → `## [2.0.2] - <date>`, PR `development` → `main`
+      (merge commit, E-025), after the merge tag `v2.0.2` on `main` → release workflow green, assets incl. `latest.yml` +
       `latest-linux.yml`, release notes from the CHANGELOG section (needs the
       user's go, like every release)
 
@@ -249,6 +277,9 @@ anything new is built.
       patterns can't know names)
 - [ ] Export of the whole record as PDF/archive (e.g. for the exam registration)
 - [ ] Automatic entry into the IHK portal (deferred by the user, E-012)
+- [ ] Linux: set `desktopName` + `linux.syncDesktopName: true` in the
+      electron-builder config so desktops link the running window to the
+      AppImage's `.desktop` entry (hint printed by electron-builder 26.17)
 - [ ] Ideas from the old README roadmap: light theme, "copy all 3 blocks",
       full export/PDF, copy a single day from the previous week, character counter
 - [ ] **UI overhaul — planned for v2.1, not part of V2** (user, 2026-10-10).
@@ -314,4 +345,8 @@ anything new is built.
 | 2026-10-16 | 7.3: snapshots in `sicherungen/` + restore in Settings (E-024) | 5ef3ee4 |
 | 2026-10-16 | 7.4: error boundaries + renderer crash dialog | e8b054f |
 | 2026-10-16 | 7.5: DST progress, holiday state, scoped undo, toast timers, load errors (tests in Europe/Berlin) | 060447a |
-| 2026-10-16 | Phase 7 delivered | PR #5 |
+| 2026-10-16 | Phase 7 delivered | PR #5 (merged, 3bdf5a3) |
+| 2026-10-17 | 8.1: Electron 43.8.0 + `npm audit fix` (prod audit clean) | cd102cb |
+| 2026-10-17 | E-025: long-lived `development` branch, `main` only per release; CI on `development` pushes; old `claude/…` branches merged → to be deleted by the user | 4209df9 |
+| 2026-10-17 | 8.2: Node 24 in CI/release, CI builds the renderer (E-026) | 9a8bcad |
+| 2026-10-17 | 8.3: Dependabot against `development` | `development` |

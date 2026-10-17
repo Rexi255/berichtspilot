@@ -2,11 +2,11 @@
 
 Electron desktop app that produces the weekly IHK training record ("Berichtsheft")
 for an apprentice (IT specialist for system integration, Schleswig-Holstein,
-Germany). Current release: v2.0.1 — entry by hand or from notes, WebUntis
-import, AI phrasing via the clipboard, in-app updates → three exactly formatted
-text blocks to copy into the IHK portal.
-**Next:** hardening + maintenance (phases 7–10 from the 2026-10-15 code review,
-release v2.0.2), then the UI overhaul (v2.1); voice dictation is parked — see `docs/PLAN.md`.
+Germany). Current release: v2.0.2 — entry by hand or from notes, WebUntis
+import, AI phrasing via the clipboard, in-app updates, daily backups → three
+exactly formatted text blocks to copy into the IHK portal.
+**Next:** release hardening + tests (phases 9–10 from the 2026-10-15 code review),
+then the UI overhaul (v2.1); voice dictation is parked — see `docs/PLAN.md`.
 
 ## Language rules
 
@@ -60,6 +60,7 @@ Folder-specific rules live in `electron/CLAUDE.md` and `src/lib/CLAUDE.md`.
 
 ```bash
 npm ci                 # install (cloud sessions: prefix ELECTRON_SKIP_BINARY_DOWNLOAD=1)
+npx -y npm@11 install … # lockfile changes: the lock has npm 11 `libc` fields, npm 10 strips them
 npm test               # Vitest — src/lib + electron modules, in Europe/Berlin time (vite.config.js) (fast, ~2 s)
 npm run lint           # ESLint (required by CI)
 npm run build:renderer # Vite build — proves the renderer compiles
@@ -81,6 +82,9 @@ target from `http://127.0.0.1:9333/json` (Node 22 has `WebSocket` built in):
 `Runtime.evaluate` (clicks, `window.api` calls), `Input.insertText` (typing),
 `Page.captureScreenshot`. Native dialogs are invisible to CDP — start `Xvfb :99`
 yourself and capture them with `import -display :99 -window root shot.png`.
+`npm run build:linux` works in the cloud too; start the AppImage (no FUSE) with
+`APPIMAGE_EXTRACT_AND_RUN=1 xvfb-run -a ./Berichtspilot-*.AppImage --no-sandbox`
+from a scratch folder — it keeps `daten.json` next to the AppImage.
 
 Without an Electron binary (cloud), the renderer also runs in a plain browser:
 `npx vite preview` serves `dist/`, and `browserApi` in `src/store.jsx` swaps the
@@ -89,10 +93,13 @@ sessions for smoke tests (global `playwright` package under `/opt/node-tools`);
 `page.addInitScript()` can install a fake `window.api` to test store flows such
 as restore/import with dialogs answered.
 
-CI (`.github/workflows/ci.yml`) runs lint + tests on every PR.
+CI (`.github/workflows/ci.yml`, Node 24 — E-026) runs lint + tests + renderer build on
+every push to `main`/`development` and on every PR.
 Release: push tag `vX.Y.Z` → `.github/workflows/release.yml` builds NSIS installer +
 AppImage + auto-update metadata (`latest*.yml`); the tag must match `package.json`
-`version` (E-017).
+`version` (E-017). The release notes are the CHANGELOG section of that version
+(the workflow fails without one); a manual run (`workflow_dispatch`) on
+`development` is a build dry run that publishes nothing.
 
 ## Project map
 
@@ -150,8 +157,13 @@ docs/                knowledge base (see above)
 
 ## Git workflow
 
-- Work on a feature branch; deliver via **pull request** against `main`; CI must be green.
-  If the session names a branch, use it.
+- **All work goes to the long-lived branch `development`** (user, E-025) — also
+  when the session names its own `claude/…` branch: `git fetch origin development
+  && git checkout development`, commit and push there (this is the user's
+  standing permission). Never create a new branch per chat.
+- `main` holds the released state. Only a release step merges: PR `development`
+  → `main` (CI green, **merge commit**, not squash), then the tag. No PR between
+  releases — CI runs on every push to `development`.
 - Conventional Commits in English (`feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:`).
 - Small, self-contained steps — ideally one PR (or at least one commit) per plan step.
 

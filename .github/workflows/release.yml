@@ -41,7 +41,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24 # = .nvmrc
           cache: npm
 
       # latest.yml carries package.json's version — a mismatching tag would
@@ -53,6 +53,22 @@ jobs:
           version="v$(node -p "require('./package.json').version")"
           if [ "$version" != "$GITHUB_REF_NAME" ]; then
             echo "Tag $GITHUB_REF_NAME does not match package.json ($version)"
+            exit 1
+          fi
+
+      # Release notes = this version's CHANGELOG section. Runs on a manual
+      # start too, so a missing section shows up before anything is tagged.
+      - name: Release notes from CHANGELOG
+        shell: bash
+        run: |
+          version="$(node -p "require('./package.json').version")"
+          awk -v v="$version" '
+            $0 ~ "^## \\[" v "\\]" { on = 1; next }
+            on && /^## \[/ { exit }
+            on { print }
+          ' CHANGELOG.md > release-notes.md
+          if [ ! -s release-notes.md ]; then
+            echo "CHANGELOG.md has no section for $version"
             exit 1
           fi
 
@@ -71,4 +87,5 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: ${{ matrix.artifact }}
+          body_path: release-notes.md
           fail_on_unmatched_files: true

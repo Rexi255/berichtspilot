@@ -5,7 +5,11 @@ improvements to the holiday/format logic.
 
 ## Setup
 
-Requires **Node.js ≥ 20.19**.
+Requires **Node.js ≥ 22.12**; recommended is **24 LTS** (`.nvmrc`) — CI and the
+release builds use it, and it is the Node inside Electron 43. Change
+dependencies with **npm 11** (bundled with Node 24; on Node 22 use
+`npx -y npm@11 install …`): the lockfile carries npm 11's `libc` fields, which
+npm 10 strips. `npm ci` works with both.
 
 ```bash
 git clone https://github.com/Rexi255/berichtspilot.git
@@ -74,6 +78,8 @@ sharing it.
 
 ## Pull requests
 
+- Work happens on the branch `development`; `main` holds the released state
+  and only receives a merge per release. Open PRs against `development`.
 - Small, focused PRs with a meaningful description.
 - Run `npm run lint`, `npm test` and `npm run build:renderer` before opening a PR.
 - For UI changes, a screenshot is appreciated.

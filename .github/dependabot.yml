@@ -1,0 +1,53 @@
+# Dependency updates (step 8.3). PRs go to `development` (E-025) and reach
+# `main` with the next release. GitHub's security updates always target `main`:
+# after merging one there, merge `main` back into `development`.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    target-branch: development
+    schedule:
+      interval: weekly
+      day: monday
+      timezone: Europe/Berlin
+    # Fresh releases wait a week — most malicious npm versions are pulled
+    # within days (security updates are not delayed)
+    cooldown:
+      default-days: 7
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: chore(deps)
+      prefix-development: chore(deps-dev)
+    groups:
+      # Alone, majors included: read
+      # https://www.electronjs.org/docs/latest/breaking-changes before merging
+      electron:
+        patterns: [electron]
+      # Builds the installer and the update metadata (latest*.yml) — check a
+      # local build before merging
+      electron-builder:
+        patterns: [electron-builder]
+      # Pinned on purpose (E-017): check the hosts it contacts and the headers
+      # it sends against the allowlist before merging
+      electron-updater:
+        patterns: [electron-updater]
+      # Everything else: minor + patch in one PR; majors come one by one
+      dependencies:
+        patterns: ['*']
+        exclude-patterns: [electron, electron-builder, electron-updater]
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    directory: /
+    target-branch: development
+    schedule:
+      interval: weekly
+      day: monday
+      timezone: Europe/Berlin
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: ci
+    groups:
+      actions:
+        patterns: ['*']

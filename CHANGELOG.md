@@ -6,6 +6,13 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [2.0.2] - 2026-10-17
+
+The safety release: daily backups you can restore, no lost changes when
+closing, a window that only shows Berichtspilot, and Electron 43.8 with its
+security fixes. From 2.0.0 or 2.0.1 the app updates itself (sidebar card or
+Settings → Updates); your data stays as it is.
+
 ### Added
 
 - **Daily backups you can restore:** Berichtspilot now keeps a copy of your
@@ -45,6 +52,9 @@ versioning follows [Semantic Versioning](https://semver.org/).
   have used the app's functions, including overwriting `daten.json`. Only the
   app's own page may talk to the background process, and the window only gets
   the permission it needs (copying to the clipboard).
+- **Electron 43.8 instead of 43.0:** brings the security fixes of the last
+  months for the app's built-in browser engine (Chromium) and Electron itself.
+  A library used by the in-app updater was updated as well.
 
 ## [2.0.1] - 2026-10-10
 

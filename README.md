@@ -88,7 +88,7 @@ Dein WebUntis-Passwort gibst du direkt auf der Seite der Schule ein, die App sie
 
 ## Entwicklung
 
-Voraussetzung: Node.js 20.19 oder neuer.
+Voraussetzung: Node.js 22.12 oder neuer (empfohlen: 24).
 
 ```bash
 npm install
