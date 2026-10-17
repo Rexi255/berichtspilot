@@ -70,10 +70,9 @@ Electron support window: 44.x stays supported until Electron 47 is out; 45
 
 ## Open questions (for the user)
 
-- **Code signing (9.4)** — ask before 9.4: SignPath Foundation (free for open
-  source) · Azure Artifact Signing · stay unsigned.
+None at the moment.
 
-(Answered 2026-10-17: v2.0.2 is released with 8.4 — phase 7 plus 8.1–8.3;
+(Answered 2026-10-17: code signing (9.4) — stay unsigned, E-028. v2.0.2 is released with 8.4 — phase 7 plus 8.1–8.3;
 the user's update test to 2.0.2 works and "Automatically delete head
 branches" is on (checked: `deleteBranchOnMerge: true`).
 Dependabot: "calmer, and Electron 44 now" → E-027, 8.5, 8.6. Release tags from
@@ -278,9 +277,8 @@ anything new is built.
       WebUntis probe must still work
 - [ ] 9.3 Checklist for the user's GitHub settings (2FA/passkey, tag protection
       `v*`, branch protection on `main`) in `CONTRIBUTING.md` → done by the user
-- [ ] 9.4 Code signing for the Windows installer — open question first (options:
-      SignPath Foundation, free for open source · Azure Artifact Signing ·
-      stay unsigned)
+- [x] ~~9.4 Code signing for the Windows installer~~ — the user chose to stay
+      unsigned (2026-10-17, E-028)
 
 ### Phase 10 — Tests beyond `src/lib`
 - [ ] 10.1 Playwright smoke test against `vite preview` (browser mode via

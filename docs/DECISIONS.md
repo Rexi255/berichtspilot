@@ -590,3 +590,23 @@ tools (`eslint` 10 failed CI: it needs a config migration together with
 
 Considered: switching Dependabot off — rejected, Electron's security
 releases would then depend on someone remembering them.
+
+### E-028 · The Windows installer stays unsigned · accepted
+Step 9.4 asked whether to sign `Berichtspilot-Setup-<version>.exe`. **The user
+(2026-10-17): stay unsigned.**
+
+- The first manual install shows SmartScreen's "Der Computer wurde durch
+  Windows geschützt"; the README explains "Weitere Informationen → Trotzdem
+  ausführen". In-app updates don't show it (checked by the user with 2.0.2).
+- Update integrity rests on electron-updater's `sha512` check against
+  `latest.yml`, fetched over HTTPS from the GitHub release. No
+  `publisherName` is configured, so there is no signature check — whoever can
+  publish a release can ship an update. That makes 9.1 (only the release job
+  may write, actions pinned to SHAs) and 9.3 (2FA, tag/branch protection) the
+  real safeguards.
+
+Considered: SignPath Foundation (free for open source, but an application
+and its signing workflow in CI) and Azure Artifact Signing (monthly fee plus
+identity validation) — not worth it for a one-person tool installed by a few
+people. Revisit if the SmartScreen warning becomes a real obstacle (e.g. the
+app is handed to other apprentices).
