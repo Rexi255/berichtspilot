@@ -97,7 +97,9 @@ CI (`.github/workflows/ci.yml`, Node 24 — E-026) runs lint + tests + renderer 
 every push to `main`/`development` and on every PR.
 Release: push tag `vX.Y.Z` → `.github/workflows/release.yml` builds NSIS installer +
 AppImage + auto-update metadata (`latest*.yml`); the tag must match `package.json`
-`version` (E-017).
+`version` (E-017). The release notes are the CHANGELOG section of that version
+(the workflow fails without one); a manual run (`workflow_dispatch`) on
+`development` is a build dry run that publishes nothing.
 
 ## Project map
 
