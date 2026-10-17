@@ -30,3 +30,16 @@ export function typeBullet(page) {
 export function block1Text(page) {
   return page.locator('[data-output="work"] pre').textContent()
 }
+
+/**
+ * Click the title bar's "Schließen". The window (and with it the page) may be
+ * gone before Playwright has finished the click — that is the expected
+ * outcome, not an error; the caller checks the app's exit and daten.json.
+ */
+export async function closeWindow(page) {
+  try {
+    await page.getByRole('button', { name: 'Schließen', exact: true }).click()
+  } catch (error) {
+    if (!/closed/i.test(error.message)) throw error
+  }
+}

@@ -7,7 +7,7 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { BLOCK_1, BULLET, MONDAY, WEDNESDAY, typeBullet, block1Text } from './week.mjs'
+import { BLOCK_1, BULLET, MONDAY, WEDNESDAY, typeBullet, block1Text, closeWindow } from './week.mjs'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 
@@ -55,7 +55,7 @@ test('closing right after typing keeps the text; a restart shows it', async () =
   await typeBullet(page)
 
   // Close at once — well inside the 400 ms autosave delay
-  await Promise.all([app.waitForEvent('close'), page.getByRole('button', { name: 'Schließen', exact: true }).click()])
+  await Promise.all([app.waitForEvent('close'), closeWindow(page)])
 
   const saved = JSON.parse(fs.readFileSync(path.join(dir, 'daten.json'), 'utf8'))
   const day = saved.weeks.find((w) => w.id === MONDAY)?.days.find((d) => d.date === WEDNESDAY)

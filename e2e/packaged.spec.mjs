@@ -10,6 +10,7 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { closeWindow } from './week.mjs'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const EXE = process.env.PACKAGED_APP ? path.resolve(ROOT, process.env.PACKAGED_APP) : null
@@ -41,9 +42,14 @@ test('the packaged app starts from app.asar, saves and closes', async () => {
   const child = spawn(
     EXE,
     [`--user-data-dir=${dir}`, '--remote-debugging-port=0', ...(process.platform === 'linux' ? ['--no-sandbox'] : [])],
-    { env, stdio: 'ignore' }
+    { env, stdio: ['ignore', 'pipe', 'pipe'] }
   )
-  const exited = new Promise((resolve) => child.on('exit', (code) => resolve(code)))
+  // The app's own output (a FATAL from the asar check lands here) — printed
+  // only if the test fails
+  let output = ''
+  child.stdout.on('data', (chunk) => (output += chunk))
+  child.stderr.on('data', (chunk) => (output += chunk))
+  const exited = new Promise((resolve) => child.on('exit', (code, signal) => resolve(signal ?? code)))
   try {
     const portFile = path.join(dir, 'DevToolsActivePort')
     await expect.poll(() => fs.existsSync(portFile), { timeout: 30_000 }).toBe(true)
@@ -56,11 +62,14 @@ test('the packaged app starts from app.asar, saves and closes', async () => {
     // Fresh profile → the setup wizard; skipping it saves setupDone
     await page.getByRole('button', { name: 'Überspringen' }).click()
     await expect(page.getByText('Noch keine Berichtswochen angelegt.')).toBeVisible()
-    await page.getByRole('button', { name: 'Schließen', exact: true }).click()
+    await closeWindow(page)
 
     expect(await exited).toBe(0)
     const saved = JSON.parse(fs.readFileSync(path.join(dir, 'daten.json'), 'utf8'))
     expect(saved.settings.setupDone).toBe(true)
+  } catch (error) {
+    console.log(`--- output of ${EXE}:\n${output.trim() || '(none)'}`)
+    throw error
   } finally {
     child.kill()
     try {
