@@ -543,3 +543,22 @@ merged into `main` only with a release.
 Considered: one branch + PR per step (the old way) — rejected by the user,
 every chat left another `claude/…` branch behind. A permanently open draft PR
 `development` → `main` for CI — not needed once CI runs on the branch push.
+
+### E-026 · Node 24 LTS for CI and release builds; `engines` ≥ 22.12 · accepted
+Step 8.2 planned Node 22 (Node 20 is EOL since 2026-04-30). Checked on
+2026-10-17 and switched to **24**:
+
+- Node 22 is in maintenance and reaches EOL on 2027-04-30 — another bump in
+  half a year. Node 24 is the active LTS (maintenance until 2028-04-30).
+- Electron 43 runs on Node 24.22 itself (`process.versions.node`), so CI tests
+  the main-process modules on the Node they really run on.
+- Node 24 ships npm 11, which writes the lockfile with its `libc` fields — the
+  form the lock already has; npm 10 (Node 22) strips them.
+
+`ci.yml`, `release.yml` and `.nvmrc` say `24`. `package.json` `engines.node`
+stays a minimum, `>=22.12.0` (Vite 8's floor on 22; 22 is still supported), so
+a contributor on 22 isn't locked out. CI also runs `npm run build:renderer`.
+Checked: clean `npm ci` with Node 24.22 + npm 11.21 → lint, 290 tests and the
+renderer build green. npm 11's install-script approval does not affect
+Electron: since 43 it has no install script and downloads its binary on the
+first start (`electron/index.js`).

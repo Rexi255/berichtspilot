@@ -38,15 +38,9 @@ WebUntis "Lehrstoff" ─────────────┘    (daten.json) 
 if the session names a `claude/…` branch) and pushes there. No PR until the
 release step 8.4. 8.1 (Electron 43.8 + audit fixes) is on `development`.
 
-**Next: 8.2 + 8.3 — Node 22 and Dependabot** (small, one commit each):
+**Next: 8.3 — Dependabot**:
 
-1. **8.2 Node 22 LTS:** `node-version: 22` in `.github/workflows/ci.yml` and
-   `release.yml`; `.nvmrc` → `22`; `package.json` `engines.node` → `>=22.12.0`;
-   CONTRIBUTING "Requires Node.js ≥ 20.19" → 22. `ci.yml` gets a step
-   `npm run build:renderer` after the tests. Mention in CONTRIBUTING that
-   lockfile changes are made with **npm 11** (`npx -y npm@11 install …`): the
-   lock carries npm 11's `libc` fields, npm 10 (bundled with Node 22) strips
-   them and produces a noisy diff; `npm ci` works with both.
+1. ~~8.2~~ done: Node 24 instead of 22 (E-026).
 2. **8.3 `.github/dependabot.yml`:** `npm` weekly — minor + patch grouped,
    `electron` in its own group (and its major updates: read
    https://www.electronjs.org/docs/latest/breaking-changes before merging),
@@ -54,7 +48,7 @@ release step 8.4. 8.1 (Electron 43.8 + audit fixes) is on `development`.
    weekly (checkout/setup-node are still on `@v4`). Both with
    `target-branch: development` (E-025).
 3. Verify: lint/test/build; YAML parses (`node -e` with a tiny parser or
-   `npx -y yaml-lint`); CI on the push to `development` is green with Node 22.
+   `npx -y yaml-lint`); CI on the push to `development` is green (Node 24).
 4. CHANGELOG: nothing user-facing (maintenance only) — skip unless the user
    wants an "Internal" note.
 5. Then 8.4 (release v2.0.2) — the user decided on 2026-10-17 to release
@@ -223,8 +217,11 @@ anything new is built.
       Electron via CDP: all views, file navigation cancelled, `window.open`
       denied, typed + closed at once → saved, restart → text back; `build:linux`
       → AppImage starts on 43.8.0, real update check → `none`)
-- [ ] 8.2 Node 22 LTS (Node 20 is EOL since 2026-04-30) in `ci.yml`, `release.yml`,
-      `.nvmrc`, `engines`, CONTRIBUTING; `npm run build:renderer` as a CI step
+- [x] 8.2 Node 24 LTS instead of the planned 22 (E-026: 22 is EOL 2027-04-30,
+      Electron 43 runs Node 24, npm 11 matches the lock) in `ci.yml`,
+      `release.yml`, `.nvmrc`; `engines` ≥ 22.12; CONTRIBUTING + README; CI also
+      runs `npm run build:renderer` (2026-10-17; clean `npm ci` + lint/tests/build
+      with Node 24.22 / npm 11.21)
 - [ ] 8.3 `.github/dependabot.yml`: npm weekly (minor/patch grouped, Electron on its
       own) + github-actions
 - [ ] 8.4 Release v2.0.2 (phase 7 + 8.1–8.3, user 2026-10-17): `npm version 2.0.2 --no-git-tag-version`,
@@ -331,3 +328,4 @@ anything new is built.
 | 2026-10-16 | Phase 7 delivered | PR #5 (merged, 3bdf5a3) |
 | 2026-10-17 | 8.1: Electron 43.8.0 + `npm audit fix` (prod audit clean) | cd102cb |
 | 2026-10-17 | E-025: long-lived `development` branch, `main` only per release; CI on `development` pushes; old `claude/…` branches merged → to be deleted by the user | `development` |
+| 2026-10-17 | 8.2: Node 24 in CI/release, CI builds the renderer (E-026) | `development` |
