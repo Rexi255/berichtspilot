@@ -7,48 +7,39 @@
 #   git tag v1.1.0
 #   git push origin v1.1.0
 #
+# A manual start (workflow_dispatch, e.g. on `development`) is a dry run: it
+# builds and checks everything and keeps the files as workflow artifacts for
+# a week, but publishes nothing.
+#
+# Least privilege (step 9.1, E-030): `check` and `build` run the project's
+# code and its npm dependencies with a read-only token; only `release` may
+# write to the repository, and it runs no project code — it attaches what the
+# builds produced. Actions are pinned to commit SHAs (Dependabot updates them
+# together with the `# vX.Y.Z` comment).
 name: Release
 
 on:
   push:
     tags:
       - 'v*'
-  workflow_dispatch: {} # manual start from the Actions UI
+  workflow_dispatch: {} # manual start from the Actions UI = dry run
 
 permissions:
-  contents: write # required to create the release
+  contents: read
 
 jobs:
-  build:
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: windows-latest
-            script: build:win
-            artifact: |
-              release/*.exe
-              release/*.exe.blockmap
-              release/latest.yml
-          - os: ubuntu-latest
-            script: build:linux
-            artifact: |
-              release/*.AppImage
-              release/latest-linux.yml
-    runs-on: ${{ matrix.os }}
+  # Fast checks before the long builds: tag = version, release notes exist
+  check:
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          node-version: 24 # = .nvmrc
-          cache: npm
+          persist-credentials: false
 
       # latest.yml carries package.json's version — a mismatching tag would
       # announce an update the app can never reach (or hide a real one)
       - name: Tag matches package.json
         if: startsWith(github.ref, 'refs/tags/v')
-        shell: bash
         run: |
           version="v$(node -p "require('./package.json').version")"
           if [ "$version" != "$GITHUB_REF_NAME" ]; then
@@ -59,7 +50,6 @@ jobs:
       # Release notes = this version's CHANGELOG section. Runs on a manual
       # start too, so a missing section shows up before anything is tagged.
       - name: Release notes from CHANGELOG
-        shell: bash
         run: |
           version="$(node -p "require('./package.json').version")"
           awk -v v="$version" '
@@ -72,6 +62,46 @@ jobs:
             exit 1
           fi
 
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release-notes
+          path: release-notes.md
+          if-no-files-found: error
+          retention-days: 7
+
+  build:
+    needs: check
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            script: build:win
+            # the unpacked app the installer was made from (same fuses + asar)
+            app: release/win-unpacked/Berichtspilot.exe
+            run: ''
+            artifact: |
+              release/*.exe
+              release/*.exe.blockmap
+              release/latest.yml
+          - os: ubuntu-latest
+            script: build:linux
+            app: release/linux-unpacked/berichtspilot
+            run: xvfb-run -a # no display on the runner
+            artifact: |
+              release/*.AppImage
+              release/latest-linux.yml
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24 # = .nvmrc
+          cache: npm
+
       - run: npm ci
 
       - name: Lint & Tests
@@ -82,10 +112,52 @@ jobs:
       - name: Build
         run: npm run ${{ matrix.script }}
 
-      - name: Release
-        if: startsWith(github.ref, 'refs/tags/v')
-        uses: softprops/action-gh-release@v3
+      # The fuses and the asar integrity check (E-029) exist only in this
+      # build: a package that doesn't start must never reach the update feed
+      - name: Packaged app starts
+        shell: bash
+        run: ${{ matrix.run }} npx playwright test --project=packaged
+        env:
+          PACKAGED_APP: ${{ matrix.app }}
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          files: ${{ matrix.artifact }}
-          body_path: release-notes.md
+          name: release-${{ matrix.os }}
+          path: ${{ matrix.artifact }}
+          if-no-files-found: error
+          retention-days: 7
+
+  # The only job with write access — on a tag only, no checkout, no npm
+  release:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # create the release, upload the files
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: release-*
+          path: release
+          merge-multiple: true
+
+      # Exactly the five files of a release — anything else means a build changed
+      - name: Files to publish
+        run: |
+          ls -l release
+          expected="latest-linux.yml latest.yml release-notes.md *.AppImage *.exe *.exe.blockmap"
+          for pattern in $expected; do
+            [ "$(cd release && ls -1 $pattern 2>/dev/null | wc -l)" = 1 ] || { echo "expected one $pattern"; exit 1; }
+          done
+          [ "$(ls -1 release | wc -l)" = 6 ] || { echo "unexpected files in release/"; exit 1; }
+
+      - uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
+        with:
+          files: |
+            release/*.exe
+            release/*.exe.blockmap
+            release/*.AppImage
+            release/latest.yml
+            release/latest-linux.yml
+          body_path: release/release-notes.md
           fail_on_unmatched_files: true
