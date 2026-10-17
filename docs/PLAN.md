@@ -67,8 +67,9 @@ session before merging into `main` and tagging):
    (no `…-vor-update.json` — the schema didn't change).
 7. Afterwards: phase 9 (release hardening) on `development`.
 
-Dependabot (since 8.3) opens its PRs against `development` on Mondays; merge
-them there when CI is green — Electron/electron-builder/electron-updater PRs
+Dependabot (8.3) reads `.github/dependabot.yml` from the default branch, so it
+starts after the 8.4 merge into `main`. Then it opens its PRs against
+`development` on Mondays; merge them there when CI is green — Electron/electron-builder/electron-updater PRs
 only after the checks named in `.github/dependabot.yml`.
 
 Electron support window: 43.x stays supported until Electron 46 is out (45 is in
