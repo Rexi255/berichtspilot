@@ -18,6 +18,7 @@ import {
 import { isoWeek, mondayOf, toISO } from './lib/dates.js'
 import { setMapping } from './lib/webuntis.js'
 import { applySetup } from './lib/setup.js'
+import { BACKUP_KINDS, backupTitle } from './lib/backups.js'
 import { showToast } from './ui/toast.jsx'
 
 const StoreContext = createContext(null)
@@ -36,6 +37,10 @@ const browserApi = {
     localStorage.setItem('daten', JSON.stringify(d))
     return { ok: true }
   },
+  onFlushRequest: () => () => {},
+  listBackups: async () => ({ ok: true, backups: [] }),
+  readBackup: async () => ({ ok: false, error: DESKTOP_ONLY }),
+  createBackup: async () => ({ ok: true, name: null }),
   exportData: async () => ({ ok: false, error: DESKTOP_ONLY }),
   importData: async () => ({ ok: false, error: DESKTOP_ONLY }),
   exportText: async () => ({ ok: false, error: DESKTOP_ONLY }),
@@ -78,7 +83,10 @@ export function StoreProvider({ children }) {
   // settings.setupDone === false). UI state only, never saved.
   const [setupRequested, setSetupRequested] = useState(false)
   const installingRef = useRef(false)
+  // Pending autosave (timer id, null = nothing waiting) and whether the last
+  // save failed — both mean "the state on screen isn't on disk yet"
   const timerRef = useRef(null)
+  const saveFailedRef = useRef(false)
   const loadedRef = useRef(false)
   // Current state for mutations that must read it BEFORE setData (undo)
   const dataRef = useRef(null)
@@ -88,8 +96,16 @@ export function StoreProvider({ children }) {
 
   // Load on start; if the file is missing, seed data is created.
   // Older files are migrated; files from NEWER app versions block loading
-  // (instead of being silently destroyed by the next autosave).
+  // (instead of being silently destroyed by the next autosave). Anything else
+  // that goes wrong here shows the error screen instead of hanging at
+  // "Lade Daten …" (step 7.5).
   useEffect(() => {
+    const failed = (error) =>
+      setLoadError({
+        message: `Die Daten konnten nicht geöffnet werden (${String(error?.message ?? error)}).`,
+        hint: 'Deine Dateien bleiben unverändert. Im Ordner „sicherungen“ neben daten.json liegen ältere Stände: Kopiere einen davon als daten.json in den Datenordner und starte Berichtspilot neu.',
+        canReveal: true,
+      })
     api.loadData().then((res) => {
       setDataPath(res.path ?? '')
       // daten.json and every backup exist but are unreadable: never fall back to
@@ -97,7 +113,7 @@ export function StoreProvider({ children }) {
       if (!res.ok) {
         setLoadError({
           message: `daten.json und alle Sicherungen sind nicht lesbar (${res.error ?? 'unbekannter Fehler'}).`,
-          hint: 'Deine Dateien bleiben unverändert. Ersetze daten.json im Datenordner durch eine lesbare Kopie (z. B. einen Export) und starte Berichtspilot neu.',
+          hint: 'Deine Dateien bleiben unverändert. Ersetze daten.json im Datenordner durch eine lesbare Kopie (z. B. aus dem Ordner „sicherungen“ oder einen Export) und starte Berichtspilot neu.',
           canReveal: true,
         })
         return
@@ -116,9 +132,20 @@ export function StoreProvider({ children }) {
       } else {
         d = seedData()
       }
+      // A hand-edited file without the lists would crash every view
+      if (!Array.isArray(d.profiles) || !Array.isArray(d.weeks)) {
+        failed(new Error('der Datei fehlen die Listen der Profile oder Wochen'))
+        return
+      }
       // Current week missing (Mon–Fri)? Create it once, right with the loaded data
-      const today = new Date()
-      const autoCreated = shouldAutoCreate(d, toISO(today)) ? newWeek(mondayOf(today), d.profiles, d.periods) : null
+      let autoCreated
+      try {
+        const today = new Date()
+        autoCreated = shouldAutoCreate(d, toISO(today)) ? newWeek(mondayOf(today), d.profiles, d.periods) : null
+      } catch (error) {
+        failed(error)
+        return
+      }
       if (autoCreated) d = { ...d, weeks: [...d.weeks, autoCreated].sort(byId) }
       loadedRef.current = true
       setData(d)
@@ -131,7 +158,7 @@ export function StoreProvider({ children }) {
       // Look for a new version once per start, only if the user leaves it on
       // (E-017). Main answers 'unsupported' without a request in dev/portable.
       if (d.settings.updateCheck) api.updateCheck().then(setUpdate, () => {})
-    })
+    }, failed)
   }, [])
 
   // Every status change (progress included) arrives as an event from main
@@ -142,7 +169,13 @@ export function StoreProvider({ children }) {
 
   const saveNow = useCallback(async (d) => {
     setSaveStatus('saving')
-    const res = await api.saveData(d)
+    let res
+    try {
+      res = await api.saveData(d)
+    } catch (error) {
+      res = { ok: false, error: String(error) }
+    }
+    saveFailedRef.current = !res.ok
     setSaveStatus(res.ok ? 'saved' : 'error')
     return res
   }, [])
@@ -151,9 +184,24 @@ export function StoreProvider({ children }) {
   useEffect(() => {
     if (!data || !loadedRef.current) return
     clearTimeout(timerRef.current)
-    timerRef.current = setTimeout(() => saveNow(data), 400)
+    timerRef.current = setTimeout(() => {
+      timerRef.current = null
+      saveNow(data)
+    }, 400)
     return () => clearTimeout(timerRef.current)
   }, [data, saveNow])
+
+  // Write what isn't on disk yet right now — before the window closes (main
+  // asks via onFlushRequest, step 7.2) or the page reloads. → { ok, error? }
+  const flush = useCallback(async () => {
+    if (!dataRef.current || !loadedRef.current) return { ok: true }
+    if (timerRef.current === null && !saveFailedRef.current) return { ok: true }
+    clearTimeout(timerRef.current)
+    timerRef.current = null
+    return saveNow(dataRef.current)
+  }, [saveNow])
+
+  useEffect(() => api.onFlushRequest(flush), [flush])
 
   // The main process enforces the WebUntis switch and address (off or no
   // address = no request at all; switching off or changing the address logs
@@ -340,6 +388,7 @@ export function StoreProvider({ children }) {
     installingRef.current = true
     setInstallingUpdate(true)
     clearTimeout(timerRef.current)
+    timerRef.current = null
     let res
     try {
       const saved = dataRef.current ? await saveNow(dataRef.current) : { ok: true }
@@ -358,6 +407,19 @@ export function StoreProvider({ children }) {
   }, [saveNow])
 
   const exportData = useCallback(() => api.exportData(data), [data])
+
+  // Snapshot in sicherungen/ right before the record gets replaced (import,
+  // restore — E-024). Pending changes are written first, so it holds exactly
+  // what is on screen; without it nothing gets replaced.
+  const snapshotBefore = useCallback(
+    async (reason) => {
+      const saved = await flush()
+      if (!saved.ok) return { ok: false, error: 'Die aktuellen Änderungen konnten nicht gespeichert werden — nichts geändert.' }
+      const res = await api.createBackup(reason)
+      return res.ok ? res : { ok: false, error: `${res.error || 'Sicherung fehlgeschlagen'} — nichts geändert.` }
+    },
+    [flush]
+  )
 
   // Import: migrate + validate the file, then ask natively whether to merge
   // (add only what's missing) or replace everything.
@@ -382,9 +444,41 @@ export function StoreProvider({ children }) {
       cancelId: 2,
     })
     if (choice !== 0 && choice !== 1) return { ok: false, canceled: true }
+    const snap = await snapshotBefore('import')
+    if (!snap.ok) return snap
     setData((d) => (choice === 0 ? mergeData(d, imported) : replaceData(d, imported)))
     return { ok: true, merged: choice === 0 }
-  }, [])
+  }, [snapshotBefore])
+
+  // Restore a snapshot from Settings → Daten: read, migrate + validate like an
+  // import, ask, keep the current state as a snapshot, then replace (the
+  // device's WebUntis and update opt-ins stay, like import "Ersetzen")
+  const restoreBackup = useCallback(
+    async (backup) => {
+      const res = await api.readBackup(backup.name)
+      if (!res.ok || !res.data) return { ok: false, error: res.error ?? 'Die Sicherung konnte nicht gelesen werden.' }
+      let restored
+      try {
+        restored = validateData(migrateData(res.data))
+      } catch (error) {
+        return { ok: false, error: String(error.message ?? error) }
+      }
+      const choice = await api.askDialog({
+        title: 'Sicherung wiederherstellen',
+        message: `Stand „${BACKUP_KINDS[backup.reason] ?? 'Sicherung'}“ vom ${backupTitle(backup)} wiederherstellen?`,
+        detail:
+          'Der aktuelle Datenbestand wird dabei komplett ersetzt. Vorher wird er selbst gesichert („Vor dem Wiederherstellen“) — du kannst also jederzeit zurück.',
+        buttons: ['Wiederherstellen', 'Abbrechen'],
+        cancelId: 1,
+      })
+      if (choice !== 0) return { ok: false, canceled: true }
+      const snap = await snapshotBefore('restore')
+      if (!snap.ok) return snap
+      setData((d) => replaceData(d, restored))
+      return { ok: true }
+    },
+    [snapshotBefore]
+  )
 
   const value = {
     data,
@@ -407,11 +501,12 @@ export function StoreProvider({ children }) {
     setWebuntisAddress,
     exportData,
     importData,
+    restoreBackup,
     setupOpen,
     completeSetup,
     skipSetup,
     openSetup,
-    saveNow: () => data && saveNow(data),
+    flush,
     update,
     checkForUpdate,
     downloadUpdate,

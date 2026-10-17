@@ -8,9 +8,11 @@ Keep this file in sync when changing process boundaries, IPC or networking.
 ┌──────────────────────────── Main process (Node) ─────────────────────────────┐
 │ electron/main.js                                                             │
 │  · frameless window, context menu + spell check (de-DE)                      │
-│  · resolve daten.json location, atomic save, rolling backups .bak1–3         │
+│  · resolve daten.json location, close flush, all IPC via handle()            │
 │  · native dialogs (export/import/ask), clipboard, reveal in file manager     │
 │  · single-instance lock                                                      │
+│ electron/guard.js       app URL only, trusted IPC senders (E-022)            │
+│ electron/storage.js     load, atomic save queue, .bak1–3, sicherungen/       │
 │ electron/net.js         network layer: allowlist, timeout, German errors     │
 │ electron/webuntis-*.js  WebUntis login window, token, week fetch (E-013)     │
 │ electron/updater.js     auto-update via electron-updater (E-017)             │
@@ -25,22 +27,34 @@ Keep this file in sync when changing process boundaries, IPC or networking.
 │ src/store.jsx  StoreProvider: loads on start, holds `data`, 400 ms autosave  │
 │ src/views/*    Overview · WeekEditor (+ PhrasingPanel, WebuntisPanel) ·      │
 │                Profiles · Settings · SetupWizard                             │
-│ src/ui/*       Titlebar · Sidebar · UpdateHint · basics · toast              │
+│ src/ui/*       Titlebar · Sidebar · UpdateHint · ErrorBoundary · basics ·    │
+│                toast                                                         │
 │ src/lib/*      pure logic: dates · holidays · format · model · notes ·       │
-│                phrasing · webuntis · update · setup                          │
+│                phrasing · webuntis · update · setup · backups                │
 └──────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ## Data flow
 
 1. Start: `store.jsx` → `api.loadData()` → main reads `daten.json` (fallback: newest
-   intact `.bakN`) → `migrateData()` upgrades old schemas → `setData`.
+   intact `.bakN`, then the newest intact snapshot in `sicherungen/`) →
+   `migrateData()` upgrades old schemas → `setData`.
    No file ⇒ `seedData()` with `settings.setupDone: false` ⇒ `App.jsx` shows
    `SetupWizard` instead of the shell (also when opened from Settings, store
    flag `setupOpen`); the current week is auto-created only after it (E-020).
 2. Every store mutation produces a new `data` object (immutable updates).
-3. A debounced effect (400 ms) → `api.saveData(data)` → main writes
-   `daten.json.tmp` + fsync → rotates backups → `rename` onto `daten.json`.
+3. A debounced effect (400 ms) → `api.saveData(data)` → main checks the shape and
+   queues it in `electron/storage.js` (E-023): one write at a time, a newer state
+   supersedes a waiting one → `daten.json.tmp` + fsync → rotates backups →
+   `rename` onto `daten.json` (retried on Windows file locks).
+   Closing the window first asks the renderer to write its pending change
+   (`app:flush` → `flush()` in the store → `app:flushed`; 3 s timeout, a failed
+   save asks "Trotzdem schließen?"); `will-quit` waits for a running write.
+   Snapshots (E-024): before the first write of a day `daten.json` is copied to
+   `sicherungen/daten-YYYY-MM-DD.json` (30 kept); before the first write with a
+   higher schema version (= after an app update) to `…-HHMMSS-vor-update.json`;
+   import and restore ask for `…-vor-import` / `…-vor-wiederherstellung` via
+   `backup:create` before they replace the record (10 of each kept).
 4. Output: `WeekEditor` calls `formatAll(week)` from `src/lib/format.js` → copy via
    `navigator.clipboard.writeText`.
 5. AI phrasing (clipboard bridge, E-011): `PhrasingPanel` builds a prompt from the
@@ -55,10 +69,20 @@ the bridge with `localStorage` stubs — handy for smoke tests.
 
 ## IPC channels
 
+Every handler is registered through `handle()` in `electron/main.js`: a call
+that doesn't come from the app page in the main window (its WebContents, top
+frame, app URL — `isTrustedSender()` in `electron/guard.js`) is refused with
+`{ ok: false, code: 'forbidden' }` before the handler runs.
+
 | Channel | preload function | Purpose / result |
 |---|---|---|
 | `data:load` | `loadData()` | read daten.json (or a backup) → `{ ok, data, path, fromBackup, error }` |
-| `data:save` | `saveData(data)` | atomic write → `{ ok, error }` |
+| `data:save` | `saveData(data)` | shape check (`checkSaveData()`), then queued atomic write → `{ ok, error }` |
+| `app:flush` (event main → renderer) | `onFlushRequest(cb)` | the window is closing: `cb` (the store's `flush()`) writes a pending autosave; the preload answers with `app:flushed` `{ ok, error? }` even if `cb` throws |
+| `app:flushed` | (preload, from `onFlushRequest`) | answer to `app:flush` — main closes the window, or asks first if `ok` is false |
+| `backup:list` | `listBackups()` | snapshots in `sicherungen/`, newest first → `{ ok, dir, backups: [{ name, date, time, reason, size }] }` (`reason`: `daily`/`update`/`import`/`restore`) |
+| `backup:read` | `readBackup(name)` | parsed content of one snapshot → `{ ok, data }`; `name` must match the snapshot name pattern (`parseSnapshotName()`), never a path. The renderer migrates + validates it like an import |
+| `backup:create` | `createBackup(reason)` | snapshot of the current `daten.json` after queued writes, `reason` only `import` or `restore` → `{ ok, name }` (`name` null without a daten.json) |
 | `data:export` | `exportData(data)` | save dialog, write JSON → `{ ok, path, canceled, error }` |
 | `data:import` | `importData()` | open dialog, read JSON (validated in renderer) → `{ ok, data, canceled, error }` |
 | `text:export` | `exportText(fileName, content)` | save one output block as .txt |
@@ -175,11 +199,41 @@ app (no app window, no IPC, daten.json untouched):
   anonymised shapes (`electron/shape.js`: keys, types, string lengths, enum-like
   values; URLs with ids replaced).
 
+## Failure handling (step 7.4)
+
+- **Render errors:** `src/ui/ErrorBoundary.jsx` wraps each view (keyed with the
+  view, so switching views clears it — e.g. to restore a snapshot in Settings)
+  and, as an outer net, everything below the title bar (sidebar, setup wizard).
+  The title bar and the store stay outside: the window buttons keep working and
+  autosave goes on. "Neu laden" runs the store's `flush()` first.
+- **Renderer crash** (`render-process-gone`, not `clean-exit`): main shows
+  "Die Anzeige ist abgestürzt" with "Neu laden" / "Beenden"; the close
+  handshake is skipped for a gone renderer.
+
 ## Security model
 
 - Main window: `contextIsolation: true`, `nodeIntegration: false`, `sandbox: true`.
-- CSP in `index.html`: `default-src 'self'`, no external scripts/hosts.
-- Planned for the overhaul: secrets via `safeStorage` in a separate file (not in
-  daten.json); any third-party page only in its own `BrowserWindow` with a separate
-  session partition and a minimal preload; microphone permission granted only to
-  the app's own window.
+- **The main window only shows the app (E-022, step 7.1):** `will-navigate` /
+  `will-redirect` to anything but the app URL are cancelled (a dropped file, a
+  stray link — the preload would hand that page the full `window.api`),
+  `<webview>` is refused, external links go to the system browser through the
+  window open handler (https only). The app URL is the built `dist/index.html`
+  (compared as a file path) or, unpacked only, the Vite dev server origin from
+  `VITE_DEV_SERVER_URL` — a packaged app never loads a URL from the environment.
+- IPC only from the app page (`handle()` + `isTrustedSender()`, see "IPC
+  channels"); `data:save` additionally refuses anything that isn't shaped like
+  the record (`checkSaveData()`: object with integer `version`, `settings`,
+  `profiles`, `weeks`).
+- Permission requests of the main window: only `clipboard-sanitized-write`
+  (copying the output blocks), everything else is denied (`ALLOWED_PERMISSIONS`
+  in `electron/guard.js`; dictation will add `media` there, step 2.3). The
+  WebUntis login partition denies everything.
+- The renderer ignores files dragged onto the window (`src/main.jsx`).
+- CSP in `index.html`: `default-src 'self'`, no external scripts/hosts. The
+  dev server entries (`ws://` / `http://localhost:5173`) are removed from the
+  built `dist/index.html` by a Vite plugin (`vite.config.js`); the build fails if
+  they can't be found.
+- Dev flags (`--screenshot`, `--view`, `--scroll`) work in unpacked runs only.
+- Planned: secrets via `safeStorage` in a separate file (not in daten.json); any
+  third-party page only in its own `BrowserWindow` with a separate session
+  partition and a minimal preload.

@@ -12,7 +12,25 @@ import {
   mondayOfIsoWeek,
   weekRangeLabel,
   inRange,
+  daysBetween,
 } from './dates.js'
+
+describe('test environment', () => {
+  it('runs in German local time, DST included (vite.config.js test.env)', () => {
+    expect(new Date(2026, 0, 15).getTimezoneOffset()).toBe(-60)
+    expect(new Date(2026, 2, 30).getTimezoneOffset()).toBe(-120)
+  })
+})
+
+describe('daysBetween', () => {
+  it('counts calendar days, also across the DST switch', () => {
+    expect(daysBetween('2026-03-23', '2026-03-30')).toBe(7) // spring forward on 29.03.
+    expect(daysBetween('2026-10-19', '2026-10-26')).toBe(7) // fall back on 25.10.
+    expect(daysBetween('2026-04-20', '2026-04-20')).toBe(0)
+    expect(daysBetween('2026-05-01', '2026-04-27')).toBe(-4)
+    expect(daysBetween('2025-12-29', '2026-01-02')).toBe(4)
+  })
+})
 
 describe('toISO / parseISO / formatDE', () => {
   it('are consistent with each other (local, no UTC offset)', () => {

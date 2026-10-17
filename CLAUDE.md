@@ -5,7 +5,8 @@ for an apprentice (IT specialist for system integration, Schleswig-Holstein,
 Germany). Current release: v2.0.1 — entry by hand or from notes, WebUntis
 import, AI phrasing via the clipboard, in-app updates → three exactly formatted
 text blocks to copy into the IHK portal.
-**Next:** UI overhaul (v2.1) and voice dictation (parked) — see `docs/PLAN.md`.
+**Next:** hardening + maintenance (phases 7–10 from the 2026-10-15 code review,
+release v2.0.2), then the UI overhaul (v2.1); voice dictation is parked — see `docs/PLAN.md`.
 
 ## Language rules
 
@@ -59,11 +60,11 @@ Folder-specific rules live in `electron/CLAUDE.md` and `src/lib/CLAUDE.md`.
 
 ```bash
 npm ci                 # install (cloud sessions: prefix ELECTRON_SKIP_BINARY_DOWNLOAD=1)
-npm test               # Vitest — pure logic in src/lib (fast, <1 s)
+npm test               # Vitest — src/lib + electron modules, in Europe/Berlin time (vite.config.js) (fast, ~2 s)
 npm run lint           # ESLint (required by CI)
 npm run build:renderer # Vite build — proves the renderer compiles
 npm run dev            # Vite + Electron with hot reload (needs a display)
-electron . --screenshot=shot.png [--view=editor|profiles|settings] [--scroll=<css selector>]  # headless UI check
+electron . --screenshot=shot.png [--view=editor|profiles|settings] [--scroll=<css selector>]  # headless UI check (unpacked runs only)
 ```
 
 Dev mode keeps `daten.json` in the **current working directory** — run screenshot
@@ -75,11 +76,18 @@ or Electron starts as plain Node.
 Cloud sessions can still fetch the Electron binary (`node node_modules/electron/install.js`)
 and run it headless: `xvfb-run -a node_modules/electron/dist/electron --no-sandbox <dir>`
 (the cloud proxy blocks most external hosts — test network code against a local server).
+To drive the real app, add `--remote-debugging-port=9333` and talk CDP to the page
+target from `http://127.0.0.1:9333/json` (Node 22 has `WebSocket` built in):
+`Runtime.evaluate` (clicks, `window.api` calls), `Input.insertText` (typing),
+`Page.captureScreenshot`. Native dialogs are invisible to CDP — start `Xvfb :99`
+yourself and capture them with `import -display :99 -window root shot.png`.
 
 Without an Electron binary (cloud), the renderer also runs in a plain browser:
 `npx vite preview` serves `dist/`, and `browserApi` in `src/store.jsx` swaps the
 IPC bridge for `localStorage`. Playwright + Chromium are preinstalled in cloud
-sessions for smoke tests.
+sessions for smoke tests (global `playwright` package under `/opt/node-tools`);
+`page.addInitScript()` can install a fake `window.api` to test store flows such
+as restore/import with dialogs answered.
 
 CI (`.github/workflows/ci.yml`) runs lint + tests on every PR.
 Release: push tag `vX.Y.Z` → `.github/workflows/release.yml` builds NSIS installer +
@@ -89,15 +97,17 @@ AppImage + auto-update metadata (`latest*.yml`); the tag must match `package.jso
 ## Project map
 
 ```
-electron/main.js     window, daten.json location, atomic save + backups, all IPC handlers
+electron/main.js     window, daten.json location, close flush, all IPC handlers
+electron/storage.js  daten.json load + atomic save + backups, one write at a time (E-003, E-023)
 electron/preload.js  contextBridge → window.api (the only bridge to the renderer)
+electron/guard.js    main window guard: app URL only, trusted IPC senders, save shape check (E-022)
 electron/net.js      network layer: host allowlist, timeout, German error texts (E-007)
 electron/updater.js  auto-update via electron-updater (E-017): check / download / install, allowlist on its session
 electron/webuntis-probe.js  dev spike `--webuntis-probe` (E-013); shape.js = JSON/URL anonymiser
 src/store.jsx        central state (React context), 400 ms autosave, all mutations
-src/lib/             PURE logic, fully tested: dates · holidays · format · model · notes · phrasing · webuntis · update · setup
+src/lib/             PURE logic, fully tested: dates · holidays · format · model · notes · phrasing · webuntis · update · setup · backups
 src/views/           screens: overview · week editor (+ PhrasingPanel, WebuntisPanel) · profiles · settings · setup wizard
-src/ui/              design system: Titlebar, Sidebar, UpdateHint, basics, toast, Logo
+src/ui/              design system: Titlebar, Sidebar, UpdateHint, ErrorBoundary, basics, toast, Logo
 src/index.css        Tailwind v4 + design tokens/themes (data-theme on <html>)
 docs/                knowledge base (see above)
 ```
@@ -109,7 +119,7 @@ docs/                knowledge base (see above)
    holds real IHK examples — never edit those expectations to make tests pass.
 2. **No data loss.** `daten.json` holds the user's entire training record.
    Schema change ⇒ bump `DATA_VERSION` + migration step + test. Never weaken the
-   atomic write/backup logic in `electron/main.js`.
+   atomic write/backup logic in `electron/storage.js`.
 3. **Electron security.** `contextIsolation: true`, `nodeIntegration: false`,
    `sandbox: true`, strict CSP. The renderer never gets Node/`fs`/network directly —
    everything goes through a named IPC channel exposed in `preload.js`.
@@ -121,7 +131,9 @@ docs/                knowledge base (see above)
 6. **Customer data protection.** Text leaving the machine must be visible to and
    confirmed by the user first; no silent uploads.
 7. **Dates:** ISO strings `YYYY-MM-DD`, always parsed as local dates via
-   `parseISO()` — never `new Date('YYYY-MM-DD')` (UTC offset bug).
+   `parseISO()` — never `new Date('YYYY-MM-DD')` (UTC offset bug). Day
+   differences via `daysBetween()`, never milliseconds between local dates
+   (23/25-hour days at the DST switch).
 8. **"Easy to use" is a product principle:** download → install → it works. No
    mandatory extra installs (Python, Docker, Ollama …) for core features.
 

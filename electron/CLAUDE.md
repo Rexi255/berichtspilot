@@ -5,10 +5,12 @@ may only do what `preload.js` exposes.
 
 ## Rules
 
-- **A new channel touches three places:** `ipcMain.handle('area:action', …)` in
-  `main.js`, a named function in `preload.js`, and a fallback in `browserApi` in
-  `src/store.jsx` (so `vite` in a plain browser doesn't crash). Then add it to the
-  channel table in `docs/ARCHITECTURE.md`.
+- **A new channel touches three places:** `handle('area:action', …)` in
+  `main.js` (never `ipcMain.handle` directly — `handle()` refuses callers that
+  aren't the app page, `electron/guard.js`), a named function in `preload.js`,
+  and a fallback in `browserApi` in `src/store.jsx` (so `vite` in a plain
+  browser doesn't crash). Then add it to the channel table in
+  `docs/ARCHITECTURE.md`.
 - Channel names: `area:action` in English (`data:save`, `window:close`).
 - Handlers return `{ ok: true, … }` or `{ ok: false, error: '…' }` — don't throw
   (errors lose their type across IPC). User-facing error texts are German.
@@ -16,8 +18,9 @@ may only do what `preload.js` exposes.
   URLs or shell commands from the renderer unchecked.
 - Never expose raw `ipcRenderer` or a generic "invoke(channel)" bridge.
 - Don't change the main window's `webPreferences` (`contextIsolation`,
-  `nodeIntegration: false`, `sandbox`). Additional windows get their **own session
-  partition** and their own minimal preload.
+  `nodeIntegration: false`, `sandbox`) and keep its guards: navigation only to
+  the app URL, permissions only from `ALLOWED_PERMISSIONS` (E-022). Additional
+  windows get their **own session partition** and their own minimal preload.
 - **Network:** only here, only to hosts in the allowlist in `docs/ARCHITECTURE.md`.
 - **Secrets:** only via `safeStorage.encryptString()` in a dedicated file next to
   `daten.json` (never inside it). Never log them, never send them back to the
@@ -25,10 +28,12 @@ may only do what `preload.js` exposes.
 
 ## Storage logic (do not weaken)
 
-`resolveDataDir()` (dev → CWD, portable → next to the executable if writable,
-otherwise `userData`) and `writeData()` (tmp + fsync → rotate backups → atomic
-rename) are acceptance criteria. Change them only with a written rationale in
-`docs/DECISIONS.md`.
+`resolveDataDir()` in `main.js` (dev → CWD, portable → next to the executable if
+writable, otherwise `userData`) and `createStorage()` in `storage.js` (writes one
+at a time; tmp + fsync → rotate backups → atomic rename, retried on Windows file
+locks) are acceptance criteria. Change them only with a written rationale in
+`docs/DECISIONS.md` (E-003, E-023). The close flush (`app:flush` → renderer saves
+→ `app:flushed`) and the `will-quit` wait for running writes belong to it.
 
 ## Testing
 

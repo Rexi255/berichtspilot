@@ -6,6 +6,46 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- **Daily backups you can restore:** Berichtspilot now keeps a copy of your
+  data for each day (the last 30 days) in the folder `sicherungen` next to
+  `daten.json`, plus one before every app update, import and restore. Settings →
+  Daten → "Sicherungen" lists them; "Wiederherstellen" brings an older state
+  back — the current one is saved first, so you can always go back.
+
+### Fixed
+
+- **Training progress after the clock change:** on the Monday after the switch
+  to summer time, the progress tile showed the previous week (only for a
+  training that started in winter).
+- **Holiday name for your federal state:** setting a day to "Feiertag" now
+  suggests the holiday of the profile's state (e.g. "Heilige Drei Könige" in
+  Bayern) instead of always using Schleswig-Holstein.
+- **"Rückgängig" after "Mit KI formulieren" / "Aus WebUntis füllen"** only
+  undoes those bullets or subjects — changes you made meanwhile on other days
+  or in "Unterweisungen" stay.
+- **Notifications disappear on time** even when a new one shows up meanwhile.
+- **A damaged data file shows an explanation** instead of hanging at
+  "Lade Daten …".
+- **An error in one view no longer blanks the whole window:** Berichtspilot
+  shows a message with "Neu laden" and "Fehlerdetails kopieren" instead; the
+  window buttons and the other views keep working (e.g. to restore a backup).
+  If the display crashes completely, a dialog offers to reload it.
+- **Closing right after typing no longer loses the last change:** the app now
+  saves before the window closes. If saving fails, it asks before closing
+  instead of silently dropping the change.
+- **"Fehler beim Speichern!" from two saves at once:** saves now run one after
+  another, and a file briefly locked by a virus scanner (Windows) is retried.
+
+### Security
+
+- **The app window only shows Berichtspilot:** a file dragged onto the window
+  (or any other page) can no longer replace the app — before, such a page could
+  have used the app's functions, including overwriting `daten.json`. Only the
+  app's own page may talk to the background process, and the window only gets
+  the permission it needs (copying to the clipboard).
+
 ## [2.0.1] - 2026-10-10
 
 ### Changed

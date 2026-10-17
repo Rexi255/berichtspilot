@@ -437,3 +437,85 @@ reason to pick, so it is treated as "not chosen"; any other value is kept.
 Weeks that already exist are left alone. Considered: Enter jumping into an
 empty bullet below instead of inserting — possible later, but one bullet
 already removes the problem.
+
+### E-022 · The main window only shows the app; IPC only from the app page · accepted
+Code review (2026-10-15, user asked for it): the main window had no navigation
+guard and the IPC handlers didn't check the caller. A page the window navigated
+to — Chromium opens a file dropped onto the window in place — got the full
+`window.api` from the preload; a test page overwrote `daten.json` with
+`saveData()` (shown in a scratch folder), and three more saves would have
+rotated every `.bak` out. Fix (step 7.1):
+
+- `will-navigate` / `will-redirect` only to the app URL (`createAppUrlCheck()`:
+  the built `index.html` compared as a file path — Windows drive-letter case and
+  percent-encoding can't cause a mismatch — or the dev server origin when
+  unpacked); no `<webview>`.
+- Every IPC handler goes through `handle()`: sender must be the main window's
+  WebContents, top frame, app URL (`isTrustedSender()`), else `code: 'forbidden'`.
+- `data:save` checks the record's shape (`checkSaveData()`), schema-version
+  agnostic so a schema bump never needs a main-process change.
+- Permission requests: only `clipboard-sanitized-write`; dictation adds `media`
+  later. Checked in Electron: copying works, notifications/geolocation denied.
+- Smaller items from the same review: the renderer ignores dropped files, the
+  production CSP drops the dev server hosts, `VITE_DEV_SERVER_URL` and the
+  screenshot flags only count in unpacked runs.
+
+Considered: a navigation guard alone — rejected, the sender check is the safety
+net if a navigation path is ever missed (iframes, future features).
+
+### E-023 · Saving: one write at a time, flush before closing · accepted
+Code review (2026-10-15): two overlapping saves (a save slower than the 400 ms
+autosave delay — virus scanner, USB stick — or the save before an update
+install) shared `daten.json.tmp`; in a simulation one of each pair failed with
+`ENOENT` ("Fehler beim Speichern!") and `daten.json` briefly pointed at a file
+still being written. Closing the window within 400 ms of the last keystroke
+dropped that change (reproduced in Electron: typed, closed at once → text
+missing). Extends E-003, nothing weakened (step 7.2):
+
+- `electron/storage.js` (`createStorage()`, tested against a temp folder) owns
+  load + save. Writes run one after another; while one runs, only the newest
+  waiting state is kept, and superseded callers get the newer result. The
+  steps stay tmp + fsync → `.bak1–3` → atomic rename.
+- The final rename is retried on `EPERM`/`EBUSY`/`EACCES` (Windows scanners and
+  indexers lock fresh files briefly): 50, 100, 200, 400, 800 ms, then error.
+- Close handshake: the window's `close` is held, main sends `app:flush`, the
+  store's `flush()` writes a pending (or previously failed) save, the preload
+  answers `app:flushed`. A failed save asks "Trotzdem schließen?"; a crashed
+  renderer or no answer within 3 s doesn't block closing. `will-quit` waits for a
+  running write. Checked in Electron: typed + closed at once → saved; failing
+  write → window stays open with the question.
+
+### E-024 · Snapshots in `sicherungen/`: daily + before update, import, restore · accepted
+Code review (2026-10-15): `.bak1–3` rotate on every autosave, so they only
+cover the last few seconds — they protect against a corrupted file, not against
+a logic error. Every start saves right after loading (and migrating), so a
+faulty migration would have pushed the original out of all backups within
+three starts or edits. Additive to E-003/E-023 (step 7.3):
+
+- Folder `sicherungen/` next to `daten.json` (German: the user may browse it),
+  plain copies of `daten.json`:
+  - `daten-YYYY-MM-DD.json` — before the first save of a day (the state the
+    day started with), 30 kept (≈ a month back);
+  - `daten-YYYY-MM-DD-HHMMSS-vor-update.json` — before the first save whose
+    `version` is higher than the file on disk (= first start after an app
+    update with a schema change), 10 kept;
+  - `…-vor-import.json` / `…-vor-wiederherstellung.json` — requested by the
+    renderer (`backup:create`) after flushing pending changes and before it
+    replaces the record; without the snapshot nothing gets replaced. 10 each.
+- Automatic snapshots never block a save (like the `.bak` rotation); the
+  requested ones report errors.
+- Restore in Settings → Daten → "Sicherungen": read (`backup:read`, name pattern
+  only, never a path) → `migrateData()` + `validateData()` → native question →
+  snapshot "vor-wiederherstellung" → `replaceData()` (the device's WebUntis and
+  update opt-ins stay, like import "Ersetzen").
+- Load falls back to the newest readable snapshot after `.bak3`.
+- Size: a 3-year record is ~1–2 MB, so at most ~60 snapshots ≈ 100 MB in the
+  worst case — acceptable for the safety; the limits live in `KEEP`
+  (`electron/storage.js`).
+
+Checked: Electron with a v10 file → `daten-2026-10-16.json` + `…-vor-update.json`
+holding the v10 state, IPC refuses `../daten.json` and unknown reasons;
+browser mode with a fake bridge: restore = read → ask → snapshot → replace,
+cancel changes nothing, import snapshots before replacing.
+Considered: snapshots on every app start — rejected, a day is the unit the user
+thinks in ("gestern war noch alles da"), and starts can be many per day.

@@ -7,6 +7,8 @@ const fsp = fs.promises
 const { createWebUntisSession, cleanServer, PARTITION: WEBUNTIS_PARTITION } = require('./webuntis-session')
 const { fetchWeek } = require('./webuntis')
 const { createUpdater } = require('./updater')
+const { ALLOWED_PERMISSIONS, createAppUrlCheck, isTrustedSender, checkSaveData } = require('./guard')
+const { createStorage } = require('./storage')
 
 // ---------------------------------------------------------------------------
 // Location of daten.json. Goal: keep the file "portable" next to the
@@ -52,52 +54,29 @@ function resolveDataDir() {
 // The file name stays German for compatibility with existing installs (DECISIONS E-014)
 const DATA_PATH = path.join(resolveDataDir(), 'daten.json')
 
-// How many rolling backups (daten.json.bak1 … .bakN) we keep.
-const MAX_BACKUPS = 3
-
-/**
- * Back up the previous state, rolling, BEFORE daten.json is overwritten:
- * .bak2 -> .bak3, .bak1 -> .bak2, daten.json -> .bak1 (copy). We copy instead
- * of moving so daten.json keeps existing until the final atomic rename. That
- * way the last MAX_BACKUPS states survive and a corrupted daten.json can be
- * restored from them.
- */
-async function rotateBackups() {
-  try {
-    await fsp.access(DATA_PATH) // no daten.json yet -> nothing to back up
-  } catch {
-    return
-  }
-  await fsp.rm(`${DATA_PATH}.bak${MAX_BACKUPS}`, { force: true }).catch(() => {})
-  for (let i = MAX_BACKUPS - 1; i >= 1; i--) {
-    await fsp.rename(`${DATA_PATH}.bak${i}`, `${DATA_PATH}.bak${i + 1}`).catch(() => {})
-  }
-  await fsp.copyFile(DATA_PATH, `${DATA_PATH}.bak1`).catch(() => {})
-}
-
-/**
- * Write atomically and safely. A crash/power failure must never destroy a
- * training record that grew over years:
- *  1. Write the new data completely into a temp file and force it to disk
- *     via fsync — the old daten.json stays untouched meanwhile.
- *  2. Back up the previous state, rolling (.bak1 … .bakN).
- *  3. Atomically rename the temp file into place (rename is atomic within one
- *     partition — daten.json never exists half-written).
- */
-async function writeData(json) {
-  const tmp = DATA_PATH + '.tmp'
-  const fh = await fsp.open(tmp, 'w')
-  try {
-    await fh.writeFile(json, 'utf8')
-    await fh.sync() // buffers guaranteed on disk
-  } finally {
-    await fh.close()
-  }
-  await rotateBackups()
-  await fsp.rename(tmp, DATA_PATH)
-}
+// Loading, atomic saving and backups: electron/storage.js (E-003, step 7.2)
+const storage = createStorage({ dataPath: DATA_PATH })
 
 let win = null
+
+// The app's own page (step 7.1): the dev server only in an unpacked dev run —
+// a packaged app never loads a URL from the environment
+const DEV_SERVER_URL = app.isPackaged ? null : process.env.VITE_DEV_SERVER_URL || null
+const INDEX_FILE = path.join(__dirname, '..', 'dist', 'index.html')
+const isAppUrl = createAppUrlCheck({ devServerUrl: DEV_SERVER_URL, indexFile: INDEX_FILE })
+
+/**
+ * ipcMain.handle for the app page only: calls from any other page (the window
+ * navigated away, an iframe, another window) are refused before `fn` runs.
+ */
+function handle(channel, fn) {
+  ipcMain.handle(channel, (event, ...args) => {
+    if (!isTrustedSender(event, { webContents: win?.webContents, isAppUrl })) {
+      return { ok: false, code: 'forbidden', error: 'Anfrage abgelehnt.' }
+    }
+    return fn(event, ...args)
+  })
+}
 
 function createWindow() {
   win = new BrowserWindow({
@@ -119,6 +98,54 @@ function createWindow() {
   })
 
   win.once('ready-to-show', () => win.show())
+
+  // Closing writes the renderer's pending autosave first (step 7.2): the close
+  // is held back, the renderer flushes and answers, then the window closes for
+  // real. A failed save asks before anything is lost; a renderer that crashed
+  // or doesn't answer in time doesn't block closing.
+  let closeAllowed = false
+  let rendererGone = false
+  win.on('close', (event) => {
+    if (closeAllowed || rendererGone || win.webContents.isCrashed()) return
+    event.preventDefault()
+    if (flushWaiter) return // already asking
+    flushRenderer().then(async (result) => {
+      if (win.isDestroyed()) return
+      if (result.ok === false) {
+        const { response } = await dialog.showMessageBox(win, {
+          type: 'warning',
+          title: 'Nicht gespeichert',
+          message: 'Die letzten Änderungen konnten nicht gespeichert werden.',
+          detail: `${result.error || ''}\n\nBeim Schließen gehen sie verloren.`.trim(),
+          buttons: ['Trotzdem schließen', 'Abbrechen'],
+          defaultId: 1,
+          cancelId: 1,
+          noLink: true,
+        })
+        if (response !== 0) return
+      }
+      closeAllowed = true
+      win.close()
+    })
+  })
+
+  // The window shows the app and nothing else (step 7.1): no navigation away
+  // (a file dropped onto the window, a link without target), no <webview>.
+  // External links open in the browser via the window open handler below.
+  const stayOnApp = (event, url) => {
+    if (!isAppUrl(event.url ?? url)) event.preventDefault()
+  }
+  win.webContents.on('will-navigate', stayOnApp)
+  win.webContents.on('will-redirect', stayOnApp)
+  win.webContents.on('will-attach-webview', (event) => event.preventDefault())
+  // Only the permissions the app needs, only for its own page
+  win.webContents.session.setPermissionRequestHandler((contents, permission, callback, details) => {
+    callback(
+      contents === win.webContents &&
+        ALLOWED_PERMISSIONS.has(permission) &&
+        isAppUrl(details?.requestingUrl ?? contents.getURL())
+    )
+  })
 
   // German spell checking in input fields. May fail if the OS offers no German
   // dictionary — then we simply go without.
@@ -159,6 +186,30 @@ function createWindow() {
     if (menu.items.length > 0) menu.popup()
   })
 
+  // The renderer crashed or was killed (step 7.4): the frameless window would
+  // stay blank without a close button. Saved data is on disk; offer a reload.
+  win.webContents.on('render-process-gone', async (_ev, details) => {
+    if (details?.reason === 'clean-exit' || win.isDestroyed()) return
+    rendererGone = true
+    const { response } = await dialog.showMessageBox(win, {
+      type: 'error',
+      title: 'Berichtspilot',
+      message: 'Die Anzeige ist abgestürzt.',
+      detail: 'Deine gespeicherten Daten sind sicher — verloren ist höchstens die Eingabe der letzten Sekunde.',
+      buttons: ['Neu laden', 'Beenden'],
+      defaultId: 0,
+      cancelId: 1,
+      noLink: true,
+    })
+    if (win.isDestroyed()) return
+    if (response === 0) {
+      win.webContents.once('did-finish-load', () => (rendererGone = false))
+      win.reload()
+    } else {
+      win.close()
+    }
+  })
+
   // Report the maximized state to the renderer (for the title bar icon)
   const reportMaximized = () => {
     if (!win.isDestroyed()) {
@@ -174,16 +225,17 @@ function createWindow() {
     return { action: 'deny' }
   })
 
-  if (process.env.VITE_DEV_SERVER_URL) {
-    win.loadURL(process.env.VITE_DEV_SERVER_URL)
+  if (DEV_SERVER_URL) {
+    win.loadURL(DEV_SERVER_URL)
   } else {
-    win.loadFile(path.join(__dirname, '..', 'dist', 'index.html'))
+    win.loadFile(INDEX_FILE)
   }
 
   // Dev helper: `electron . --screenshot=path.png [--view=editor] [--scroll=selector]`
   // renders the app, saves a screenshot and quits (for UI checks without a
   // display). `--scroll` brings an element below the fold into view first.
-  const shotArg = process.argv.find((a) => a.startsWith('--screenshot='))
+  // Unpacked runs only — the installed app ignores these flags.
+  const shotArg = !app.isPackaged && process.argv.find((a) => a.startsWith('--screenshot='))
   if (shotArg) {
     const targetPath = shotArg.slice('--screenshot='.length)
     const viewArg = process.argv.find((a) => a.startsWith('--view='))
@@ -191,10 +243,8 @@ function createWindow() {
     win.webContents.once('did-finish-load', () => {
       setTimeout(async () => {
         if (viewArg) {
-          const view = viewArg.split('=')[1]
-          await win.webContents.executeJavaScript(
-            `document.querySelector('[data-nav="${view}"]')?.click()`
-          )
+          const selector = JSON.stringify(`[data-nav="${viewArg.split('=')[1].replace(/[^\w-]/g, '')}"]`)
+          await win.webContents.executeJavaScript(`document.querySelector(${selector})?.click()`)
           await new Promise((r) => setTimeout(r, 900))
         }
         if (scrollArg) {
@@ -213,41 +263,49 @@ function createWindow() {
 }
 
 // ---------------------------------------------------------------------------
+// Flush on close (step 7.2): main asks with `app:flush`, the preload answers
+// with `app:flushed` once the renderer's pending save is written
+// ---------------------------------------------------------------------------
+const FLUSH_TIMEOUT_MS = 3000
+let flushWaiter = null
+
+/** Ask the renderer to save now → `{ ok, error? }` (`ok` also on timeout). */
+function flushRenderer() {
+  return new Promise((resolve) => {
+    const timer = setTimeout(() => finish({ ok: true, timedOut: true }), FLUSH_TIMEOUT_MS)
+    function finish(result) {
+      clearTimeout(timer)
+      flushWaiter = null
+      resolve(result && typeof result === 'object' ? result : { ok: true })
+    }
+    flushWaiter = finish
+    win.webContents.send('app:flush')
+  })
+}
+
+handle('app:flushed', (_ev, result) => {
+  flushWaiter?.({ ok: result?.ok !== false, error: typeof result?.error === 'string' ? result.error : undefined })
+  return { ok: true }
+})
+
+// ---------------------------------------------------------------------------
 // IPC: persistence (load/save) + export/import via native dialogs
 // ---------------------------------------------------------------------------
-ipcMain.handle('data:load', async () => {
-  // daten.json first, then the backups in order. If the main file is corrupt
-  // (JSON error after an aborted write), the newest readable backup is used.
-  const candidates = [DATA_PATH]
-  for (let i = 1; i <= MAX_BACKUPS; i++) candidates.push(`${DATA_PATH}.bak${i}`)
+handle('data:load', () => storage.load())
 
-  let lastError = null
-  for (const file of candidates) {
-    try {
-      const content = await fsp.readFile(file, 'utf8')
-      const data = JSON.parse(content) // throws for a corrupt file
-      return { ok: true, data, path: DATA_PATH, fromBackup: file !== DATA_PATH }
-    } catch (error) {
-      if (error.code === 'ENOENT') continue // file doesn't exist -> next one
-      lastError = error // exists but is broken -> try a backup
-    }
-  }
-  // None of the files existed -> genuine first start (not an error)
-  if (!lastError) return { ok: true, data: null, path: DATA_PATH }
-  // Existing files are all unreadable/corrupt
-  return { ok: false, error: String(lastError), path: DATA_PATH }
+handle('data:save', async (_ev, data) => {
+  const invalid = checkSaveData(data)
+  if (invalid) return { ok: false, error: invalid }
+  return storage.save(data)
 })
 
-ipcMain.handle('data:save', async (_ev, data) => {
-  try {
-    await writeData(JSON.stringify(data, null, 2))
-    return { ok: true }
-  } catch (error) {
-    return { ok: false, error: String(error) }
-  }
-})
+// Snapshots in sicherungen/ (E-024): list, read one (validated name, never a
+// path from the renderer), and take one before an import or a restore
+handle('backup:list', () => storage.listSnapshots())
+handle('backup:read', (_ev, name) => storage.readSnapshot(name))
+handle('backup:create', (_ev, reason) => storage.snapshot(reason))
 
-ipcMain.handle('data:export', async (_ev, data) => {
+handle('data:export', async (_ev, data) => {
   const { canceled, filePath } = await dialog.showSaveDialog(win, {
     title: 'Daten exportieren',
     defaultPath: `berichtspilot-backup-${new Date().toISOString().slice(0, 10)}.json`,
@@ -262,7 +320,7 @@ ipcMain.handle('data:export', async (_ev, data) => {
   }
 })
 
-ipcMain.handle('data:import', async () => {
+handle('data:import', async () => {
   const { canceled, filePaths } = await dialog.showOpenDialog(win, {
     title: 'Daten importieren',
     filters: [{ name: 'JSON', extensions: ['json'] }],
@@ -279,7 +337,7 @@ ipcMain.handle('data:import', async () => {
 })
 
 // Export a single text block as .txt
-ipcMain.handle('text:export', async (_ev, { fileName, content }) => {
+handle('text:export', async (_ev, { fileName, content }) => {
   const { canceled, filePath } = await dialog.showSaveDialog(win, {
     title: 'Als .txt exportieren',
     defaultPath: fileName,
@@ -296,14 +354,14 @@ ipcMain.handle('text:export', async (_ev, { fileName, content }) => {
 
 // Read the clipboard (for "Aus Zwischenablage" in the editor) — the sandboxed
 // renderer has no reliable clipboard read access.
-ipcMain.handle('clipboard:read', () => clipboard.readText())
+handle('clipboard:read', () => clipboard.readText())
 
 // Show daten.json in the file manager (Settings -> Daten)
-ipcMain.handle('path:reveal', () => shell.showItemInFolder(DATA_PATH))
+handle('path:reveal', () => shell.showItemInFolder(DATA_PATH))
 
 // Generic native question dialog (e.g. import: merge/replace).
 // Returns the index of the clicked button.
-ipcMain.handle('dialog:ask', async (_ev, { title, message, detail, buttons, cancelId }) => {
+handle('dialog:ask', async (_ev, { title, message, detail, buttons, cancelId }) => {
   const { response } = await dialog.showMessageBox(win, {
     type: 'question',
     title,
@@ -322,13 +380,13 @@ ipcMain.handle('dialog:ask', async (_ev, { title, message, detail, buttons, canc
 // (checked by cleanServer(): only *.webuntis.com hosts, E-019) and a Monday date
 // (validated in fetchWeek).
 const webuntis = createWebUntisSession()
-ipcMain.handle('webuntis:status', () => webuntis.status())
-ipcMain.handle('webuntis:login', () => webuntis.openLogin({ parent: win }))
-ipcMain.handle('webuntis:logout', () => webuntis.logout())
-ipcMain.handle('webuntis:configure', (_e, config) =>
+handle('webuntis:status', () => webuntis.status())
+handle('webuntis:login', () => webuntis.openLogin({ parent: win }))
+handle('webuntis:logout', () => webuntis.logout())
+handle('webuntis:configure', (_e, config) =>
   webuntis.configure({ enabled: config?.enabled === true, host: config?.host, school: config?.school })
 )
-ipcMain.handle('webuntis:week', (_e, mondayISO) =>
+handle('webuntis:week', (_e, mondayISO) =>
   fetchWeek(webuntis, mondayISO, { ses: session.fromPartition(WEBUNTIS_PARTITION) })
 )
 
@@ -341,18 +399,18 @@ const updater = createUpdater({
     if (win && !win.isDestroyed()) win.webContents.send('update:changed', status)
   },
 })
-ipcMain.handle('update:status', () => updater.status())
-ipcMain.handle('update:check', () => updater.check())
-ipcMain.handle('update:download', () => updater.download())
-ipcMain.handle('update:install', () => updater.install())
+handle('update:status', () => updater.status())
+handle('update:check', () => updater.check())
+handle('update:download', () => updater.download())
+handle('update:install', () => updater.install())
 
 // Window controls for the custom title bar
-ipcMain.handle('window:minimize', () => win?.minimize())
-ipcMain.handle('window:maximize', () => {
+handle('window:minimize', () => win?.minimize())
+handle('window:maximize', () => {
   if (!win) return
   win.isMaximized() ? win.unmaximize() : win.maximize()
 })
-ipcMain.handle('window:close', () => win?.close())
+handle('window:close', () => win?.close())
 
 // Dev spike: `electron . --webuntis-probe` runs the WebUntis probe instead of
 // the app (DECISIONS E-013). It only reads the WebUntis address from
@@ -405,4 +463,12 @@ if (!app.requestSingleInstanceLock()) {
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit()
+})
+
+// A write still running when the last window closed finishes before the app
+// exits (step 7.2) — quitting mid-write would drop the newest state
+app.on('will-quit', (event) => {
+  if (!storage.busy()) return
+  event.preventDefault()
+  storage.idle().then(() => app.quit())
 })

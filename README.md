@@ -73,6 +73,8 @@ Alles steckt in einer Datei: `daten.json`.
 
 Daneben liegen bis zu drei Backups. Ist die Datei mal kaputt, nimmt die App automatisch das neueste intakte Backup. Den genauen Pfad siehst du unten links in der Seitenleiste.
 
+Zusätzlich legt die App im Ordner `sicherungen` jeden Tag eine Sicherung an (die letzten 30 Tage bleiben) und eine weitere vor jedem Update, Import und Wiederherstellen. Zurückholen kannst du einen alten Stand unter **Einstellungen → Daten → Sicherungen**. Der aktuelle Stand wird dabei vorher selbst gesichert.
+
 ## Datenschutz
 
 Dein Berichtsheft verlässt den Rechner nicht von allein. Nur zwei Funktionen gehen online, beide optional:

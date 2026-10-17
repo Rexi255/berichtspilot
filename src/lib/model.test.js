@@ -17,6 +17,9 @@ import {
   duplicateProfile,
   profileForDate,
   shouldAutoCreate,
+  trainingProgress,
+  withStatus,
+  restoreDays,
 } from './model.js'
 
 const profileWith = (patch) => ({
@@ -664,3 +667,73 @@ describe('shouldAutoCreate', () => {
     expect(shouldAutoCreate(dataWith({ trainingStart: '', trainingEnd: '' }), '2030-01-07')).toBe(true)
   })
 })
+
+describe('trainingProgress', () => {
+  const settings = { trainingStart: '2026-02-02', trainingEnd: '2026-07-31' }
+
+  it('counts training weeks from the Monday of the start week', () => {
+    expect(trainingProgress(settings, '2026-02-02')).toEqual({ current: 1, total: 26 })
+    expect(trainingProgress(settings, '2026-02-08')).toEqual({ current: 1, total: 26 })
+    expect(trainingProgress(settings, '2026-02-09')).toEqual({ current: 2, total: 26 })
+  })
+
+  it('stays right on the Monday after the DST switch (was one week behind)', () => {
+    expect(trainingProgress(settings, '2026-03-23').current).toBe(8)
+    expect(trainingProgress(settings, '2026-03-30').current).toBe(9)
+    expect(trainingProgress({ trainingStart: '2026-02-02', trainingEnd: '2026-03-30' }, '2026-03-30')).toEqual({ current: 9, total: 9 })
+  })
+
+  it('clamps to 1 … total and needs both dates in order', () => {
+    expect(trainingProgress(settings, '2025-12-01').current).toBe(1)
+    expect(trainingProgress(settings, '2027-01-01').current).toBe(26)
+    expect(trainingProgress({ trainingStart: '2026-02-02', trainingEnd: '' }, '2026-03-01')).toBeNull()
+    expect(trainingProgress({ trainingStart: '2026-08-01', trainingEnd: '2026-02-01' }, '2026-03-01')).toBeNull()
+    expect(trainingProgress({}, '2026-03-01')).toBeNull()
+  })
+})
+
+describe('withStatus', () => {
+  const day = { date: '2026-01-06', type: 'work', status: 'normal', holidayName: null, bullets: ['x'] }
+
+  it("suggests the holiday name of the profile's federal state (was always SH)", () => {
+    expect(withStatus(day, 'holiday', 'BY')).toMatchObject({ status: 'holiday', holidayName: 'Heilige Drei Könige' })
+    expect(withStatus(day, 'holiday', 'SH').holidayName).toBe('')
+    expect(withStatus({ ...day, date: '2026-10-31' }, 'holiday', 'SH').holidayName).toBe('Reformationstag')
+  })
+
+  it('keeps a typed name when there is no holiday, and the name when leaving the status', () => {
+    expect(withStatus({ ...day, holidayName: 'Betriebsausflug' }, 'holiday', 'SH').holidayName).toBe('Betriebsausflug')
+    const holiday = { ...day, status: 'holiday', holidayName: 'Heilige Drei Könige' }
+    expect(withStatus(holiday, 'sick', 'BY')).toMatchObject({ status: 'sick', holidayName: 'Heilige Drei Könige', bullets: ['x'] })
+  })
+})
+
+describe('restoreDays', () => {
+  const week = (bullets) => ({
+    id: '2026-04-20',
+    status: 'draft',
+    instructions: 'Unterweisung',
+    days: [
+      { date: '2026-04-20', type: 'work', bullets: bullets[0], subjects: [] },
+      { date: '2026-04-21', type: 'work', bullets: bullets[1], subjects: [] },
+    ],
+  })
+
+  it('undoes only the applied days and field — later edits elsewhere stay (was: the whole week)', () => {
+    const before = week([['alt'], ['Dienstag']])
+    const now = { ...week([['KI 1', 'KI 2'], ['Dienstag geändert']]), instructions: 'neu', status: 'done' }
+    const undone = restoreDays(now, before, ['2026-04-20'], 'bullets')
+    expect(undone.days[0].bullets).toEqual(['alt'])
+    expect(undone.days[1].bullets).toEqual(['Dienstag geändert'])
+    expect(undone).toMatchObject({ instructions: 'neu', status: 'done' })
+  })
+
+  it('restores subjects for WebUntis, copies (no shared arrays) and ignores unknown dates', () => {
+    const before = { id: 'w', days: [{ date: '2026-04-20', type: 'school', bullets: [''], subjects: [{ label: 'LF02', bullets: [''] }] }] }
+    const now = { id: 'w', days: [{ date: '2026-04-20', type: 'school', bullets: ['x'], subjects: [{ label: 'LF02', bullets: ['Thema'] }] }] }
+    const undone = restoreDays(now, before, ['2026-04-20', '2026-04-25'], 'subjects')
+    expect(undone.days[0]).toEqual({ date: '2026-04-20', type: 'school', bullets: ['x'], subjects: [{ label: 'LF02', bullets: [''] }] })
+    expect(undone.days[0].subjects).not.toBe(before.days[0].subjects)
+  })
+})
+

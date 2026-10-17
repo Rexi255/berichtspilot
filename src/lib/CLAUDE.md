@@ -7,7 +7,10 @@
 - `format.test.js` contains the **real IHK examples** from `docs/OUTPUT_FORMAT.md`.
   Those expected strings are the spec — change the code, never the test.
   Output strings stay German (weekday names, "den", "Feiertag: …", "Krankheitstag").
-- Dates: only via the helpers in `dates.js` (`parseISO`, `toISO`, `addDays` …).
+- Dates: only via the helpers in `dates.js` (`parseISO`, `toISO`, `addDays`,
+  `daysBetween` …). Tests run in `Europe/Berlin` (`test.env` in `vite.config.js`)
+  so DST bugs show up; date tests around the clock change (end of March / end
+  of October) are welcome.
 - Holidays: back new/changed holidays with state + source in a comment and test at
   least two years.
 - `model.js`: schema change ⇒ bump `DATA_VERSION`, add a step to `migrateData()`,

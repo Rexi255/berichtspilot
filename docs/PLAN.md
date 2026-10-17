@@ -27,29 +27,48 @@ WebUntis "Lehrstoff" ─────────────┘    (daten.json) 
 - Nothing leaves the machine without the user seeing it (E-009 – E-011).
 - Without network/accounts everything works like v1.2 (every automation is optional).
 - Output format and `daten.json` safety stay untouched.
-- Release target **v2.0.0** (E-018). V2 is complete and prepared on
-  `claude/intelligent-curie-yxizss`; it only has to be merged into `main` and tagged.
+- V2 is released (v2.0.0 on 2026-10-10, E-018). Every further change goes via PR
+  into `main`; a release is a version bump + tag `vX.Y.Z` (E-017).
 
 ## Next step
 
-**v2.0.1 is released** (2026-10-10, https://github.com/Rexi255/berichtspilot/releases/tag/v2.0.1):
-PR #3 merged, tag `v2.0.1` on `main`, release workflow green, all five assets
-(incl. `latest.yml`) attached, release notes from the `[2.0.1]` CHANGELOG
-section. Work continues on branch `claude/intelligent-curie-yxizss`; deliver via
-PR into `main` (the user allowed `gh pr merge` for Claude Code).
+**Phase 7 (hardening) is done** on branch `claude/clever-mendel-psk8d2` — 7.1–7.5,
+one commit each, PR #5 into `main` (https://github.com/Rexi255/berichtspilot/pull/5,
+see the Done log). Before continuing: PR #5 must be merged into `main` by the
+user (or with their explicit go); start the next step from the current `main`.
 
-1. Real in-app update test by the user: in the installed 2.0.0, sidebar card /
-   Settings → "Updates" → download → install → restart on 2.0.1; data migrated
-   to schema v11 (profiles with 2 starter bullets now 1). If it fails: check
-   `latest.yml` on the release and the updater allowlist (E-017).
-2. Then ask the user what comes first: UI overhaul (v2.1, "Later / to-do"),
-   the parked dictation phase, WebUntis-assisted setup (fill school days +
-   subjects from the timetable, see E-020), or Enter jumping into an empty
-   bullet below instead of inserting one (E-021).
+**Next: 8.1 — Electron + audit fixes** (no breaking changes expected):
+
+1. `npm install --save-dev electron@^43` → lock on the newest 43.x (was 43.0.0);
+   44.x only after reading https://www.electronjs.org/docs/latest/breaking-changes
+   (otherwise leave it to Dependabot, 8.3).
+2. `npm audit fix` (never `--force`); afterwards `npm audit --omit=dev` must show
+   no high/critical (it listed `js-yaml` inside `electron-updater`); note what
+   remains in dev-only tools in the PR.
+3. Verify: `npm run lint && npm test && npm run build:renderer`; Electron smoke
+   test in the cloud: `node node_modules/electron/install.js`, then from a
+   scratch folder `xvfb-run -a <repo>/node_modules/electron/dist/electron
+   --no-sandbox --remote-debugging-port=9333 <repo>` and drive it via CDP
+   (`Runtime.evaluate`, `Input.insertText`, `Page.captureScreenshot`): app loads,
+   every view opens, typing + closing at once still saves (E-023), a navigation
+   to a file is still cancelled (E-022). Optionally `npm run build:linux` →
+   AppImage starts.
+4. CHANGELOG `[Unreleased]` → "Changed: Electron 43.x (security fixes)".
+5. Then 8.2 (Node 22 in CI/release/`.nvmrc`/`engines`/CONTRIBUTING, CI also runs
+   `npm run build:renderer`) and 8.3 (Dependabot) — small, can share one PR.
+
+Still open from v2.0.1: the user's real in-app update test (installed 2.0.0 →
+sidebar card / Settings → "Updates" → download → install → restart on 2.0.1).
+The first real install of v2.0.2 will also exercise the new snapshots: after
+the update `sicherungen/` should hold a `…-vor-update.json` only if the schema
+changed (it doesn't in 2.0.2 — expect just the daily snapshot).
 
 ## Open questions (for the user)
 
-None right now.
+- **When to release v2.0.2?** Recommendation: after 8.1–8.3 (8.4), so the
+  release carries the hardening *and* the Electron security update. Alternative:
+  release phase 7 right after its PR is merged and ship the Electron update as
+  v2.0.3. Ask before 8.4 (or earlier if the user brings it up).
 
 Parked by the user (2026-10-10), not to be asked now: which speech model to
 bundle (E-010 has the measurements; real-voice recordings belong to that
@@ -152,7 +171,83 @@ decision).
       `latest-linux.yml`; `/releases/latest/download/latest.yml` = 2.0.0 (2026-10-10)
 - [ ] Installed by hand once; real update test (see open questions)
 
+### Phase 7 — Hardening (v2.0.2) · from the code review of 2026-10-15
+The user asked for a review of the whole project and then for its "step 1":
+close the security gap in the main window and make saving loss-proof before
+anything new is built.
+- [x] 7.1 Main window locked to the app: navigation (`will-navigate`) and
+      foreign IPC senders refused (`electron/guard.js`), permission requests
+      denied except clipboard writing, `data:save` checks the shape, dropped
+      files are ignored, dev flags (`--screenshot`) only unpackaged, production
+      CSP without `localhost` (2026-10-16; E-022; checked in Electron: navigation to
+      a file is cancelled, copying works, notifications/geolocation denied,
+      `saveData(null)` refused, dev server mode and `--screenshot` still work)
+- [x] 7.2 Save pipeline (`electron/storage.js`): one write at a time (queue, newest
+      state wins), rename retried on Windows lock errors, pending autosave
+      flushed on close (handshake `app:flush`), writes finish before quit
+      (2026-10-16; E-023; Electron: typed + closed at once → saved, the commit
+      before lost it; failing write → window stays open and asks)
+- [x] 7.3 Snapshots in `sicherungen/` next to `daten.json` (E-022): one per day
+      (30 kept), plus before an app update (schema change), an import
+      "Ersetzen" and a restore (10 each); restore in Settings → Daten; load
+      falls back to the newest snapshot (2026-10-16; E-024; Electron: v10 file →
+      daily + vor-update snapshot with the v10 state; browser mode: restore and
+      import flows with a fake bridge)
+- [x] 7.4 Error boundary around the views (title bar stays usable) + dialog on a
+      renderer crash (2026-10-16; browser mode: a hand-broken week → message in
+      the view, sidebar + window buttons work, Settings reachable; Electron:
+      `Page.crash` → native dialog)
+- [x] 7.5 Small bugs, each with a test: training progress off by one after the
+      DST switch, holiday name always from SH, toast timers restarting, undo
+      of AI/WebUntis resetting the whole week, template date math via
+      `new Date('YYYY-MM-DD')`, load errors hanging at "Lade Daten …" (2026-10-16;
+      `daysBetween()`, `trainingProgress()`, `withStatus()`, `restoreDays()`;
+      tests now run in Europe/Berlin; browser mode: old build vs. new — undo
+      kept the other day's edit, toast A left on time, broken file → error screen)
+- [ ] 7.6 Release → moved to 8.4, so v2.0.2 also ships the Electron security
+      update (see "Open questions" for an earlier release)
+
+### Phase 8 — Maintenance automation
+- [ ] 8.1 Electron to the newest 43.x (lock is still on 43.0.0, `npm audit` lists a
+      high advisory about pop-up sandboxing — relevant for the WebUntis login
+      window) or 44.x after reading its breaking changes; `npm audit fix` (incl.
+      `js-yaml` inside electron-updater); Electron screenshot + updater test
+- [ ] 8.2 Node 22 LTS (Node 20 is EOL since 2026-04-30) in `ci.yml`, `release.yml`,
+      `.nvmrc`, `engines`, CONTRIBUTING; `npm run build:renderer` as a CI step
+- [ ] 8.3 `.github/dependabot.yml`: npm weekly (minor/patch grouped, Electron on its
+      own) + github-actions
+- [ ] 8.4 Release v2.0.2 (phase 7 + 8.1–8.3): `npm version 2.0.2 --no-git-tag-version`,
+      CHANGELOG `[Unreleased]` → `## [2.0.2] - <date>`, PR into `main`, after the
+      merge tag `v2.0.2` → release workflow green, assets incl. `latest.yml` +
+      `latest-linux.yml`, release notes from the CHANGELOG section (needs the
+      user's go, like every release)
+
+### Phase 9 — Release hardening (supply chain)
+- [ ] 9.1 `release.yml`: build jobs without write access; a separate release job
+      with `contents: write` downloads the artifacts and attaches them; all
+      actions pinned to commit SHAs (Dependabot keeps them current)
+- [ ] 9.2 Electron fuses in the electron-builder config (`runAsNode` off,
+      `enableNodeOptionsEnvironmentVariable` off, `enableNodeCliInspectArguments`
+      off, `onlyLoadAppFromAsar` on, asar integrity on); dev mode and the
+      WebUntis probe must still work
+- [ ] 9.3 Checklist for the user's GitHub settings (2FA/passkey, tag protection
+      `v*`, branch protection on `main`) in `CONTRIBUTING.md` → done by the user
+- [ ] 9.4 Code signing for the Windows installer — open question first (options:
+      SignPath Foundation, free for open source · Azure Artifact Signing ·
+      stay unsigned)
+
+### Phase 10 — Tests beyond `src/lib`
+- [ ] 10.1 Playwright smoke test against `vite preview` (browser mode via
+      `browserApi`): fresh start → skip wizard → create week → type a bullet →
+      exact text in output block 1; `npm run test:e2e`, runs in CI
+- [ ] 10.2 Optional: Electron end-to-end via Playwright `_electron` under xvfb
+      (save → restart → data back; close right after typing keeps the text)
+
 ### Later / to-do
+- [ ] Warning list for customer data: a local list of customer names / host
+      names that the "Mit KI formulieren" check warns about (the regex
+      patterns can't know names)
+- [ ] Export of the whole record as PDF/archive (e.g. for the exam registration)
 - [ ] Automatic entry into the IHK portal (deferred by the user, E-012)
 - [ ] Ideas from the old README roadmap: light theme, "copy all 3 blocks",
       full export/PDF, copy a single day from the previous week, character counter
@@ -213,3 +308,10 @@ decision).
 | 2026-10-10 | Fix: setup wizard scrolls again (`.aurora` overflow beat Tailwind's `overflow-y-auto`; scrolling moved to an inner element) | PR #2 (18e2325) |
 | 2026-10-10 | E-021: one starter bullet per work day (schema v11) | PR #3 |
 | 2026-10-10 | v2.0.1 released: PR #3 merged, tag pushed, release workflow green, release notes from CHANGELOG | 1c70518, tag `v2.0.1` |
+| 2026-10-15 | Code review of the whole project (user request) → phases 7–10 planned | be62952 |
+| 2026-10-16 | 7.1: main window locked to the app, IPC sender check, permissions, save shape check (E-022) | 6dfd44e |
+| 2026-10-16 | 7.2: save queue + rename retry + flush on close (E-023) | 5f08126 |
+| 2026-10-16 | 7.3: snapshots in `sicherungen/` + restore in Settings (E-024) | 5ef3ee4 |
+| 2026-10-16 | 7.4: error boundaries + renderer crash dialog | e8b054f |
+| 2026-10-16 | 7.5: DST progress, holiday state, scoped undo, toast timers, load errors (tests in Europe/Berlin) | 060447a |
+| 2026-10-16 | Phase 7 delivered | PR #5 |

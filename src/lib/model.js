@@ -1,6 +1,6 @@
 // Data model: profiles, weeks, periods, seed data, migration + validation.
 // Field names are English since schema v3 (mapping: docs/GLOSSARY.md).
-import { WEEKDAY_KEYS, addDays, inRange, formatDE, parseISO, mondayOf } from './dates.js'
+import { WEEKDAY_KEYS, addDays, daysBetween, inRange, formatDE, parseISO, mondayOf } from './dates.js'
 import { holidayOn } from './holidays.js'
 import { WEBUNTIS_HOST } from './webuntis.js'
 
@@ -463,10 +463,7 @@ export function weekFromTemplate(mondayISO, template, profiles, periods = []) {
 
   const days = template.days.map((old) => {
     // Keep the old day's weekday offset (Mon = 0 … Sat = 5)
-    const offset = Math.round(
-      (new Date(old.date).getTime() - new Date(template.id).getTime()) / 86400000
-    )
-    const date = addDays(mondayISO, offset)
+    const date = addDays(mondayISO, daysBetween(template.id, old.date))
     const { status, holidayName, schoolBreak } = dayStatusFor(date, state, periods)
     const type = old.type === 'school' && schoolBreak ? 'work' : old.type
     return {
@@ -612,3 +609,44 @@ export function newProfile() {
     webuntisSubjects: {},
   }
 }
+
+/**
+ * Training week of `todayISO` for the progress tile: week 1 is the week of
+ * `trainingStart` (Monday-based), clamped to 1 … total. Null without both
+ * dates in order. Counted in calendar days, so the DST switch can't make it a
+ * week short.
+ */
+export function trainingProgress({ trainingStart, trainingEnd } = {}, todayISO) {
+  if (!trainingStart || !trainingEnd || trainingEnd <= trainingStart) return null
+  const firstMonday = mondayOf(parseISO(trainingStart))
+  const weekIndex = (iso) => Math.floor(daysBetween(firstMonday, iso) / 7) + 1
+  const total = weekIndex(trainingEnd)
+  return { current: Math.min(Math.max(weekIndex(todayISO), 1), total), total }
+}
+
+/**
+ * A day switched to another status in the editor. Switching to "holiday"
+ * suggests the real holiday name for the profile's federal state (`state`),
+ * otherwise keeps what was typed; other fields stay untouched.
+ */
+export function withStatus(day, status, state = 'SH') {
+  if (status !== 'holiday') return { ...day, status }
+  return { ...day, status, holidayName: holidayOn(day.date, state) || day.holidayName || '' }
+}
+
+/**
+ * Undo for "Mit KI formulieren" / "Aus WebUntis füllen": put back only `field`
+ * (`bullets` or `subjects`) of the given dates from `snapshot` — edits made
+ * elsewhere in the week since then stay.
+ */
+export function restoreDays(week, snapshot, dates, field) {
+  const before = new Map((snapshot?.days ?? []).map((d) => [d.date, d]))
+  const touched = new Set(dates)
+  return {
+    ...week,
+    days: week.days.map((d) =>
+      touched.has(d.date) && before.has(d.date) ? { ...d, [field]: structuredClone(before.get(d.date)[field]) } : d
+    ),
+  }
+}
+
