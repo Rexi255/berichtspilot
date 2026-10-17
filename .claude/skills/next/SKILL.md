@@ -20,9 +20,10 @@ description: Implement the next step from docs/PLAN.md (Berichtspilot overhaul).
 5. **Implement:** follow `CLAUDE.md` and the folder `CLAUDE.md` files. Pure logic
    first in `src/lib/` with tests, then IPC/main, then UI. Code and docs in
    English, UI text in German.
-6. **Verify:** `npm run lint && npm test && npm run build:renderer`; for UI changes
-   also a browser-mode smoke test (vite preview + Playwright) or an Electron
-   screenshot.
+6. **Verify:** `npm run lint && npm test && npm run build:renderer`; for changes
+   to the renderer flow, `electron/` or the build also `npm run test:e2e`
+   (Playwright, E-031 — CI runs it on every push anyway); for UI changes a look
+   at the result (browser mode or an Electron screenshot).
 7. **Finish:** run the `/wrap-up` skill.
 
 Spike steps (research/prototype): record the result in `DECISIONS.md` (options,

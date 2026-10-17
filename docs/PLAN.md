@@ -43,19 +43,30 @@ releases; a release step opens the PR `development` → `main`.
 branch deletions work there (the 403s were the cloud proxy only). Before
 pushing a tag or merging into `main`, still ask the user.
 
-**v2.0.2 is out** (tag pushed from the local session on the user's go,
-2026-10-17; release workflow green, `latest.yml` = 2.0.2). `development` is
-ahead of `main` by Electron 44.7 + the Dependabot PRs #7/#9 (8.5, 8.6) — they
-ship with the next release.
+**v2.0.2 is out** (2026-10-17, `latest.yml` = 2.0.2). `development` is ahead
+of `main` by Electron 44.7 + the Dependabot PRs #7/#9 (8.5, 8.6) and phases
+9–10 (fuses, new release workflow, end-to-end tests) — they ship with the next
+release.
 
-**Next: phase 9, step 9.1** (`release.yml`: build jobs read-only, a separate
-release job with `contents: write`, actions pinned to commit SHAs). Not
-blocked — the release-tag question is settled (see below). Read
-`.github/workflows/release.yml` and E-017 first; prove it with a
-`workflow_dispatch` dry run on `development` (builds, publishes nothing).
-Pinned SHAs need a `# vX.Y.Z` comment so Dependabot keeps updating them.
+**Phases 9 and 10 are done** (2026-10-17, see the roadmap): `release.yml`
+split into `check` → `build` (read-only, packaged check) → `release` (only
+writer, tags only), all actions pinned to SHAs (E-030); Electron fuses + asar
+integrity (E-029); Playwright end-to-end tests `npm run test:e2e` in CI
+(E-031). Two release dry runs on `development` (the second green: run
+39063403845); the artifacts were checked by hand like the `release` job
+would (exactly five files + notes, `sha512` in `latest*.yml` matches).
 
-The user's real in-app update test to 2.0.2 works (user, 2026-10-17).
+**Next: release v2.0.3 — only after the user's go** (open question 1). It is
+also the first real run of the new `release` job, which dry runs can't reach
+(it only runs on a tag). Steps like 8.4: version bump 2.0.2 → 2.0.3 in
+`package.json` + lock (`npm version 2.0.3 --no-git-tag-version`), CHANGELOG
+`## [Unreleased]` → `## [2.0.3] - <date>` with a short intro line (Electron
+44.7, the security entries), dry run (`gh workflow run release.yml --ref
+development`), PR `development` → `main` (merge commit, E-025), then the tag
+`v2.0.3` on `main` after the user's go → watch the run: the `release` job must
+attach the five files; `/releases/latest/download/latest.yml` = 2.0.3; the
+user's installed 2.0.2 should offer the update.
+After that: the UI overhaul (v2.1, "Later / to-do" → its workflow step 1).
 
 **Dependabot** (E-027) opens its PRs against `development` on Mondays. Merge
 green ones with `gh pr merge <n> --squash` (the repo deletes merged branches
@@ -70,7 +81,21 @@ Electron support window: 44.x stays supported until Electron 47 is out; 45
 
 ## Open questions (for the user)
 
-None at the moment.
+1. **Release v2.0.3 now?** It would ship Electron 44.7, the dependency
+   updates, the fuses and — for the first time — the new release workflow.
+   Recommendation: yes, soon, so the new `release` job is proven while the
+   changes are fresh. Needs the user's go for the PR into `main` and the tag.
+2. **Step 9.3b — for the user to do (no decision needed):** apply the
+   "Maintainer checklist: GitHub security settings" in `CONTRIBUTING.md`
+   (2FA/passkey, tag ruleset `v*`, rulesets for `main`/`development`, require
+   SHA pinning, release immutability, Dependabot alerts + security updates).
+   State read on 2026-10-17 (read-only API): no rulesets, `main` unprotected,
+   workflow token read-only ✓, SHA pinning not enforced, release immutability
+   off, Dependabot alerts/security updates off, secret scanning + push
+   protection on ✓, 2FA not readable with the token. Possible any time —
+   before v2.0.3 is fine: the tag ruleset lets the admin through, and the
+   checks `pruefen` + `e2e` the `main` ruleset requires exist since 2026-10-17.
+   Not changed by Claude on purpose: repository settings are the user's.
 
 (Answered 2026-10-17: code signing (9.4) — stay unsigned, E-028. v2.0.2 is released with 8.4 — phase 7 plus 8.1–8.3;
 the user's update test to 2.0.2 works and "Automatically delete head
@@ -268,24 +293,38 @@ anything new is built.
       `build:win` packs 44.7.0, the unpacked app starts from `app.asar`
 
 ### Phase 9 — Release hardening (supply chain)
-- [ ] 9.1 `release.yml`: build jobs without write access; a separate release job
-      with `contents: write` downloads the artifacts and attaches them; all
-      actions pinned to commit SHAs (Dependabot keeps them current)
-- [ ] 9.2 Electron fuses in the electron-builder config (`runAsNode` off,
-      `enableNodeOptionsEnvironmentVariable` off, `enableNodeCliInspectArguments`
-      off, `onlyLoadAppFromAsar` on, asar integrity on); dev mode and the
-      WebUntis probe must still work
-- [ ] 9.3 Checklist for the user's GitHub settings (2FA/passkey, tag protection
-      `v*`, branch protection on `main`) in `CONTRIBUTING.md` → done by the user
+- [x] 9.1 `release.yml`: `check` → `build` (read-only token, `persist-credentials:
+      false`, packaged check, files as run artifacts) → `release` (tags only, the
+      only job with `contents: write`, no checkout/npm, insists on exactly the
+      five files); every action in `release.yml` + `ci.yml` pinned to a commit
+      SHA with `# vX.Y.Z` (E-030) (2026-10-17; dry runs on `development`: the
+      first found a test race on Linux, the second green — run 39063403845;
+      its artifacts checked like the `release` job would: five files + notes,
+      `sha512` matches. The `release` job itself runs first with v2.0.3)
+- [x] 9.2 Electron fuses in `build.electronFuses`: `runAsNode`,
+      `enableNodeOptionsEnvironmentVariable`, `enableNodeCliInspectArguments`
+      off, `onlyLoadAppFromAsar` + asar integrity on (E-029) (2026-10-17;
+      Windows: RUN_AS_NODE/NODE_OPTIONS/--inspect ignored, tampered asar →
+      FATAL, `resources/app/` refused; dev mode + `npm start` unaffected — the
+      probe uses the same unfused dev binary; Linux: packaged check in CI)
+- [x] 9.3 Checklist for the user's GitHub settings in `CONTRIBUTING.md` →
+      "Maintainer checklist" (2FA/passkey, tag ruleset `v*`, rulesets for
+      `main`/`development`, SHA pinning required, release immutability,
+      Dependabot alerts) + current state read via the API (2026-10-17)
+- [ ] 9.3b The user applies the checklist (see "Open questions" 2)
 - [x] ~~9.4 Code signing for the Windows installer~~ — the user chose to stay
       unsigned (2026-10-17, E-028)
 
 ### Phase 10 — Tests beyond `src/lib`
-- [ ] 10.1 Playwright smoke test against `vite preview` (browser mode via
+- [x] 10.1 Playwright smoke test against `vite preview` (browser mode via
       `browserApi`): fresh start → skip wizard → create week → type a bullet →
-      exact text in output block 1; `npm run test:e2e`, runs in CI
-- [ ] 10.2 Optional: Electron end-to-end via Playwright `_electron` under xvfb
-      (save → restart → data back; close right after typing keeps the text)
+      exact text in output block 1 (+ copied text, reload); `npm run test:e2e`,
+      CI job `e2e` (E-031) (2026-10-17; green on Windows and in CI)
+- [x] 10.2 Electron end-to-end via Playwright `_electron` under xvfb: close
+      right after typing keeps the text, restart shows it; plus the
+      `packaged` project the release workflow runs after each build (fuse
+      wire + start from `app.asar` over CDP) (2026-10-17; mutation checks:
+      flush disabled → fails, unfused binary → fuse check fails)
 
 ### Later / to-do
 - [ ] Warning list for customer data: a local list of customer names / host
@@ -293,6 +332,14 @@ anything new is built.
       patterns can't know names)
 - [ ] Export of the whole record as PDF/archive (e.g. for the exam registration)
 - [ ] Automatic entry into the IHK portal (deferred by the user, E-012)
+- [ ] Rename `vite.config.js` → `vite.config.mjs`: Vite 8 warns that the
+      config is ESM loaded as CommonJS (`configLoader: 'native'` will become
+      the default in a future major)
+- [ ] Release hardening, further (E-029/E-030 "considered"): `npm ci
+      --ignore-scripts` in the release build jobs (check which install
+      scripts the build needs first); serve the renderer from a custom
+      `app://` protocol, then turn the `grantFileProtocolExtraPrivileges` fuse
+      off; build provenance attestations
 - [ ] Linux: set `desktopName` + `linux.syncDesktopName: true` in the
       electron-builder config so desktops link the running window to the
       AppImage's `.desktop` entry (hint printed by electron-builder 26.17)
@@ -370,3 +417,7 @@ anything new is built.
 | 2026-10-17 | v2.0.2 released: tag pushed from the local session, release workflow green, `latest.yml` = 2.0.2 | tag `v2.0.2` |
 | 2026-10-17 | 8.5: Dependabot majors by hand except Electron (E-027); #7 + #9 merged, #10–#12 closed | 3bc816f, 7630e87 |
 | 2026-10-17 | 8.6: Electron 44.7 (#8), checked in Electron + update check against the live release | 707bf41 |
+| 2026-10-17 | 10.1 + 10.2: Playwright end-to-end tests (browser, Electron, packaged check), CI job `e2e` (E-031) | 3f8b3f2, bdc4ea7 |
+| 2026-10-17 | 9.2: Electron fuses + asar integrity (E-029) | ab5bb91 |
+| 2026-10-17 | 9.1: release job is the only writer, actions pinned to SHAs (E-030); dry run green | 4d4e58c, bdc4ea7 |
+| 2026-10-17 | 9.3: maintainer checklist for the GitHub settings in CONTRIBUTING (applying it: user) | this commit |

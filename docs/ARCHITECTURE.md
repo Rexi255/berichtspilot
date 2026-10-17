@@ -65,7 +65,8 @@ Keep this file in sync when changing process boundaries, IPC or networking.
    ticket/phone patterns before copying.
 
 In a plain browser (`vite` without Electron), `browserApi` in `store.jsx` replaces
-the bridge with `localStorage` stubs — handy for smoke tests.
+the bridge with `localStorage` stubs — the Playwright smoke test
+(`e2e/smoke.spec.mjs`, E-031) runs the built renderer that way.
 
 ## IPC channels
 
@@ -234,6 +235,14 @@ app (no app window, no IPC, daten.json untouched):
   built `dist/index.html` by a Vite plugin (`vite.config.js`); the build fails if
   they can't be found.
 - Dev flags (`--screenshot`, `--view`, `--scroll`) work in unpacked runs only.
+- **Packaged app (E-029):** Electron fuses in `build.electronFuses` — no
+  `ELECTRON_RUN_AS_NODE`, no `NODE_OPTIONS`/`NODE_EXTRA_CA_CERTS`, no
+  `--inspect`, code only from `app.asar`, whose integrity is checked on Windows.
+  Dev runs use the unfused Electron from `node_modules`.
+- **Release pipeline (E-030):** the build jobs run with a read-only token; only
+  the final `release` job (tags only, no project code) may publish. All actions
+  are pinned to commit SHAs. Each build must pass the packaged check
+  (`e2e/packaged.spec.mjs`, E-031) before its files can be released.
 - Planned: secrets via `safeStorage` in a separate file (not in daten.json); any
   third-party page only in its own `BrowserWindow` with a separate session
   partition and a minimal preload.

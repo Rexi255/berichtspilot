@@ -14,6 +14,17 @@ versioning follows [Semantic Versioning](https://semver.org/).
   clipboard, saving and the in-app update work as before. Libraries of the
   interface (React, Vite, Tailwind) were updated as well.
 
+### Security
+
+- **The installed app only runs its own, unchanged program files:** it no
+  longer reacts to settings that could make it run foreign code or open a
+  debugger (`ELECTRON_RUN_AS_NODE`, `NODE_OPTIONS`, `--inspect`), and on
+  Windows it refuses to start if its program archive (`app.asar`) was
+  modified.
+- **Releases are built with read-only access:** only the very last step,
+  which runs none of the project's code, may publish a release, and every
+  build is started once and checked before its files are released.
+
 ## [2.0.2] - 2026-10-17
 
 The safety release: daily backups you can restore, no lost changes when

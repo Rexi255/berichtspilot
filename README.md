@@ -94,6 +94,7 @@ Voraussetzung: Node.js 22.12 oder neuer (empfohlen: 24).
 npm install
 npm run dev            # App mit Hot Reload
 npm test               # Tests
+npm run test:e2e       # End-to-End-Tests (Playwright, Browser + Electron)
 npm run lint           # ESLint
 npm run build:win      # Windows-Installer nach release/
 npm run build:linux    # AppImage nach release/ (unter Linux)
