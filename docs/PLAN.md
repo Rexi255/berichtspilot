@@ -420,4 +420,4 @@ anything new is built.
 | 2026-10-17 | 10.1 + 10.2: Playwright end-to-end tests (browser, Electron, packaged check), CI job `e2e` (E-031) | 3f8b3f2, bdc4ea7 |
 | 2026-10-17 | 9.2: Electron fuses + asar integrity (E-029) | ab5bb91 |
 | 2026-10-17 | 9.1: release job is the only writer, actions pinned to SHAs (E-030); dry run green | 4d4e58c, bdc4ea7 |
-| 2026-10-17 | 9.3: maintainer checklist for the GitHub settings in CONTRIBUTING (applying it: user) | this commit |
+| 2026-10-17 | 9.3: maintainer checklist for the GitHub settings in CONTRIBUTING (applying it: user) + docs for phases 9–10 | 0c10bb4 |
