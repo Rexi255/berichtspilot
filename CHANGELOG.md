@@ -6,6 +6,13 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [2.0.2] - 2026-10-17
+
+The safety release: daily backups you can restore, no lost changes when
+closing, a window that only shows Berichtspilot, and Electron 43.8 with its
+security fixes. From 2.0.0 or 2.0.1 the app updates itself (sidebar card or
+Settings → Updates); your data stays as it is.
+
 ### Added
 
 - **Daily backups you can restore:** Berichtspilot now keeps a copy of your

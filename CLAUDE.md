@@ -2,11 +2,11 @@
 
 Electron desktop app that produces the weekly IHK training record ("Berichtsheft")
 for an apprentice (IT specialist for system integration, Schleswig-Holstein,
-Germany). Current release: v2.0.1 — entry by hand or from notes, WebUntis
-import, AI phrasing via the clipboard, in-app updates → three exactly formatted
-text blocks to copy into the IHK portal.
-**Next:** hardening + maintenance (phases 7–10 from the 2026-10-15 code review,
-release v2.0.2), then the UI overhaul (v2.1); voice dictation is parked — see `docs/PLAN.md`.
+Germany). Current release: v2.0.2 — entry by hand or from notes, WebUntis
+import, AI phrasing via the clipboard, in-app updates, daily backups → three
+exactly formatted text blocks to copy into the IHK portal.
+**Next:** release hardening + tests (phases 9–10 from the 2026-10-15 code review),
+then the UI overhaul (v2.1); voice dictation is parked — see `docs/PLAN.md`.
 
 ## Language rules
 
@@ -93,7 +93,8 @@ sessions for smoke tests (global `playwright` package under `/opt/node-tools`);
 `page.addInitScript()` can install a fake `window.api` to test store flows such
 as restore/import with dialogs answered.
 
-CI (`.github/workflows/ci.yml`) runs lint + tests on every PR.
+CI (`.github/workflows/ci.yml`, Node 24 — E-026) runs lint + tests + renderer build on
+every push to `main`/`development` and on every PR.
 Release: push tag `vX.Y.Z` → `.github/workflows/release.yml` builds NSIS installer +
 AppImage + auto-update metadata (`latest*.yml`); the tag must match `package.json`
 `version` (E-017).
