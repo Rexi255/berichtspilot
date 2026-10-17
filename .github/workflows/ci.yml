@@ -1,5 +1,6 @@
 # Quality check on every push/PR: lint + tests (format/holiday/date logic) +
-# renderer build. The app builds themselves only run in the release workflow.
+# renderer build, and the end-to-end tests (browser + Electron, phase 10).
+# The app builds themselves only run in the release workflow.
 name: CI
 
 on:
@@ -28,3 +29,32 @@ jobs:
 
       - name: Renderer build
         run: npm run build:renderer
+
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      # Headless Chromium for the browser test; Electron brings its own
+      - name: Playwright Chromium
+        run: npx playwright install --with-deps --only-shell chromium
+
+      # Builds the renderer, then browser smoke test + Electron end-to-end
+      # test (needs a display → xvfb)
+      - name: End-to-end tests
+        run: xvfb-run -a npm run test:e2e
+
+      - name: Traces of failed tests
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: e2e-traces
+          path: test-results/
+          retention-days: 7

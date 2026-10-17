@@ -39,6 +39,7 @@
     "build:linux": "npm run build:renderer && electron-builder --linux --publish never",
     "lint": "eslint .",
     "test": "vitest run",
+    "test:e2e": "npm run build:renderer && playwright test",
     "probe:webuntis": "electron . --webuntis-probe"
   },
   "build": {
@@ -97,7 +98,9 @@
     "react-dom": "^19.3.0"
   },
   "devDependencies": {
+    "@electron/fuses": "^1.8.0",
     "@eslint/js": "^9.39.0",
+    "@playwright/test": "^1.64.0",
     "@tailwindcss/vite": "^4.3.3",
     "@vitejs/plugin-react": "^6.1.2",
     "concurrently": "^10.0.3",

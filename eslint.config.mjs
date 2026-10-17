@@ -37,4 +37,14 @@ export default [
       globals: globals.node,
     },
   },
+
+  // Playwright: tests run in Node, page.evaluate() callbacks in the browser
+  {
+    files: ['e2e/**/*.mjs', 'playwright.config.mjs'],
+    languageOptions: {
+      ecmaVersion: 'latest',
+      sourceType: 'module',
+      globals: { ...globals.node, ...globals.browser },
+    },
+  },
 ]

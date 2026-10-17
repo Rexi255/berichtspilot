@@ -464,7 +464,8 @@ function OutputPreview({ text }) {
   })
 }
 
-function OutputBlock({ title, shortName, text, fileName }) {
+// `block` = key in formatAll() — also the end-to-end tests' hook (data-output)
+function OutputBlock({ block, title, shortName, text, fileName }) {
   const [copied, setCopied] = useState(false)
   const iconRef = useRef(null)
 
@@ -485,7 +486,7 @@ function OutputBlock({ title, shortName, text, fileName }) {
   }
 
   return (
-    <Panel className="flex shrink-0 flex-col">
+    <Panel data-output={block} className="flex shrink-0 flex-col">
       <div className="flex items-center gap-1.5 border-b border-white/[0.05] py-2 pl-4 pr-2">
         <SectionTitle className="mr-auto">{title}</SectionTitle>
         <IconButton label="Als .txt exportieren" onClick={exportTxt} disabled={!text}>
@@ -822,18 +823,21 @@ export default function WeekEditor({ monday, setMonday }) {
           {/* right column: the three output blocks */}
           <div className="flex min-h-0 flex-col gap-3 overflow-y-auto pr-1">
             <OutputBlock
+              block="work"
               title="1 · Betriebliche Tätigkeiten"
               shortName="Betriebliche Tätigkeiten"
               text={blocks.work}
               fileName="1Betriebliche Tätigkeiten.txt"
             />
             <OutputBlock
+              block="instructions"
               title="2 · Unterweisungen"
               shortName="Unterweisungen"
               text={blocks.instructions}
               fileName="2Unterweisungen, betrieblicher Unterricht, sonstige Schulungen.txt"
             />
             <OutputBlock
+              block="school"
               title="3 · Berufsschule"
               shortName="Berufsschule"
               text={blocks.school}

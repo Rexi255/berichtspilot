@@ -32,6 +32,8 @@ export default defineConfig({
     target: 'chrome120',
   },
   test: {
+    // Unit tests only — the end-to-end tests in e2e/ belong to Playwright
+    include: ['src/**/*.test.{js,jsx}', 'electron/**/*.test.mjs'],
     // German local time (with DST) like the users — date bugs around the
     // clock change only show up there, not in a UTC container (step 7.5)
     env: { TZ: 'Europe/Berlin' },
