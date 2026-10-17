@@ -72,6 +72,7 @@ Electron support window: 44.x stays supported until Electron 47 is out; 45
 
 - **Code signing (9.4)** — ask before 9.4: SignPath Foundation (free for open
   source) · Azure Artifact Signing · stay unsigned.
+
 (Answered 2026-10-17: v2.0.2 is released with 8.4 — phase 7 plus 8.1–8.3;
 the user's update test to 2.0.2 works and "Automatically delete head
 branches" is on (checked: `deleteBranchOnMerge: true`).
