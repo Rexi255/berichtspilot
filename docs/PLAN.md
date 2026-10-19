@@ -66,6 +66,14 @@ development`), PR `development` → `main` (merge commit, E-025), then the tag
 `v2.0.3` on `main` after the user's go → watch the run: the `release` job must
 attach the five files; `/releases/latest/download/latest.yml` = 2.0.3; the
 user's installed 2.0.2 should offer the update.
+**Repository rules since 2026-10-19 (9.3b):** `main` only takes the PR, after
+`pruefen` + `e2e` are green, and only as a merge commit (`gh pr merge <n>
+--merge`; squash/rebase are refused). The tag push works because the user is
+admin (bypass of `Release tags`). Releases are immutable: a published
+release can't get new or replaced files — a broken v2.0.3 is fixed with
+v2.0.4, so the dry run right before tagging matters. A dry run with these
+rules on `development` (before the version bump) was green: run
+39316661700.
 After that: the UI overhaul (v2.1, "Later / to-do" → its workflow step 1).
 
 **Dependabot** (E-027) opens its PRs against `development` on Mondays. Merge
@@ -75,6 +83,11 @@ after the checks in E-027, electron-builder/-updater after the checks named in
 `.github/dependabot.yml`. Its config is read from `main`: until the next
 release merge the old one applies, so new dev-tool majors may still show up —
 close them with a short comment (like #10–#12).
+Dependabot **security** updates (on since 2026-10-19) target `main` instead:
+merge those with `--merge` (the `main` ruleset allows nothing else), then
+merge `main` back into `development`. SHA pinning is required since
+2026-10-19 — if Dependabot's own "Dependabot" runs start failing, check that
+setting first.
 
 Electron support window: 44.x stays supported until Electron 47 is out; 45
 (beta on 2026-10-17) will come as a Dependabot PR — check it per E-027.
@@ -85,17 +98,21 @@ Electron support window: 44.x stays supported until Electron 47 is out; 45
    updates, the fuses and — for the first time — the new release workflow.
    Recommendation: yes, soon, so the new `release` job is proven while the
    changes are fresh. Needs the user's go for the PR into `main` and the tag.
-2. **Step 9.3b — for the user to do (no decision needed):** apply the
-   "Maintainer checklist: GitHub security settings" in `CONTRIBUTING.md`
-   (2FA/passkey, tag ruleset `v*`, rulesets for `main`/`development`, require
-   SHA pinning, release immutability, Dependabot alerts + security updates).
-   State read on 2026-10-17 (read-only API): no rulesets, `main` unprotected,
-   workflow token read-only ✓, SHA pinning not enforced, release immutability
-   off, Dependabot alerts/security updates off, secret scanning + push
-   protection on ✓, 2FA not readable with the token. Possible any time —
-   before v2.0.3 is fine: the tag ruleset lets the admin through, and the
-   checks `pruefen` + `e2e` the `main` ruleset requires exist since 2026-10-17.
-   Not changed by Claude on purpose: repository settings are the user's.
+2. **Step 9.3b — the account part is left for the user (no decision
+   needed):** two-factor authentication with a passkey or security key,
+   recovery codes stored offline, revoke unused tokens and OAuth/GitHub apps
+   (`CONTRIBUTING.md` → "Maintainer checklist", first item). Claude's `gh`
+   token can't read or change account settings.
+   The repository part is done: on the user's request Claude set it via
+   `gh api` on 2026-10-19 and read it back — rulesets `Release tags`
+   (`refs/tags/v*`; creation/update/deletion/force push restricted; bypass
+   Repository admin = the user, `current_user_can_bypass: always`), `main`
+   (default branch; no deletion/force push; PR with 0 approvals, merge method
+   *merge* only; checks `pruefen` + `e2e`, not strict; no bypass) and
+   `development` (no deletion/force push); SHA pinning required; release
+   immutability on; Dependabot alerts + security updates on. Already right
+   before: workflow token read-only, Actions can't approve PRs, secret
+   scanning + push protection on.
 
 (Answered 2026-10-17: code signing (9.4) — stay unsigned, E-028. v2.0.2 is released with 8.4 — phase 7 plus 8.1–8.3;
 the user's update test to 2.0.2 works and "Automatically delete head
@@ -311,7 +328,10 @@ anything new is built.
       "Maintainer checklist" (2FA/passkey, tag ruleset `v*`, rulesets for
       `main`/`development`, SHA pinning required, release immutability,
       Dependabot alerts) + current state read via the API (2026-10-17)
-- [ ] 9.3b The user applies the checklist (see "Open questions" 2)
+- [ ] 9.3b Apply the checklist — repository settings done by Claude on the
+      user's request (2026-10-19, rulesets + SHA pinning + release
+      immutability + Dependabot alerts/security updates); account part
+      (2FA/passkey, tokens) open for the user (see "Open questions" 2)
 - [x] ~~9.4 Code signing for the Windows installer~~ — the user chose to stay
       unsigned (2026-10-17, E-028)
 
@@ -421,3 +441,4 @@ anything new is built.
 | 2026-10-17 | 9.2: Electron fuses + asar integrity (E-029) | ab5bb91 |
 | 2026-10-17 | 9.1: release job is the only writer, actions pinned to SHAs (E-030); dry run green | 4d4e58c, bdc4ea7 |
 | 2026-10-17 | 9.3: maintainer checklist for the GitHub settings in CONTRIBUTING (applying it: user) + docs for phases 9–10 | 0c10bb4 |
+| 2026-10-19 | 9.3b (repository part): rulesets `Release tags`/`main`/`development`, SHA pinning, release immutability, Dependabot alerts + security updates — set by Claude on the user's request; release dry run green (run 39316661700) | repo settings |
