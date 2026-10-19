@@ -683,13 +683,15 @@ every installation would have taken it.
 - A manual start stays a dry run: builds and checks everything, keeps the
   files as artifacts for a week (installable for a test), publishes nothing.
   action-gh-release v3 uploads all files before it publishes, so GitHub's
-  "release immutability" setting (9.3 checklist) works with this workflow.
+  "release immutability" setting (9.3 checklist) works with this workflow
+  (confirmed by v2.0.3 on 2026-10-19: draft → five files → published,
+  `isImmutable: true`).
 
 Limits: the release job still trusts what the build jobs produced — a
 compromised build job can still put a bad file into its artifact; what's gone
 is the write token during `npm ci` and the build. The rest is repository
 settings (CONTRIBUTING → maintainer checklist: tag ruleset, immutable
-releases, 2FA). Considered for later: `npm ci --ignore-scripts` in the build
+releases, 2FA) — applied on 2026-10-19 (PLAN step 9.3b). Considered for later: `npm ci --ignore-scripts` in the build
 jobs (needs a check of which install scripts the build relies on) and build
 provenance attestations (electron-updater doesn't verify them, so they'd only
 help a manual check).

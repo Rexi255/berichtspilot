@@ -52,8 +52,8 @@ commit 21d4956), annotated tag `v2.0.3` on it, release run 39325719252 green
 published, `isImmutable: true`). Feed checked via `/releases/latest/download/`:
 both `latest*.yml` = 2.0.3, `sha512` + size match the published installer and
 AppImage. `main` fast-forwarded back into `development`.
-**Open for the user:** check that the installed 2.0.2 offers the update to
-2.0.3 (sidebar card or Settings → Updates) and still starts afterwards.
+The user's installed app updated to 2.0.3 and works ("alles funktioniert",
+2026-10-20).
 
 **Release procedure** (as done for 2.0.3; the repository rules since
 2026-10-19, 9.3b, enforce parts of it): `npm version X.Y.Z
@@ -316,7 +316,8 @@ anything new is built.
       SHA with `# vX.Y.Z` (E-030) (2026-10-17; dry runs on `development`: the
       first found a test race on Linux, the second green — run 39063403845;
       its artifacts checked like the `release` job would: five files + notes,
-      `sha512` matches. The `release` job itself runs first with v2.0.3)
+      `sha512` matches. The `release` job itself ran green for the first time
+      with v2.0.3 on 2026-10-19, run 39325719252)
 - [x] 9.2 Electron fuses in `build.electronFuses`: `runAsNode`,
       `enableNodeOptionsEnvironmentVariable`, `enableNodeCliInspectArguments`
       off, `onlyLoadAppFromAsar` + asar integrity on (E-029) (2026-10-17;
