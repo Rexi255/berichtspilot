@@ -36,7 +36,10 @@ WebUntis "Lehrstoff" ─────────────┘    (daten.json) 
 **Branch workflow since 2026-10-17 (E-025):** every session works on
 `development` (`git fetch origin development && git checkout development`, even
 if the session names a `claude/…` branch) and pushes there. No PR between
-releases; a release step opens the PR `development` → `main`.
+releases; a release step opens the PR `development` → `main`. One exception
+so far: on 2026-10-20 the user asked to bring both branches level after
+v2.0.3 — the post-release docs and the dev-only `@eslint/js` bump (#17) went
+to `main` by PR; the app code on `main` is still exactly v2.0.3.
 
 **The user continues locally in VS Code (Claude Code extension) from
 2026-10-17.** Locally git uses the user's own credentials — tag pushes and
@@ -443,3 +446,4 @@ anything new is built.
 | 2026-10-17 | 9.3: maintainer checklist for the GitHub settings in CONTRIBUTING (applying it: user) + docs for phases 9–10 | 0c10bb4 |
 | 2026-10-19 | 9.3b (repository part): rulesets `Release tags`/`main`/`development`, SHA pinning, release immutability, Dependabot alerts + security updates — set by Claude on the user's request; release dry run green (run 39316661700) | 07b0201 (docs) |
 | 2026-10-19 | v2.0.3: bump + CHANGELOG, dry run green (run 39325088802), PR #16 merged, tag pushed, release run green (39325719252, first real `release` job), feed checked | 21d4956, 183a6e1, tag `v2.0.3` |
+| 2026-10-20 | `main` and `development` brought level on the user's request (post-release docs + #17, no app code) | PR `development` → `main` |
