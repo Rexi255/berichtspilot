@@ -95,7 +95,8 @@ Electron support window: 44.x stays supported until Electron 47 is out; 45
 ## Open questions (for the user)
 
 1. **Step 9.3b — the account part is left for the user (no decision
-   needed):** two-factor authentication with a passkey or security key,
+   needed):** two-factor authentication is on (user, 2026-10-20); still
+   open: a passkey or security key as the 2FA method if it isn't one yet,
    recovery codes stored offline, revoke unused tokens and OAuth/GitHub apps
    (`CONTRIBUTING.md` → "Maintainer checklist", first item). Claude's `gh`
    token can't read or change account settings.
