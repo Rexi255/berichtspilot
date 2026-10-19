@@ -6,6 +6,13 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [2.0.3] - 2026-10-19
+
+The hardening release: Electron 44.7, an installed app that only runs its own
+unchanged program files, and releases built with read-only access. From
+2.0.0, 2.0.1 or 2.0.2 the app updates itself (sidebar card or Settings →
+Updates); your data stays as it is.
+
 ### Changed
 
 - **Electron 44.7 instead of 43.8:** the app's built-in browser engine
@@ -23,7 +30,9 @@ versioning follows [Semantic Versioning](https://semver.org/).
   modified.
 - **Releases are built with read-only access:** only the very last step,
   which runs none of the project's code, may publish a release, and every
-  build is started once and checked before its files are released.
+  build is started once and checked before its files are released. A
+  published release can no longer be changed afterwards — an update always
+  brings exactly the files that were released.
 
 ## [2.0.2] - 2026-10-17
 

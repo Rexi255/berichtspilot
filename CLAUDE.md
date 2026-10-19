@@ -2,12 +2,12 @@
 
 Electron desktop app that produces the weekly IHK training record ("Berichtsheft")
 for an apprentice (IT specialist for system integration, Schleswig-Holstein,
-Germany). Current release: v2.0.2 — entry by hand or from notes, WebUntis
+Germany). Current release: v2.0.3 — entry by hand or from notes, WebUntis
 import, AI phrasing via the clipboard, in-app updates, daily backups → three
 exactly formatted text blocks to copy into the IHK portal.
 Phases 9–10 of the 2026-10-15 code review (release hardening, end-to-end tests)
-are done on `development`. **Next:** release v2.0.3 (user's go), then the UI
-overhaul (v2.1); voice dictation is parked — see `docs/PLAN.md`.
+ship with v2.0.3. **Next:** the UI overhaul (v2.1); voice dictation is
+parked — see `docs/PLAN.md`.
 
 ## Language rules
 

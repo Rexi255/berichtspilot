@@ -56,16 +56,18 @@ integrity (E-029); Playwright end-to-end tests `npm run test:e2e` in CI
 39063403845); the artifacts were checked by hand like the `release` job
 would (exactly five files + notes, `sha512` in `latest*.yml` matches).
 
-**Next: release v2.0.3 — only after the user's go** (open question 1). It is
-also the first real run of the new `release` job, which dry runs can't reach
-(it only runs on a tag). Steps like 8.4: version bump 2.0.2 → 2.0.3 in
-`package.json` + lock (`npm version 2.0.3 --no-git-tag-version`), CHANGELOG
-`## [Unreleased]` → `## [2.0.3] - <date>` with a short intro line (Electron
-44.7, the security entries), dry run (`gh workflow run release.yml --ref
-development`), PR `development` → `main` (merge commit, E-025), then the tag
-`v2.0.3` on `main` after the user's go → watch the run: the `release` job must
-attach the five files; `/releases/latest/download/latest.yml` = 2.0.3; the
-user's installed 2.0.2 should offer the update.
+**Next: finish the v2.0.3 release — the user gave the go on 2026-10-19.** It
+is also the first real run of the new `release` job, which dry runs can't
+reach (it only runs on a tag). Done (2026-10-19): version bump 2.0.2 → 2.0.3
+in `package.json` + lock (`npm version 2.0.3 --no-git-tag-version`),
+CHANGELOG `## [2.0.3] - 2026-10-19` with an intro line, `CLAUDE.md` says
+v2.0.3, dry run of that state, PR `development` → `main` opened
+(`gh pr list --base main`). Left: when the PR's checks are green, ask the
+user once more (promised), then merge it with `gh pr merge <n> --merge` and
+push the tag `v2.0.3` on the merge commit on `main` → watch the run: the
+`release` job must attach the five files; `/releases/latest/download/latest.yml`
+= 2.0.3; the user's installed 2.0.2 should offer the update. Afterwards
+merge `main` back into `development` (fast-forward) and log it below.
 **Repository rules since 2026-10-19 (9.3b):** `main` only takes the PR, after
 `pruefen` + `e2e` are green, and only as a merge commit (`gh pr merge <n>
 --merge`; squash/rebase are refused). The tag push works because the user is
@@ -94,11 +96,7 @@ Electron support window: 44.x stays supported until Electron 47 is out; 45
 
 ## Open questions (for the user)
 
-1. **Release v2.0.3 now?** It would ship Electron 44.7, the dependency
-   updates, the fuses and — for the first time — the new release workflow.
-   Recommendation: yes, soon, so the new `release` job is proven while the
-   changes are fresh. Needs the user's go for the PR into `main` and the tag.
-2. **Step 9.3b — the account part is left for the user (no decision
+1. **Step 9.3b — the account part is left for the user (no decision
    needed):** two-factor authentication with a passkey or security key,
    recovery codes stored offline, revoke unused tokens and OAuth/GitHub apps
    (`CONTRIBUTING.md` → "Maintainer checklist", first item). Claude's `gh`
@@ -113,6 +111,8 @@ Electron support window: 44.x stays supported until Electron 47 is out; 45
    immutability on; Dependabot alerts + security updates on. Already right
    before: workflow token read-only, Actions can't approve PRs, secret
    scanning + push protection on.
+
+(Answered 2026-10-19: release v2.0.3 now — the user gave the go.)
 
 (Answered 2026-10-17: code signing (9.4) — stay unsigned, E-028. v2.0.2 is released with 8.4 — phase 7 plus 8.1–8.3;
 the user's update test to 2.0.2 works and "Automatically delete head
@@ -331,7 +331,7 @@ anything new is built.
 - [ ] 9.3b Apply the checklist — repository settings done by Claude on the
       user's request (2026-10-19, rulesets + SHA pinning + release
       immutability + Dependabot alerts/security updates); account part
-      (2FA/passkey, tokens) open for the user (see "Open questions" 2)
+      (2FA/passkey, tokens) open for the user (see "Open questions" 1)
 - [x] ~~9.4 Code signing for the Windows installer~~ — the user chose to stay
       unsigned (2026-10-17, E-028)
 
