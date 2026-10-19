@@ -36,60 +36,61 @@ WebUntis "Lehrstoff" ─────────────┘    (daten.json) 
 **Branch workflow since 2026-10-17 (E-025):** every session works on
 `development` (`git fetch origin development && git checkout development`, even
 if the session names a `claude/…` branch) and pushes there. No PR between
-releases; a release step opens the PR `development` → `main`.
+releases; a release step opens the PR `development` → `main`. One exception
+so far: on 2026-10-20 the user asked to bring both branches level after
+v2.0.3 — the post-release docs and the dev-only `@eslint/js` bump (#17) went
+to `main` by PR; the app code on `main` is still exactly v2.0.3.
 
 **The user continues locally in VS Code (Claude Code extension) from
 2026-10-17.** Locally git uses the user's own credentials — tag pushes and
 branch deletions work there (the 403s were the cloud proxy only). Before
 pushing a tag or merging into `main`, still ask the user.
 
-**v2.0.2 is out** (2026-10-17, `latest.yml` = 2.0.2). `development` is ahead
-of `main` by Electron 44.7 + the Dependabot PRs #7/#9 (8.5, 8.6) and phases
-9–10 (fuses, new release workflow, end-to-end tests) — they ship with the next
-release.
+**v2.0.3 is out** (2026-10-19, `latest.yml` = 2.0.3, an immutable release).
+It ships Electron 44.7, the Dependabot PRs #7/#9 (8.5, 8.6) and phases 9–10
+(fuses + asar integrity E-029, release workflow E-030, end-to-end tests
+E-031). PR #16 merged as a merge commit (183a6e1, same tree as the dry-run
+commit 21d4956), annotated tag `v2.0.3` on it, release run 39325719252 green
+— the first real run of the new `release` job (draft → five files →
+published, `isImmutable: true`). Feed checked via `/releases/latest/download/`:
+both `latest*.yml` = 2.0.3, `sha512` + size match the published installer and
+AppImage. `main` fast-forwarded back into `development`.
+The user's installed app updated to 2.0.3 and works ("alles funktioniert",
+2026-10-20).
 
-**Phases 9 and 10 are done** (2026-10-17, see the roadmap): `release.yml`
-split into `check` → `build` (read-only, packaged check) → `release` (only
-writer, tags only), all actions pinned to SHAs (E-030); Electron fuses + asar
-integrity (E-029); Playwright end-to-end tests `npm run test:e2e` in CI
-(E-031). Two release dry runs on `development` (the second green: run
-39063403845); the artifacts were checked by hand like the `release` job
-would (exactly five files + notes, `sha512` in `latest*.yml` matches).
+**Release procedure** (as done for 2.0.3; the repository rules since
+2026-10-19, 9.3b, enforce parts of it): `npm version X.Y.Z
+--no-git-tag-version` (package.json + lock) → CHANGELOG `## [X.Y.Z] - <date>`
+with an intro line → commit + push to `development` → dry run of exactly
+that commit (`gh workflow run release.yml --ref development`) → PR
+`development` → `main`; `main` only takes it once `pruefen` + `e2e` are green
+and only as a merge commit (`gh pr merge <n> --merge`) → **ask the user** →
+annotated tag `git tag -a vX.Y.Z <merge commit> -m "Berichtspilot X.Y.Z"` +
+push (works because the user is admin: bypass of the `Release tags` ruleset)
+→ watch the run, check the feed → fast-forward `development` to `main`.
+Releases are immutable: a published release can't get new or replaced files,
+a broken one is fixed with the next patch version — so the dry run right
+before tagging matters.
 
-**Next: finish the v2.0.3 release — the user gave the go on 2026-10-19.** It
-is also the first real run of the new `release` job, which dry runs can't
-reach (it only runs on a tag). Done (2026-10-19): version bump 2.0.2 → 2.0.3
-in `package.json` + lock (`npm version 2.0.3 --no-git-tag-version`),
-CHANGELOG `## [2.0.3] - 2026-10-19` with an intro line, `CLAUDE.md` says
-v2.0.3, dry run of that state, PR `development` → `main` opened
-(`gh pr list --base main`). Left: when the PR's checks are green, ask the
-user once more (promised), then merge it with `gh pr merge <n> --merge` and
-push the tag `v2.0.3` on the merge commit on `main` → watch the run: the
-`release` job must attach the five files; `/releases/latest/download/latest.yml`
-= 2.0.3; the user's installed 2.0.2 should offer the update. Afterwards
-merge `main` back into `development` (fast-forward) and log it below.
-**Repository rules since 2026-10-19 (9.3b):** `main` only takes the PR, after
-`pruefen` + `e2e` are green, and only as a merge commit (`gh pr merge <n>
---merge`; squash/rebase are refused). The tag push works because the user is
-admin (bypass of `Release tags`). Releases are immutable: a published
-release can't get new or replaced files — a broken v2.0.3 is fixed with
-v2.0.4, so the dry run right before tagging matters. A dry run with these
-rules on `development` (before the version bump) was green: run
-39316661700.
-After that: the UI overhaul (v2.1, "Later / to-do" → its workflow step 1).
+**Next: the UI overhaul (v2.1)** — "Later / to-do" → its workflow step 1
+(baseline: demo `daten.json` fixture + project skill `ui-shots`). The *what*
+is still open: ask the user what bothers them in the current UI before step 2.
 
 **Dependabot** (E-027) opens its PRs against `development` on Mondays. Merge
 green ones with `gh pr merge <n> --squash` (the repo deletes merged branches
 itself since 2026-10-17); Electron PRs only
 after the checks in E-027, electron-builder/-updater after the checks named in
-`.github/dependabot.yml`. Its config is read from `main`: until the next
-release merge the old one applies, so new dev-tool majors may still show up —
-close them with a short comment (like #10–#12).
+`.github/dependabot.yml`. Its config is read from `main` (current since the
+v2.0.3 merge); dev-tool majors that still show up are closed with a short
+comment (like #10–#12).
 Dependabot **security** updates (on since 2026-10-19) target `main` instead:
 merge those with `--merge` (the `main` ruleset allows nothing else), then
 merge `main` back into `development`. SHA pinning is required since
-2026-10-19 — if Dependabot's own "Dependabot" runs start failing, check that
-setting first.
+2026-10-19; Dependabot's own update runs work with it (checked 2026-10-19
+right after the v2.0.3 merge — they opened #17). Dependabot alert #1
+(`sprintf-js` ≤ 1.1.3, moderate, no fix yet) sits in the dev-only chain
+electron-builder → @electron/get → global-agent → roarr and doesn't ship
+(`npm audit --omit=dev` = 0); it goes away with an electron-builder update.
 
 Electron support window: 44.x stays supported until Electron 47 is out; 45
 (beta on 2026-10-17) will come as a Dependabot PR — check it per E-027.
@@ -97,7 +98,8 @@ Electron support window: 44.x stays supported until Electron 47 is out; 45
 ## Open questions (for the user)
 
 1. **Step 9.3b — the account part is left for the user (no decision
-   needed):** two-factor authentication with a passkey or security key,
+   needed):** two-factor authentication is on (user, 2026-10-20); still
+   open: a passkey or security key as the 2FA method if it isn't one yet,
    recovery codes stored offline, revoke unused tokens and OAuth/GitHub apps
    (`CONTRIBUTING.md` → "Maintainer checklist", first item). Claude's `gh`
    token can't read or change account settings.
@@ -317,7 +319,8 @@ anything new is built.
       SHA with `# vX.Y.Z` (E-030) (2026-10-17; dry runs on `development`: the
       first found a test race on Linux, the second green — run 39063403845;
       its artifacts checked like the `release` job would: five files + notes,
-      `sha512` matches. The `release` job itself runs first with v2.0.3)
+      `sha512` matches. The `release` job itself ran green for the first time
+      with v2.0.3 on 2026-10-19, run 39325719252)
 - [x] 9.2 Electron fuses in `build.electronFuses`: `runAsNode`,
       `enableNodeOptionsEnvironmentVariable`, `enableNodeCliInspectArguments`
       off, `onlyLoadAppFromAsar` + asar integrity on (E-029) (2026-10-17;
@@ -441,4 +444,6 @@ anything new is built.
 | 2026-10-17 | 9.2: Electron fuses + asar integrity (E-029) | ab5bb91 |
 | 2026-10-17 | 9.1: release job is the only writer, actions pinned to SHAs (E-030); dry run green | 4d4e58c, bdc4ea7 |
 | 2026-10-17 | 9.3: maintainer checklist for the GitHub settings in CONTRIBUTING (applying it: user) + docs for phases 9–10 | 0c10bb4 |
-| 2026-10-19 | 9.3b (repository part): rulesets `Release tags`/`main`/`development`, SHA pinning, release immutability, Dependabot alerts + security updates — set by Claude on the user's request; release dry run green (run 39316661700) | repo settings |
+| 2026-10-19 | 9.3b (repository part): rulesets `Release tags`/`main`/`development`, SHA pinning, release immutability, Dependabot alerts + security updates — set by Claude on the user's request; release dry run green (run 39316661700) | 07b0201 (docs) |
+| 2026-10-19 | v2.0.3: bump + CHANGELOG, dry run green (run 39325088802), PR #16 merged, tag pushed, release run green (39325719252, first real `release` job), feed checked | 21d4956, 183a6e1, tag `v2.0.3` |
+| 2026-10-20 | `main` and `development` brought level on the user's request (post-release docs + #17, no app code) | PR `development` → `main` |
