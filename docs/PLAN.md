@@ -83,8 +83,11 @@ comment (like #10–#12).
 Dependabot **security** updates (on since 2026-10-19) target `main` instead:
 merge those with `--merge` (the `main` ruleset allows nothing else), then
 merge `main` back into `development`. SHA pinning is required since
-2026-10-19 — if Dependabot's own "Dependabot" runs start failing, check that
-setting first.
+2026-10-19; Dependabot's own update runs work with it (checked 2026-10-19
+right after the v2.0.3 merge — they opened #17). Dependabot alert #1
+(`sprintf-js` ≤ 1.1.3, moderate, no fix yet) sits in the dev-only chain
+electron-builder → @electron/get → global-agent → roarr and doesn't ship
+(`npm audit --omit=dev` = 0); it goes away with an electron-builder update.
 
 Electron support window: 44.x stays supported until Electron 47 is out; 45
 (beta on 2026-10-17) will come as a Dependabot PR — check it per E-027.
