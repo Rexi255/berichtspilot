@@ -8,7 +8,8 @@ description: Finish a work session cleanly — verify, update PLAN/CHANGELOG/doc
 Goal: a fresh chat with zero context can continue seamlessly using only the repo.
 
 1. **Verify:** `npm run lint && npm test && npm run build:renderer` — all green,
-   otherwise fix first. Read your own diff (`git diff`) critically: format tests
+   otherwise fix first; `npm run test:e2e` too where it runs (needs
+   Playwright's Chromium and the Electron binary — CI runs it on every push). Read your own diff (`git diff`) critically: format tests
    untouched? No secrets / `daten.json` in the diff? Security rules respected?
    Code/docs English, UI German?
 2. **`docs/PLAN.md`:**

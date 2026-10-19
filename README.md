@@ -29,7 +29,7 @@ Download unter **[Releases](https://github.com/Rexi255/berichtspilot/releases)**
 **Windows:** `Berichtspilot-Setup-<version>.exe` ausführen. Admin-Rechte brauchst du nicht.
 
 > **Windows warnt beim ersten Start?**
-> Die Meldung „Der Computer wurde durch Windows geschützt“ ist normal. Der Installer ist (noch) nicht signiert, deshalb kennt Windows den Herausgeber nicht.
+> Die Meldung „Der Computer wurde durch Windows geschützt“ ist normal. Der Installer ist nicht signiert, deshalb kennt Windows den Herausgeber nicht.
 > Klick auf **Weitere Informationen** und dann auf **Trotzdem ausführen**.
 > Bei Updates aus der App heraus kommt die Warnung nicht mehr.
 
@@ -94,6 +94,7 @@ Voraussetzung: Node.js 22.12 oder neuer (empfohlen: 24).
 npm install
 npm run dev            # App mit Hot Reload
 npm test               # Tests
+npm run test:e2e       # End-to-End-Tests (Playwright, Browser + Electron)
 npm run lint           # ESLint
 npm run build:win      # Windows-Installer nach release/
 npm run build:linux    # AppImage nach release/ (unter Linux)

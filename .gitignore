@@ -6,6 +6,10 @@ dist/
 release/
 *.tmp
 
+# Playwright output (traces of failed end-to-end tests)
+/test-results/
+/playwright-report/
+
 # App data: daten.json is user-specific — never commit it
 # (incl. the temp file used for atomic writes and the rolling backups)
 daten.json

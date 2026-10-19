@@ -6,7 +6,7 @@ improvements to the holiday/format logic.
 ## Setup
 
 Requires **Node.js ≥ 22.12**; recommended is **24 LTS** (`.nvmrc`) — CI and the
-release builds use it, and it is the Node inside Electron 43. Change
+release builds use it, and it is the Node inside Electron 44. Change
 dependencies with **npm 11** (bundled with Node 24; on Node 22 use
 `npx -y npm@11 install …`): the lockfile carries npm 11's `libc` fields, which
 npm 10 strips. `npm ci` works with both.
@@ -48,6 +48,32 @@ npm run dev
   dates (no UTC offset). Don't switch to `new Date("YYYY-MM-DD")`.
 - **Schema changes** need a migration step and a test (see `docs/DATA_MODEL.md`).
 
+## Tests
+
+```bash
+npm test                 # Vitest: src/lib + electron modules (~2 s)
+npm run test:e2e         # Playwright: builds the renderer, then end-to-end tests
+```
+
+`test:e2e` runs two projects (`playwright.config.mjs`): **browser** — the built
+renderer in Chromium via `vite preview`, from a fresh start to the exact text
+of output block 1 — and **electron** — the real app with `daten.json` in a temp
+folder: closing right after typing keeps the text, a restart shows it. Once per
+machine: `npx playwright install --only-shell chromium`. On Linux without a
+display: `xvfb-run -a npm run test:e2e`. The third project, **packaged**,
+checks a built app (fuses, start from `app.asar`) and only runs with
+`PACKAGED_APP` set — the release workflow does that after each build:
+
+```bash
+npm run build:win
+PACKAGED_APP=release/win-unpacked/Berichtspilot.exe npx playwright test --project=packaged
+```
+
+The packaged app normally opens your real data folder; the test points it at
+a temp folder (`--user-data-dir`). Start `release/win-unpacked` by hand only
+with `PORTABLE_EXECUTABLE_DIR=<scratch folder>` set, or it uses your own
+`daten.json`.
+
 ## Quick UI check
 
 A built-in screenshot helper renders the app invisibly and saves a PNG:
@@ -81,8 +107,50 @@ sharing it.
 - Work happens on the branch `development`; `main` holds the released state
   and only receives a merge per release. Open PRs against `development`.
 - Small, focused PRs with a meaningful description.
-- Run `npm run lint`, `npm test` and `npm run build:renderer` before opening a PR.
+- Run `npm run lint`, `npm test` and `npm run build:renderer` (CI also runs
+  `npm run test:e2e`) before opening a PR.
 - For UI changes, a screenshot is appreciated.
+
+## Maintainer checklist: GitHub security settings
+
+The Windows installer is unsigned (DECISIONS E-028), so an update is trusted
+because it comes from this repository's GitHub releases: whoever can push a
+`v*` tag or publish a release ships code to every installation. The release
+workflow only lets its last job write (E-030); these settings close the doors
+around it (step 9.3). Set them once and check them again after changing
+anything in the repository settings.
+
+- [ ] **Account:** two-factor authentication with a passkey or security key
+      (github.com/settings/security), recovery codes stored offline. Revoke
+      personal access tokens and OAuth/GitHub apps you no longer use
+      (github.com/settings/tokens, …/applications).
+- [ ] **Release tags** — Settings → Rules → Rulesets → New ruleset → *New tag
+      ruleset*: name `Release tags`, enforcement *Active*, target *Include by
+      pattern* `v*`; rules *Restrict creations*, *Restrict updates*, *Restrict
+      deletions*, *Block force pushes*; bypass list: *Repository admin*
+      (always). Only you can create or move a release tag — no workflow, no
+      Dependabot, no leaked token without admin rights.
+- [ ] **`main`** — *New branch ruleset*: name `main`, enforcement *Active*,
+      target *Include default branch*; rules *Restrict deletions*, *Block force
+      pushes*, *Require a pull request before merging* (required approvals 0,
+      allowed merge methods: *Merge* only — E-025) and *Require status checks
+      to pass* with `pruefen` and `e2e` (from GitHub Actions); no bypass. The
+      release PR `development` → `main` then needs green CI.
+- [ ] **`development`** — branch ruleset `development`: *Restrict deletions*
+      and *Block force pushes* only (direct pushes stay allowed, E-025).
+- [ ] **Actions** — Settings → Actions → General: tick *Require actions to be
+      pinned to a full-length commit SHA* (every workflow is pinned); keep
+      *Workflow permissions* at "Read repository contents and packages
+      permissions" and "Allow GitHub Actions to create and approve pull
+      requests" off.
+- [ ] **Releases** — Settings → General → Releases: *Enable release
+      immutability*. A published release's files and tag can't be changed any
+      more; a broken release is fixed with a new version. The release workflow
+      uploads all files before it publishes, so it works with this.
+- [ ] **Code security** — Settings → Advanced Security: *Dependabot alerts*
+      and *Dependabot security updates* on (their PRs target `main`: merge
+      `main` back into `development` afterwards, E-025); keep *Secret
+      scanning* and *Push protection* on.
 
 ## Reporting bugs
 

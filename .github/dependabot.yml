@@ -24,18 +24,48 @@ updates:
       electron:
         patterns: [electron]
       # Builds the installer and the update metadata (latest*.yml) — check a
-      # local build before merging
+      # local build before merging (minor + patch only, see `ignore`)
       electron-builder:
         patterns: [electron-builder]
       # Pinned on purpose (E-017): check the hosts it contacts and the headers
       # it sends against the allowlist before merging
       electron-updater:
         patterns: [electron-updater]
-      # Everything else: minor + patch in one PR; majors come one by one
+      # Everything else: minor + patch in one PR
       dependencies:
         patterns: ['*']
         exclude-patterns: [electron, electron-builder, electron-updater]
         update-types: [minor, patch]
+    # Majors of everything but Electron are done by hand when we decide to
+    # (E-027; ESLint 10 needs a config migration, for example). Electron's
+    # majors stay on: only the newest three are supported. `ignore` has no
+    # exceptions, so the patterns list all other packages — add a new
+    # dependency here as well.
+    ignore:
+      - dependency-name: '@*'
+        update-types: [version-update:semver-major]
+      - dependency-name: 'electron-*'
+        update-types: [version-update:semver-major]
+      - dependency-name: 'eslint*'
+        update-types: [version-update:semver-major]
+      - dependency-name: 'react*'
+        update-types: [version-update:semver-major]
+      - dependency-name: 'vite*'
+        update-types: [version-update:semver-major]
+      - dependency-name: concurrently
+        update-types: [version-update:semver-major]
+      - dependency-name: cross-env
+        update-types: [version-update:semver-major]
+      - dependency-name: globals
+        update-types: [version-update:semver-major]
+      - dependency-name: gsap
+        update-types: [version-update:semver-major]
+      - dependency-name: lenis
+        update-types: [version-update:semver-major]
+      - dependency-name: tailwindcss
+        update-types: [version-update:semver-major]
+      - dependency-name: wait-on
+        update-types: [version-update:semver-major]
 
   - package-ecosystem: github-actions
     directory: /

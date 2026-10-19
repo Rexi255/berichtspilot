@@ -2,11 +2,12 @@
 
 Electron desktop app that produces the weekly IHK training record ("Berichtsheft")
 for an apprentice (IT specialist for system integration, Schleswig-Holstein,
-Germany). Current release: v2.0.2 — entry by hand or from notes, WebUntis
+Germany). Current release: v2.0.3 — entry by hand or from notes, WebUntis
 import, AI phrasing via the clipboard, in-app updates, daily backups → three
 exactly formatted text blocks to copy into the IHK portal.
-**Next:** release hardening + tests (phases 9–10 from the 2026-10-15 code review),
-then the UI overhaul (v2.1); voice dictation is parked — see `docs/PLAN.md`.
+Phases 9–10 of the 2026-10-15 code review (release hardening, end-to-end tests)
+ship with v2.0.3. **Next:** the UI overhaul (v2.1); voice dictation is
+parked — see `docs/PLAN.md`.
 
 ## Language rules
 
@@ -62,6 +63,7 @@ Folder-specific rules live in `electron/CLAUDE.md` and `src/lib/CLAUDE.md`.
 npm ci                 # install (cloud sessions: prefix ELECTRON_SKIP_BINARY_DOWNLOAD=1)
 npx -y npm@11 install … # lockfile changes: the lock has npm 11 `libc` fields, npm 10 strips them
 npm test               # Vitest — src/lib + electron modules, in Europe/Berlin time (vite.config.js) (fast, ~2 s)
+npm run test:e2e       # Playwright (E-031): builds the renderer, browser smoke test + Electron end-to-end (~10 s)
 npm run lint           # ESLint (required by CI)
 npm run build:renderer # Vite build — proves the renderer compiles
 npm run dev            # Vite + Electron with hot reload (needs a display)
@@ -73,6 +75,11 @@ checks from a scratch folder (`<repo>/node_modules/electron/dist/electron <repo>
 so the real data file isn't migrated/overwritten. In a VS Code terminal on
 Windows `ELECTRON_RUN_AS_NODE` may be set; unset it (`env -u ELECTRON_RUN_AS_NODE …`)
 or Electron starts as plain Node.
+**Packaged builds** (`release/win-unpacked`, the AppImage) are "installed": they
+open the user's **real** `%APPDATA%\Berichtspilot\daten.json`. Start them only
+with `PORTABLE_EXECUTABLE_DIR=<scratch>` or `--user-data-dir=<scratch>`, or via
+the packaged check: `PACKAGED_APP=release/win-unpacked/Berichtspilot.exe npx playwright test --project=packaged`.
+Their fuses (E-029) refuse `--inspect`; drive them over CDP (`--remote-debugging-port`).
 
 Cloud sessions can still fetch the Electron binary (`node node_modules/electron/install.js`)
 and run it headless: `xvfb-run -a node_modules/electron/dist/electron --no-sandbox <dir>`
@@ -93,13 +100,17 @@ sessions for smoke tests (global `playwright` package under `/opt/node-tools`);
 `page.addInitScript()` can install a fake `window.api` to test store flows such
 as restore/import with dialogs answered.
 
-CI (`.github/workflows/ci.yml`, Node 24 — E-026) runs lint + tests + renderer build on
-every push to `main`/`development` and on every PR.
+CI (`.github/workflows/ci.yml`, Node 24 — E-026) runs lint + tests + renderer build
+and, in job `e2e`, `npm run test:e2e` under xvfb on every push to
+`main`/`development` and on every PR.
 Release: push tag `vX.Y.Z` → `.github/workflows/release.yml` builds NSIS installer +
 AppImage + auto-update metadata (`latest*.yml`); the tag must match `package.json`
 `version` (E-017). The release notes are the CHANGELOG section of that version
 (the workflow fails without one); a manual run (`workflow_dispatch`) on
-`development` is a build dry run that publishes nothing.
+`development` is a build dry run that publishes nothing (files stay as run
+artifacts for 7 days). Build jobs are read-only, only the final `release` job
+writes; every action is pinned to a commit SHA with a `# vX.Y.Z` comment —
+keep both when editing a workflow (E-030).
 
 ## Project map
 
@@ -116,6 +127,7 @@ src/lib/             PURE logic, fully tested: dates · holidays · format · mo
 src/views/           screens: overview · week editor (+ PhrasingPanel, WebuntisPanel) · profiles · settings · setup wizard
 src/ui/              design system: Titlebar, Sidebar, UpdateHint, ErrorBoundary, basics, toast, Logo
 src/index.css        Tailwind v4 + design tokens/themes (data-theme on <html>)
+e2e/                 Playwright: browser smoke · Electron end-to-end · packaged check (E-031)
 docs/                knowledge base (see above)
 ```
 

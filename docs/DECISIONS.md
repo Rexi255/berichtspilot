@@ -537,8 +537,13 @@ merged into `main` only with a release.
 - **Dependabot** targets `development` (`target-branch`). GitHub's security
   updates always target `main` — if one is merged there, merge `main` back
   into `development` right away. Same for a hotfix made directly on `main`.
-- Branch deletion on GitHub is done by the user: the cloud git proxy refuses
-  deleting refs (HTTP 403).
+- Branch deletion and **tag pushes** are done by the user: the cloud git
+  proxy refuses both (HTTP 403; tag refused when releasing 2.0.2). Pushing to
+  `development` works. Local sessions (VS Code, since 2026-10-17) use the
+  user's own git credentials and can push the tag — only after the user's go
+  (done that way for `v2.0.2`). A manual release dry run (`workflow_dispatch` on
+  `development`) builds both installers without publishing — run it before
+  the release merge.
 
 Considered: one branch + PR per step (the old way) — rejected by the user,
 every chat left another `claude/…` branch behind. A permanently open draft PR
@@ -562,3 +567,172 @@ Checked: clean `npm ci` with Node 24.22 + npm 11.21 → lint, 290 tests and the
 renderer build green. npm 11's install-script approval does not affect
 Electron: since 43 it has no install script and downloads its binary on the
 first start (`electron/index.js`).
+Electron 44.7 (2026-10-17) runs on Node 24.21 — CI stays on 24.
+
+### E-027 · Dependabot: majors by hand, except Electron · accepted
+Its first run (2026-10-17) opened six PRs at once, three of them majors of dev
+tools (`eslint` 10 failed CI: it needs a config migration together with
+`@eslint/js` and the plugins). The user picked "calmer" over switching it off.
+
+- `.github/dependabot.yml` **ignores semver-major updates of every npm
+  package except `electron`**. `ignore` has no exceptions, so the patterns
+  (`@*`, `electron-*`, `eslint*`, `react*`, `vite*` + single names) cover all
+  other packages; a new dependency has to be added there. A major is done by
+  hand when we decide to, with its migration in the same commit.
+- **Electron's majors stay on:** only the newest three majors get security
+  fixes, so falling behind is the bigger risk. Before merging: read
+  https://www.electronjs.org/docs/latest/breaking-changes, then check in
+  Electron (views, clipboard, save + close, navigation/permission guards) and
+  the update check — see the 44.7 check in PLAN 8.6.
+- GitHub Actions keep their majors (one grouped PR; they rarely break inputs).
+- Dependabot reads its config from `main` only, so a change here takes effect
+  with the next release; PRs it opens before that are closed by hand.
+
+Considered: switching Dependabot off — rejected, Electron's security
+releases would then depend on someone remembering them.
+
+### E-028 · The Windows installer stays unsigned · accepted
+Step 9.4 asked whether to sign `Berichtspilot-Setup-<version>.exe`. **The user
+(2026-10-17): stay unsigned.**
+
+- The first manual install shows SmartScreen's "Der Computer wurde durch
+  Windows geschützt"; the README explains "Weitere Informationen → Trotzdem
+  ausführen". In-app updates don't show it (checked by the user with 2.0.2).
+- Update integrity rests on electron-updater's `sha512` check against
+  `latest.yml`, fetched over HTTPS from the GitHub release. No
+  `publisherName` is configured, so there is no signature check — whoever can
+  publish a release can ship an update. That makes 9.1 (only the release job
+  may write, actions pinned to SHAs) and 9.3 (2FA, tag/branch protection) the
+  real safeguards.
+
+Considered: SignPath Foundation (free for open source, but an application
+and its signing workflow in CI) and Azure Artifact Signing (monthly fee plus
+identity validation) — not worth it for a one-person tool installed by a few
+people. Revisit if the SmartScreen warning becomes a real obstacle (e.g. the
+app is handed to other apprentices).
+
+### E-029 · Electron fuses and asar integrity in the packaged app · accepted
+Step 9.2 (code review 2026-10-15). Fuses are switches written into the Electron
+binary at build time (`build.electronFuses` in `package.json`; electron-builder
+flips them with `@electron/fuses` after packing). Set:
+
+- `runAsNode` **off** — `ELECTRON_RUN_AS_NODE=1 Berichtspilot.exe …` no longer
+  turns the installed binary into a plain Node interpreter (a known way to run
+  foreign code under the app's name and reputation).
+- `enableNodeOptionsEnvironmentVariable` **off** — `NODE_OPTIONS` (e.g.
+  `--require` of foreign code) and `NODE_EXTRA_CA_CERTS` (an extra CA that
+  could intercept the update download) are ignored.
+- `enableNodeCliInspectArguments` **off** — `--inspect*` and `SIGUSR1` open no
+  debugger into the main process (which holds the WebUntis token).
+- `onlyLoadAppFromAsar` **on** — only `resources/app.asar`; a `resources/app/`
+  folder placed next to it is never loaded.
+- `enableEmbeddedAsarIntegrityValidation` **on** — Windows: electron-builder
+  embeds the asar header hash in the exe (`INTEGRITY` resource), a changed
+  `app.asar` ends the app with a FATAL. Linux: Electron compiles the check for
+  macOS and Windows only (`shell/common/asar/archive.cc`, 44.7) — the fuse has
+  no effect there.
+
+Left as they are: `enableCookieEncryption` (a one-way switch; the WebUntis
+session cookie doesn't persist anyway, and on Linux it depends on a keyring),
+`grantFileProtocolExtraPrivileges` (stays on — the app loads `dist/index.html`
+from `file://` with ES modules; switching it off needs a custom `app://`
+protocol first, a possible later step), `loadBrowserProcessSpecificV8Snapshot`
+(no snapshot). No fuse covers Chromium's `--remote-debugging-port`: whoever can
+start the app with arguments as the user can read `daten.json` anyway; the
+packaged check (E-031) uses it.
+
+Checked on Windows (2026-10-17, local `build:win`, run isolated via
+`PORTABLE_EXECUTABLE_DIR`/`--user-data-dir`): fuse wire read back as
+configured; `ELECTRON_RUN_AS_NODE=1` + `-e` started the app instead of Node;
+`--inspect=9229` opened no port; `NODE_OPTIONS=--require marker.cjs` left no
+marker (the unfused dev binary wrote it); one byte changed in
+`dist/index.html` inside `app.asar` → `FATAL … Failed to validate block`;
+`resources/app/` instead of `app.asar` → exit 1, folder not loaded; the
+unpacked app starts, shows the wizard, saves. Linux: the packaged check in the
+release dry run (fuse wire + start under xvfb).
+
+Consequences: dev runs (`npm run dev`, `npm start`, `--webuntis-probe`,
+`--screenshot`) use the unfused Electron from `node_modules` and are
+unaffected. Playwright's Electron driver needs `--inspect`, so it can only
+drive the unpacked app; the packaged app is checked over CDP (E-031). The
+installed app also ignores an `ELECTRON_RUN_AS_NODE` left set by a VS Code
+terminal.
+
+### E-030 · Release workflow: only the last job writes; actions pinned to SHAs · accepted
+Step 9.1. Before, `release.yml` granted `contents: write` to the whole
+workflow: one matrix job ran `npm ci` (the install scripts of hundreds of
+packages), lint, tests and electron-builder with a token that could create
+releases and push. A compromised dev dependency could have published a
+manipulated installer — and with an unsigned installer (E-028) and
+electron-updater trusting the `sha512` from the same release's `latest.yml`,
+every installation would have taken it.
+
+- Default `permissions: contents: read`. Jobs: `check` (tag = version,
+  release notes → artifact) → `build` (Windows + Linux, read-only: lint,
+  tests, build, packaged check, files as artifact `release-<os>`, kept 7 days)
+  → `release` (tags only, the only job with `contents: write`; no checkout, no
+  npm, no project code: downloads the artifacts, insists on exactly the five
+  release files + notes, runs action-gh-release).
+- `actions/checkout` with `persist-credentials: false`: the token is not left
+  in `.git/config` for build scripts to find.
+- Every `uses:` is pinned to a full commit SHA with a `# vX.Y.Z` comment;
+  Dependabot's github-actions updates bump both (7-day cooldown, E-027). As of
+  2026-10-17: checkout v7.0.1, setup-node v7.1.0, upload-artifact v7.0.2,
+  download-artifact v8.0.2, action-gh-release v3.0.3 (annotated tag → its
+  commit). `ci.yml` got the same (read-only, pinned).
+- A manual start stays a dry run: builds and checks everything, keeps the
+  files as artifacts for a week (installable for a test), publishes nothing.
+  action-gh-release v3 uploads all files before it publishes, so GitHub's
+  "release immutability" setting (9.3 checklist) works with this workflow.
+
+Limits: the release job still trusts what the build jobs produced — a
+compromised build job can still put a bad file into its artifact; what's gone
+is the write token during `npm ci` and the build. The rest is repository
+settings (CONTRIBUTING → maintainer checklist: tag ruleset, immutable
+releases, 2FA). Considered for later: `npm ci --ignore-scripts` in the build
+jobs (needs a check of which install scripts the build relies on) and build
+provenance attestations (electron-updater doesn't verify them, so they'd only
+help a manual check).
+
+### E-031 · End-to-end tests with Playwright: browser, unpacked Electron, packaged app · accepted
+Phase 10 of the code review: everything outside `src/lib` and the
+`electron/` modules was only checked by hand.
+
+- **Tool:** `@playwright/test` (1.64.0, ten days old when added — the same
+  cooldown idea as Dependabot's). It drives Chromium and Electron alike, so
+  there is no second framework. `@electron/fuses` is declared explicitly
+  because the packaged check imports it (the version electron-builder uses).
+- **Projects** (`playwright.config.mjs`, files in `e2e/`):
+  - `browser` — the built renderer via `vite preview`, `browserApi`
+    (localStorage) instead of IPC; clock fixed to Wed 2026-04-29 in
+    Europe/Berlin. Fresh start → skip the wizard → create the week → type a
+    bullet → output block 1 compared **exactly** (`textContent`, never
+    `toHaveText()`, which collapses blank lines), the copied text too (the
+    Windows clipboard itself stores CRLF — normalised when reading back);
+    a reload keeps it.
+  - `electron` — `_electron.launch()` of the repo with working directory and
+    `--user-data-dir` in a temp folder: the developer's `daten.json` stays out,
+    and an installed Berichtspilot's profile and single-instance lock can't
+    end the test app. Close right after typing → the bullet is in
+    `daten.json`; restart → the week shows the same block 1. `--no-sandbox` on
+    Linux only (GitHub's Ubuntu runners block Chromium's sandbox).
+  - `packaged` — only with `PACKAGED_APP`: the fuse wire against
+    `package.json`, then the built app started with `--user-data-dir` and
+    `--remote-debugging-port=0` (port from `DevToolsActivePort`), reached
+    with `connectOverCDP`: page from `app.asar`, wizard, skip, close → exit 0
+    and `daten.json` written. The release workflow runs it after each build.
+- **Hooks:** `data-output` on the output blocks; the existing `data-daycard`,
+  `data-nav`, `data-row`.
+- **CI:** job `e2e` (`playwright install --with-deps --only-shell chromium`,
+  `xvfb-run -a npm run test:e2e`, traces on failure). Vitest now only
+  collects `src/**/*.test.{js,jsx}` and `electron/**/*.test.mjs`.
+- **The tests catch what they're for** (checked 2026-10-17): with the close
+  flush disabled the Electron test fails (bullet missing in `daten.json`);
+  against the unfused dev binary the fuse check fails; a tampered `app.asar`
+  doesn't start.
+- Closing: the window may disappear before Playwright finishes the click on
+  "Schließen" (seen on Linux in the first dry run) — `closeWindow()` accepts
+  that; exit code and `daten.json` are checked right after.
+
+Considered: driving the packaged app with `_electron` — impossible with the
+inspector fuse off (E-029); Spectron — discontinued.

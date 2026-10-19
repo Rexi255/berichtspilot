@@ -35,57 +35,92 @@ WebUntis "Lehrstoff" ─────────────┘    (daten.json) 
 
 **Branch workflow since 2026-10-17 (E-025):** every session works on
 `development` (`git fetch origin development && git checkout development`, even
-if the session names a `claude/…` branch) and pushes there. No PR until the
-release step 8.4. 8.1–8.3 are on `development` (CI green there).
+if the session names a `claude/…` branch) and pushes there. No PR between
+releases; a release step opens the PR `development` → `main`.
 
-**Next: 8.4 — release v2.0.2** (phase 7 + 8.1–8.3; the user decided on
-2026-10-17 to release with this step — still get their explicit go in the
-session before merging into `main` and tagging):
+**The user continues locally in VS Code (Claude Code extension) from
+2026-10-17.** Locally git uses the user's own credentials — tag pushes and
+branch deletions work there (the 403s were the cloud proxy only). Before
+pushing a tag or merging into `main`, still ask the user.
 
-1. CI on the newest `development` push is green (GitHub Actions → CI, branch
-   `development`).
-2. `npx -y npm@11 version 2.0.2 --no-git-tag-version` (`package.json` + both
-   `version` fields in the lock). CHANGELOG: `## [Unreleased]` →
-   `## [2.0.2] - <date>` with a one-line intro like 2.0.0's (hardening: backups,
-   loss-proof saving, locked window; Electron 43.8). Tick 8.4 + Done log, commit
-   `chore: release 2.0.2`, push `development`, CI green.
-3. PR `development` → `main` following `.github/pull_request_template.md`
-   (title "Release 2.0.2: …", body = the CHANGELOG section + checks). Merge as
-   a **merge commit** (E-025) — by the user or, with their go, via the GitHub
-   tools (`merge_method: merge`).
-4. Tag on the merge commit: `git fetch origin main && git tag v2.0.2 origin/main
-   && git push origin v2.0.2`. The cloud proxy refused branch deletions
-   (HTTP 403) — if it refuses the tag too, the user runs the same three
-   commands in their local clone (a tag pushed from there starts the release
-   workflow just the same).
-5. Release workflow green (the tag guard checks `package.json` = 2.0.2);
-   assets: `Berichtspilot-Setup-2.0.2.exe` + `.exe.blockmap` + `latest.yml`,
-   `Berichtspilot-2.0.2.AppImage` + `latest-linux.yml`; release notes = the
-   CHANGELOG section; `/releases/latest/download/latest.yml` says 2.0.2.
-6. The user's real update test 2.0.1 → 2.0.2 (sidebar card → download →
-   restart): data still there, `sicherungen/` holds today's daily snapshot
-   (no `…-vor-update.json` — the schema didn't change).
-7. Afterwards: phase 9 (release hardening) on `development`.
+**v2.0.2 is out** (2026-10-17, `latest.yml` = 2.0.2). `development` is ahead
+of `main` by Electron 44.7 + the Dependabot PRs #7/#9 (8.5, 8.6) and phases
+9–10 (fuses, new release workflow, end-to-end tests) — they ship with the next
+release.
 
-Dependabot (8.3) reads `.github/dependabot.yml` from the default branch, so it
-starts after the 8.4 merge into `main`. Then it opens its PRs against
-`development` on Mondays; merge them there when CI is green — Electron/electron-builder/electron-updater PRs
-only after the checks named in `.github/dependabot.yml`.
+**Phases 9 and 10 are done** (2026-10-17, see the roadmap): `release.yml`
+split into `check` → `build` (read-only, packaged check) → `release` (only
+writer, tags only), all actions pinned to SHAs (E-030); Electron fuses + asar
+integrity (E-029); Playwright end-to-end tests `npm run test:e2e` in CI
+(E-031). Two release dry runs on `development` (the second green: run
+39063403845); the artifacts were checked by hand like the `release` job
+would (exactly five files + notes, `sha512` in `latest*.yml` matches).
 
-Electron support window: 43.x stays supported until Electron 46 is out (45 is in
-beta on 2026-10-17); move to 44.x (newest: 44.9.0) via Dependabot before that,
-after reading its breaking changes.
+**Next: finish the v2.0.3 release — the user gave the go on 2026-10-19.** It
+is also the first real run of the new `release` job, which dry runs can't
+reach (it only runs on a tag). Done (2026-10-19): version bump 2.0.2 → 2.0.3
+in `package.json` + lock (`npm version 2.0.3 --no-git-tag-version`),
+CHANGELOG `## [2.0.3] - 2026-10-19` with an intro line, `CLAUDE.md` says
+v2.0.3, dry run of that state, PR `development` → `main` opened
+(`gh pr list --base main`). Left: when the PR's checks are green, ask the
+user once more (promised), then merge it with `gh pr merge <n> --merge` and
+push the tag `v2.0.3` on the merge commit on `main` → watch the run: the
+`release` job must attach the five files; `/releases/latest/download/latest.yml`
+= 2.0.3; the user's installed 2.0.2 should offer the update. Afterwards
+merge `main` back into `development` (fast-forward) and log it below.
+**Repository rules since 2026-10-19 (9.3b):** `main` only takes the PR, after
+`pruefen` + `e2e` are green, and only as a merge commit (`gh pr merge <n>
+--merge`; squash/rebase are refused). The tag push works because the user is
+admin (bypass of `Release tags`). Releases are immutable: a published
+release can't get new or replaced files — a broken v2.0.3 is fixed with
+v2.0.4, so the dry run right before tagging matters. A dry run with these
+rules on `development` (before the version bump) was green: run
+39316661700.
+After that: the UI overhaul (v2.1, "Later / to-do" → its workflow step 1).
 
-Still open from v2.0.1: the user's real in-app update test (installed 2.0.0 →
-sidebar card / Settings → "Updates" → download → install → restart on 2.0.1).
-The first real install of v2.0.2 will also exercise the new snapshots: after
-the update `sicherungen/` should hold a `…-vor-update.json` only if the schema
-changed (it doesn't in 2.0.2 — expect just the daily snapshot).
+**Dependabot** (E-027) opens its PRs against `development` on Mondays. Merge
+green ones with `gh pr merge <n> --squash` (the repo deletes merged branches
+itself since 2026-10-17); Electron PRs only
+after the checks in E-027, electron-builder/-updater after the checks named in
+`.github/dependabot.yml`. Its config is read from `main`: until the next
+release merge the old one applies, so new dev-tool majors may still show up —
+close them with a short comment (like #10–#12).
+Dependabot **security** updates (on since 2026-10-19) target `main` instead:
+merge those with `--merge` (the `main` ruleset allows nothing else), then
+merge `main` back into `development`. SHA pinning is required since
+2026-10-19 — if Dependabot's own "Dependabot" runs start failing, check that
+setting first.
+
+Electron support window: 44.x stays supported until Electron 47 is out; 45
+(beta on 2026-10-17) will come as a Dependabot PR — check it per E-027.
 
 ## Open questions (for the user)
 
-None right now. (Answered 2026-10-17: v2.0.2 is released with 8.4 — phase 7
-plus 8.1–8.3.)
+1. **Step 9.3b — the account part is left for the user (no decision
+   needed):** two-factor authentication with a passkey or security key,
+   recovery codes stored offline, revoke unused tokens and OAuth/GitHub apps
+   (`CONTRIBUTING.md` → "Maintainer checklist", first item). Claude's `gh`
+   token can't read or change account settings.
+   The repository part is done: on the user's request Claude set it via
+   `gh api` on 2026-10-19 and read it back — rulesets `Release tags`
+   (`refs/tags/v*`; creation/update/deletion/force push restricted; bypass
+   Repository admin = the user, `current_user_can_bypass: always`), `main`
+   (default branch; no deletion/force push; PR with 0 approvals, merge method
+   *merge* only; checks `pruefen` + `e2e`, not strict; no bypass) and
+   `development` (no deletion/force push); SHA pinning required; release
+   immutability on; Dependabot alerts + security updates on. Already right
+   before: workflow token read-only, Actions can't approve PRs, secret
+   scanning + push protection on.
+
+(Answered 2026-10-19: release v2.0.3 now — the user gave the go.)
+
+(Answered 2026-10-17: code signing (9.4) — stay unsigned, E-028. v2.0.2 is released with 8.4 — phase 7 plus 8.1–8.3;
+the user's update test to 2.0.2 works and "Automatically delete head
+branches" is on (checked: `deleteBranchOnMerge: true`).
+Dependabot: "calmer, and Electron 44 now" → E-027, 8.5, 8.6. Release tags from
+cloud sessions: overtaken by the move to local sessions, which can push the
+tag after the user's go — so 9.1 needs no tag-creating manual start; that
+option only matters if releases ever come from cloud sessions again.)
 
 Parked by the user (2026-10-10), not to be asked now: which speech model to
 bundle (E-010 has the measurements; real-voice recordings belong to that
@@ -186,7 +221,8 @@ decision).
 - [x] Tag `v2.0.0` → release workflow green → GitHub release "Berichtspilot 2.0.0"
       (Latest, not draft) with installer, `.blockmap`, AppImage, `latest.yml`,
       `latest-linux.yml`; `/releases/latest/download/latest.yml` = 2.0.0 (2026-10-10)
-- [ ] Installed by hand once; real update test (see open questions)
+- [x] Installed by hand once; real in-app update test — done with 2.0.2
+      (user, 2026-10-17)
 
 ### Phase 7 — Hardening (v2.0.2) · from the code review of 2026-10-15
 The user asked for a review of the whole project and then for its "step 1":
@@ -244,32 +280,71 @@ anything new is built.
       (majors too), electron-builder, electron-updater (pinned, E-017) each on
       their own, everything else minor + patch together (2026-10-17; valid
       against the SchemaStore `dependabot-2.0` schema, a typo'd key fails it)
-- [ ] 8.4 Release v2.0.2 (phase 7 + 8.1–8.3, user 2026-10-17): `npm version 2.0.2 --no-git-tag-version`,
-      CHANGELOG `[Unreleased]` → `## [2.0.2] - <date>`, PR `development` → `main`
-      (merge commit, E-025), after the merge tag `v2.0.2` on `main` → release workflow green, assets incl. `latest.yml` +
-      `latest-linux.yml`, release notes from the CHANGELOG section (needs the
-      user's go, like every release)
+- [x] 8.4 Release v2.0.2 (phase 7 + 8.1–8.3, user 2026-10-17): version bump,
+      CHANGELOG section, release notes from it, PR #6 merged into `main`
+      (merge commit 885a4ca, E-025), tag `v2.0.2` pushed from the local session
+      on the user's go → release workflow green, release "v2.0.2" Latest with
+      installer, `.blockmap`, AppImage, `latest.yml`, `latest-linux.yml`;
+      `/releases/latest/download/latest.yml` = 2.0.2 (2026-10-17; the user's real
+      in-app update to 2.0.2 works)
+- [x] 8.5 Dependabot calmer (user, E-027): semver majors ignored for every npm
+      package except `electron` (pattern coverage checked against
+      `package.json`, config valid against the SchemaStore schema); #10–#12
+      (`@eslint/js` 10, `eslint` 10, `vitest` 5) closed with a comment; #7
+      (checkout/setup-node v7, action-gh-release v3 — Node 24 runtimes, no
+      input changes) and #9 (React 19.3, Vite 8.3, Tailwind 4.3.3 …) squashed
+      into `development` (2026-10-17)
+- [x] 8.6 Electron 43.8 → 44.7 (#8, rebased onto #9 first). Breaking changes
+      read: `clipboard` gone from the renderer (we only use it in main) and
+      async in main (`clipboard:read` returns the promise, `ipcMain.handle`
+      awaits it — no code change); `net.request` frame destinations,
+      ia32/armv7l, macOS 12 don't apply. Node inside: 24.21 (CI stays on 24).
+      Checked on Windows (2026-10-17): lint/tests/build; Electron via CDP —
+      wizard, all views, "Aus Zwischenablage" (two lines → two bullets, umlauts
+      intact), "Kopieren" of block 1 (exact text incl. blank lines), file
+      navigation cancelled, `window.open` → null, notifications denied,
+      `saveData(null)` refused, typed + closed at once → saved, restart → text
+      back; the real `electron/updater.js` against the live release (as 2.0.1
+      → `available 2.0.2`, as 2.0.2 → `none`, redirects to
+      `release-assets.githubusercontent.com` allowed, staging header not sent);
+      `build:win` packs 44.7.0, the unpacked app starts from `app.asar`
 
 ### Phase 9 — Release hardening (supply chain)
-- [ ] 9.1 `release.yml`: build jobs without write access; a separate release job
-      with `contents: write` downloads the artifacts and attaches them; all
-      actions pinned to commit SHAs (Dependabot keeps them current)
-- [ ] 9.2 Electron fuses in the electron-builder config (`runAsNode` off,
-      `enableNodeOptionsEnvironmentVariable` off, `enableNodeCliInspectArguments`
-      off, `onlyLoadAppFromAsar` on, asar integrity on); dev mode and the
-      WebUntis probe must still work
-- [ ] 9.3 Checklist for the user's GitHub settings (2FA/passkey, tag protection
-      `v*`, branch protection on `main`) in `CONTRIBUTING.md` → done by the user
-- [ ] 9.4 Code signing for the Windows installer — open question first (options:
-      SignPath Foundation, free for open source · Azure Artifact Signing ·
-      stay unsigned)
+- [x] 9.1 `release.yml`: `check` → `build` (read-only token, `persist-credentials:
+      false`, packaged check, files as run artifacts) → `release` (tags only, the
+      only job with `contents: write`, no checkout/npm, insists on exactly the
+      five files); every action in `release.yml` + `ci.yml` pinned to a commit
+      SHA with `# vX.Y.Z` (E-030) (2026-10-17; dry runs on `development`: the
+      first found a test race on Linux, the second green — run 39063403845;
+      its artifacts checked like the `release` job would: five files + notes,
+      `sha512` matches. The `release` job itself runs first with v2.0.3)
+- [x] 9.2 Electron fuses in `build.electronFuses`: `runAsNode`,
+      `enableNodeOptionsEnvironmentVariable`, `enableNodeCliInspectArguments`
+      off, `onlyLoadAppFromAsar` + asar integrity on (E-029) (2026-10-17;
+      Windows: RUN_AS_NODE/NODE_OPTIONS/--inspect ignored, tampered asar →
+      FATAL, `resources/app/` refused; dev mode + `npm start` unaffected — the
+      probe uses the same unfused dev binary; Linux: packaged check in CI)
+- [x] 9.3 Checklist for the user's GitHub settings in `CONTRIBUTING.md` →
+      "Maintainer checklist" (2FA/passkey, tag ruleset `v*`, rulesets for
+      `main`/`development`, SHA pinning required, release immutability,
+      Dependabot alerts) + current state read via the API (2026-10-17)
+- [ ] 9.3b Apply the checklist — repository settings done by Claude on the
+      user's request (2026-10-19, rulesets + SHA pinning + release
+      immutability + Dependabot alerts/security updates); account part
+      (2FA/passkey, tokens) open for the user (see "Open questions" 1)
+- [x] ~~9.4 Code signing for the Windows installer~~ — the user chose to stay
+      unsigned (2026-10-17, E-028)
 
 ### Phase 10 — Tests beyond `src/lib`
-- [ ] 10.1 Playwright smoke test against `vite preview` (browser mode via
+- [x] 10.1 Playwright smoke test against `vite preview` (browser mode via
       `browserApi`): fresh start → skip wizard → create week → type a bullet →
-      exact text in output block 1; `npm run test:e2e`, runs in CI
-- [ ] 10.2 Optional: Electron end-to-end via Playwright `_electron` under xvfb
-      (save → restart → data back; close right after typing keeps the text)
+      exact text in output block 1 (+ copied text, reload); `npm run test:e2e`,
+      CI job `e2e` (E-031) (2026-10-17; green on Windows and in CI)
+- [x] 10.2 Electron end-to-end via Playwright `_electron` under xvfb: close
+      right after typing keeps the text, restart shows it; plus the
+      `packaged` project the release workflow runs after each build (fuse
+      wire + start from `app.asar` over CDP) (2026-10-17; mutation checks:
+      flush disabled → fails, unfused binary → fuse check fails)
 
 ### Later / to-do
 - [ ] Warning list for customer data: a local list of customer names / host
@@ -277,6 +352,14 @@ anything new is built.
       patterns can't know names)
 - [ ] Export of the whole record as PDF/archive (e.g. for the exam registration)
 - [ ] Automatic entry into the IHK portal (deferred by the user, E-012)
+- [ ] Rename `vite.config.js` → `vite.config.mjs`: Vite 8 warns that the
+      config is ESM loaded as CommonJS (`configLoader: 'native'` will become
+      the default in a future major)
+- [ ] Release hardening, further (E-029/E-030 "considered"): `npm ci
+      --ignore-scripts` in the release build jobs (check which install
+      scripts the build needs first); serve the renderer from a custom
+      `app://` protocol, then turn the `grantFileProtocolExtraPrivileges` fuse
+      off; build provenance attestations
 - [ ] Linux: set `desktopName` + `linux.syncDesktopName: true` in the
       electron-builder config so desktops link the running window to the
       AppImage's `.desktop` entry (hint printed by electron-builder 26.17)
@@ -349,4 +432,13 @@ anything new is built.
 | 2026-10-17 | 8.1: Electron 43.8.0 + `npm audit fix` (prod audit clean) | cd102cb |
 | 2026-10-17 | E-025: long-lived `development` branch, `main` only per release; CI on `development` pushes; old `claude/…` branches merged → to be deleted by the user | 4209df9 |
 | 2026-10-17 | 8.2: Node 24 in CI/release, CI builds the renderer (E-026) | 9a8bcad |
-| 2026-10-17 | 8.3: Dependabot against `development` | `development` |
+| 2026-10-17 | 8.3: Dependabot against `development` | bf13fce |
+| 2026-10-17 | 8.4: v2.0.2 bump, release notes from CHANGELOG, dry runs green, PR #6 merged (tag pending) | 885a4ca |
+| 2026-10-17 | v2.0.2 released: tag pushed from the local session, release workflow green, `latest.yml` = 2.0.2 | tag `v2.0.2` |
+| 2026-10-17 | 8.5: Dependabot majors by hand except Electron (E-027); #7 + #9 merged, #10–#12 closed | 3bc816f, 7630e87 |
+| 2026-10-17 | 8.6: Electron 44.7 (#8), checked in Electron + update check against the live release | 707bf41 |
+| 2026-10-17 | 10.1 + 10.2: Playwright end-to-end tests (browser, Electron, packaged check), CI job `e2e` (E-031) | 3f8b3f2, bdc4ea7 |
+| 2026-10-17 | 9.2: Electron fuses + asar integrity (E-029) | ab5bb91 |
+| 2026-10-17 | 9.1: release job is the only writer, actions pinned to SHAs (E-030); dry run green | 4d4e58c, bdc4ea7 |
+| 2026-10-17 | 9.3: maintainer checklist for the GitHub settings in CONTRIBUTING (applying it: user) + docs for phases 9–10 | 0c10bb4 |
+| 2026-10-19 | 9.3b (repository part): rulesets `Release tags`/`main`/`development`, SHA pinning, release immutability, Dependabot alerts + security updates — set by Claude on the user's request; release dry run green (run 39316661700) | repo settings |
