@@ -113,7 +113,7 @@ function SchoolSubjects({ day, onChange, suggestions }) {
   )
 }
 
-export default function DayEditor({ day, state, onChange, suggestions, notesVisible, notesActions }) {
+export default function DayEditor({ day, state, onChange, suggestions, notesVisible, week, weeks, onApplyAi }) {
   const choice = dayChoice(day)
   const normal = day.status === 'normal'
 
@@ -154,9 +154,7 @@ export default function DayEditor({ day, state, onChange, suggestions, notesVisi
         // and always above the subjects of a school day, which need the width
         <div className={cx('grid', day.type === 'work' && '@2xl:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]')}>
           <div className={cx('border-b border-line p-4', day.type === 'work' && '@2xl:border-b-0 @2xl:border-r')}>
-            <NotesArea day={day} onChange={onChange}>
-              {notesActions}
-            </NotesArea>
+            <NotesArea day={day} onChange={onChange} week={week} weeks={weeks} onApplyAi={onApplyAi} />
           </div>
           <div className={cx('min-w-0 p-4')}>{content}</div>
         </div>

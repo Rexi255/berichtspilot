@@ -130,6 +130,24 @@ export function parseResponse(text) {
   return { days, ignoredLines }
 }
 
+/**
+ * The bullets of one day from an answer to a single-day prompt: the section
+ * of that date when the AI kept the date line, otherwise — no date line at
+ * all — every bullet line of the answer. An answer with other dates only
+ * gives nothing (it belongs to another day).
+ */
+export function parseDayResponse(text, date) {
+  const { days } = parseResponse(text)
+  if (days[date]?.length) return days[date]
+  if (Object.keys(days).length > 0) return []
+  return (text ?? '')
+    .split(/\r?\n/)
+    .map((raw) => raw.replace(/\*\*/g, '').trim())
+    .filter((line) => BULLET_PREFIX.test(line) && !/^\d+\.\d/.test(line))
+    .map((line) => line.replace(BULLET_PREFIX, '').trim())
+    .filter((bullet) => bullet && bullet !== '…')
+}
+
 // Patterns that should not leave the machine unnoticed (warning only)
 const SENSITIVE_PATTERNS = [
   ['email', /[\w.+-]+@[\w-]+(?:\.[\w-]+)+/g],

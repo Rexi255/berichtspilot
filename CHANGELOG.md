@@ -49,6 +49,12 @@ versioning follows [Semantic Versioning](https://semver.org/).
 - **Notes next to the bullets:** the notes area is one switch for all days
   (button in the editor header or Strg+Umschalt+N); the notes themselves
   stay per day.
+- **AI for one day:** in the notes area, "KI-Prompt kopieren" copies a
+  prompt with only this day's notes for any chat AI; "Antwort einfügen"
+  shows its bullets for a check before "Übernehmen" (with undo). The answer
+  may leave out the date line. Like the whole-week flow ("Mit KI
+  formulieren", still there), the button reads "Trotzdem kopieren" when the
+  notes look like customer data.
 - **Export and import** moved from the sidebar to Settings → Daten.
 - **Keyboard shortcuts:** Strg+1/2/3 now copies output block 1/2/3 (was
   Strg+Umschalt+1/2/3); the views moved to Strg+Umschalt+1–4 (was Strg+1–4).

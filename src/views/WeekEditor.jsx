@@ -332,6 +332,9 @@ export default function WeekEditor({ monday, setMonday }) {
                     onChange={(d) => updateDay(day.date, d)}
                     suggestions={suggestions}
                     notesVisible={notesVisible}
+                    week={week}
+                    weeks={data.weeks}
+                    onApplyAi={(bullets) => applyPhrasing({ [day.date]: bullets })}
                   />
                 )}
                 <Card>

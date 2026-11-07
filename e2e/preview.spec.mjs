@@ -131,3 +131,23 @@ test('sidebar and notes switches are saved', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'KW 45' })).toBeVisible()
   await expect(page.getByRole('region', { name: 'Notizen' })).toHaveCount(0)
 })
+
+test('AI per day: the prompt holds only that day; the answer is checked, applied and undone', async ({ page }) => {
+  await page.keyboard.press('Alt+Digit3')
+  const notes = page.getByRole('region', { name: 'Notizen' })
+  await notes.getByRole('button', { name: 'KI-Prompt kopieren' }).click()
+  const prompt = await lastCopy(page)
+  expect(prompt).toContain('### 2026-11-04')
+  expect(prompt).not.toContain('### 2026-11-03')
+
+  const answer = 'Gern:\n\n### 2026-11-04\n- Tausch eines Druckers im zweiten Obergeschoss\n- Zusammenlegung von Kategorien im Ticketsystem'
+  await page.evaluate((text) => navigator.clipboard.writeText(text), answer)
+  await notes.getByRole('button', { name: 'Antwort einfügen' }).click()
+  await expect(notes.getByText('Vorschlag der KI')).toBeVisible()
+  await notes.getByRole('button', { name: 'Übernehmen', exact: true }).click()
+
+  const day = 'Mittwoch, den 04.11.2026:\n- Tausch eines Druckers im zweiten Obergeschoss\n- Zusammenlegung von Kategorien im Ticketsystem'
+  await expect.poll(() => preText(page, 'work')).toContain(day)
+  await page.getByRole('button', { name: 'Rückgängig' }).click()
+  await expect.poll(() => preText(page, 'work')).not.toContain('Tausch eines Druckers')
+})

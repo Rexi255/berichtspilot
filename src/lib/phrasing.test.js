@@ -1,7 +1,7 @@
 // Clipboard bridge: prompt building, tolerant answer parsing and the
 // customer-data warning.
 import { describe, it, expect } from 'vitest'
-import { phrasingCandidates, styleExamples, buildPrompt, parseResponse, findSensitive, promptSensitive } from './phrasing.js'
+import { phrasingCandidates, styleExamples, buildPrompt, parseResponse, parseDayResponse, findSensitive, promptSensitive } from './phrasing.js'
 
 const day = (date, patch = {}) => ({
   date,
@@ -173,5 +173,25 @@ describe('per-day prompt and its privacy check', () => {
       days: [day('2026-09-14', { bullets: ['Einrichtung eines Notebooks für Kunde 192.168.1.20'] })],
     }
     expect(promptSensitive(week, [doneWeek]).map((f) => f.kind)).toEqual(['ip', 'customer'])
+  })
+})
+
+describe('parseDayResponse (one day from the notes area)', () => {
+  it('takes the section of that date when the AI kept the date line', () => {
+    const answer = 'Gern, hier die Stichpunkte:\n\n### 2026-10-02\n- Aufbau eines Arbeitsplatzes\n- Anschluss zweier Monitore\n\nViel Erfolg!'
+    expect(parseDayResponse(answer, '2026-10-02')).toEqual(['Aufbau eines Arbeitsplatzes', 'Anschluss zweier Monitore'])
+  })
+
+  it('takes every bullet line when the answer has no date line at all', () => {
+    expect(parseDayResponse('- **Aufbau** eines Arbeitsplatzes\n• Anschluss zweier Monitore\nDas war es.', '2026-10-02')).toEqual([
+      'Aufbau eines Arbeitsplatzes',
+      'Anschluss zweier Monitore',
+    ])
+  })
+
+  it('gives nothing for an answer about other days or without bullets', () => {
+    expect(parseDayResponse('### 2026-09-30\n- Drucker getauscht', '2026-10-02')).toEqual([])
+    expect(parseDayResponse('Ich habe leider keine Notizen gefunden.', '2026-10-02')).toEqual([])
+    expect(parseDayResponse('', '2026-10-02')).toEqual([])
   })
 })

@@ -442,8 +442,11 @@ checkpoint is a styleguide in code, no HTML prototype.
       exact text with markers on/off, button vs Strg+1/3, copy bar when
       hidden, saved switches after a reload, the warning + second press;
       toasts move above the copy bar via `--toast-bottom`)
-- [ ] 11.7c AI per day (copy prompt → paste answer → check → apply, undo),
-      week AI panel + WebUntis panel restyled
+- [x] 11.7c AI per day (copy prompt → paste answer → check → apply, undo),
+      week AI panel + WebUntis panel restyled (2026-11-07; `parseDayResponse()`
+      also takes an answer without the date line; the per-day prompt is
+      checked like the week's (`promptSensitive()`), "Trotzdem kopieren"
+      on a hit; e2e covers prompt → answer → apply → undo)
 - [ ] 11.8 Profiles, rest of Settings, setup wizard
 - [ ] 11.9 Clean-up: drop `gsap`, `lenis`, `@fontsource-variable/inter`;
       `backgroundColor` in main; accessibility/critique/ux-copy reviews;
