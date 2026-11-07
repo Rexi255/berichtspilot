@@ -85,7 +85,8 @@ export function ToastHost() {
     <div
       role="status"
       aria-live="polite"
-      className="pointer-events-none fixed bottom-5 right-5 z-50 flex flex-col items-end gap-2"
+      // --toast-bottom: raised by the editor's copy bar while it is shown
+      className="pointer-events-none fixed bottom-[var(--toast-bottom,20px)] right-5 z-50 flex flex-col items-end gap-2"
     >
       {toasts.map((t) => (
         <ToastRow key={t.id} toast={t} onDone={remove} />

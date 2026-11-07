@@ -435,9 +435,13 @@ checkpoint is a styleguide in code, no HTML prototype.
       the subjects of a school day; "Woche löschen" in the ⋯ menu relies on
       the store's undo toast; tooltips render only while shown, so they
       never widen a scroll area; checked at 940/1100/1280/1440 px)
-- [ ] 11.7b Preview column: block cards, line count, "Leerzeichen anzeigen",
+- [x] 11.7b Preview column: block cards, line count, "Leerzeichen anzeigen",
       privacy warning + "Trotzdem kopieren", hide → copy bar, Strg+1–3/P;
-      e2e: preview text === copied text in every state
+      e2e: preview text === copied text in every state (2026-11-07;
+      `e2e/preview.spec.mjs` in the browser project with the demo record:
+      exact text with markers on/off, button vs Strg+1/3, copy bar when
+      hidden, saved switches after a reload, the warning + second press;
+      toasts move above the copy bar via `--toast-bottom`)
 - [ ] 11.7c AI per day (copy prompt → paste answer → check → apply, undo),
       week AI panel + WebUntis panel restyled
 - [ ] 11.8 Profiles, rest of Settings, setup wizard

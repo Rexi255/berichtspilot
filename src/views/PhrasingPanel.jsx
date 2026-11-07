@@ -15,17 +15,7 @@ import { api } from '../store.jsx'
 import { Button, IconButton, TextArea, Panel, cx } from '../ui/basics.jsx'
 import { showToast } from '../ui/toast.jsx'
 import { weekdayName, formatDE } from '../lib/dates.js'
-import { buildPrompt, parseResponse, promptSensitive, phrasingCandidates } from '../lib/phrasing.js'
-
-// German labels for the kinds reported by findSensitive()
-const SENSITIVE_LABELS = {
-  email: 'E-Mail-Adresse',
-  ip: 'IP-Adresse',
-  mac: 'MAC-Adresse',
-  ticket: 'Ticketnummer',
-  phone: 'Telefonnummer',
-  customer: 'Kundenbezug',
-}
+import { buildPrompt, parseResponse, promptSensitive, phrasingCandidates, SENSITIVE_LABELS } from '../lib/phrasing.js'
 
 const CHAT_LINKS = [
   ['Claude.ai', 'https://claude.ai/new'],

@@ -13,6 +13,7 @@ import {
   DotsThreeIcon,
   NotePencilIcon,
   ChatCenteredTextIcon,
+  SidebarSimpleIcon,
   CloudArrowDownIcon,
 } from '@phosphor-icons/react'
 import { useStore } from '../store.jsx'
@@ -28,7 +29,7 @@ import PhrasingPanel from './PhrasingPanel.jsx'
 import WebuntisPanel from './WebuntisPanel.jsx'
 import DayTabs from './editor/DayTabs.jsx'
 import DayEditor from './editor/DayEditor.jsx'
-import Preview, { BLOCKS } from './editor/Preview.jsx'
+import Preview, { CopyBar, useBlockCopy } from './editor/Preview.jsx'
 
 /* ------------------------------ Suggestions ------------------------------ */
 
@@ -99,7 +100,8 @@ function DateJump({ monday, onJump }) {
 
 export default function WeekEditor({ monday, setMonday }) {
   const { data, createWeek, updateWeek, deleteWeek, setLayout } = useStore()
-  const notesVisible = data.settings.layout.notesVisible
+  const { notesVisible, previewVisible } = data.settings.layout
+  const [showWhitespace, setShowWhitespace] = useState(false)
   // Panels belong to one week: remembering its Monday closes them on week change
   const [phrasingFor, setPhrasingFor] = useState(null)
   const phrasingOpen = phrasingFor === monday
@@ -113,7 +115,9 @@ export default function WeekEditor({ monday, setMonday }) {
   const week = data.weeks.find((w) => w.id === monday)
   const { week: weekNo, year } = isoWeek(monday)
   const profile = profileForDate(data.profiles, addDays(monday, 2))
+  // The one source of the output text: preview, buttons, copy bar, shortcuts
   const blocks = useMemo(() => (week ? formatAll(week) : null), [week])
+  const copier = useBlockCopy(blocks)
   const suggestions = useSuggestions(data)
   const progress = week ? weekProgress(week) : null
 
@@ -132,25 +136,16 @@ export default function WeekEditor({ monday, setMonday }) {
   const toggleStatus = () => updateWeek(monday, (w) => ({ ...w, status: w.status === 'done' ? 'draft' : 'done' }))
 
   // Editor shortcuts (src/lib/shortcuts.js): Alt+←/→ week, Alt+1–5 day,
-  // Strg+1/2/3 copy a block, Strg+Umschalt+N notes area, Strg+N create
+  // Strg+1/2/3 copy a block (in both preview states), Strg+P preview,
+  // Strg+Umschalt+N notes area, Strg+N create
   useEffect(() => {
-    const copyBlock = async (index) => {
-      if (!blocks) return
-      const { block, shortName } = BLOCKS[index]
-      if (!blocks[block]) {
-        showToast(`„${shortName}" ist leer`, { kind: 'error' })
-        return
-      }
-      await navigator.clipboard.writeText(blocks[block])
-      showToast(`„${shortName}" kopiert`)
-    }
-
     const handler = (e) => {
       const hit = matchShortcut(e, ['editor'])
       if (!hit) return
       if (hit.id === 'week') changeWeek(hit.arg * 7)
-      else if (hit.id === 'copy') copyBlock(hit.arg)
+      else if (hit.id === 'copy' && week) copier.copyByShortcut(hit.arg)
       else if (hit.id === 'day' && week?.days[hit.arg]) selectDay(week.days[hit.arg].date)
+      else if (hit.id === 'preview') setLayout({ previewVisible: !previewVisible })
       else if (hit.id === 'notes') setLayout({ notesVisible: !notesVisible })
       else if (hit.id === 'createWeek' && !week) createWeek(monday)
       else return
@@ -159,7 +154,7 @@ export default function WeekEditor({ monday, setMonday }) {
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [monday, week, blocks, notesVisible])
+  }, [monday, week, blocks, notesVisible, previewVisible])
 
   // Apply AI bullets ({ date: bullets }) — replaces those days' bullets. Undo
   // puts back only those bullets; edits made meanwhile elsewhere stay
@@ -261,6 +256,16 @@ export default function WeekEditor({ monday, setMonday }) {
             >
               <NotePencilIcon size={17} />
             </IconButton>
+            <IconButton
+              label={previewVisible ? 'Vorschau ausblenden' : 'Vorschau einblenden'}
+              shortcut={SHORTCUT_KEYS.preview}
+              side="bottom-end"
+              aria-pressed={previewVisible}
+              className={cx(previewVisible && 'bg-surface-2 text-ink')}
+              onClick={() => setLayout({ previewVisible: !previewVisible })}
+            >
+              <SidebarSimpleIcon size={17} style={{ transform: 'scaleX(-1)' }} />
+            </IconButton>
             <Menu
               label="Weitere Aktionen"
               icon={<DotsThreeIcon size={18} />}
@@ -295,11 +300,14 @@ export default function WeekEditor({ monday, setMonday }) {
           </Card>
         </div>
       ) : (
-        <div className="@container/editor min-h-0 flex-1">
-          <div className="h-full overflow-y-auto px-6 pb-6 @5xl/editor:overflow-hidden">
+        <div className="@container/editor flex min-h-0 flex-1 flex-col">
+          <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-6 @5xl/editor:overflow-hidden">
             <div
               key={monday}
-              className="view-in grid gap-4 @5xl/editor:h-full @5xl/editor:grid-cols-[minmax(0,1fr)_minmax(320px,0.5fr)]"
+              className={cx(
+                'view-in grid gap-4 @5xl/editor:h-full',
+                previewVisible && '@5xl/editor:grid-cols-[minmax(0,1fr)_minmax(320px,0.5fr)]'
+              )}
             >
               <div className="flex min-w-0 flex-col gap-3 @5xl/editor:min-h-0 @5xl/editor:overflow-y-auto @5xl/editor:pb-2 @5xl/editor:pr-1">
                 {webuntisOpen && (
@@ -343,11 +351,20 @@ export default function WeekEditor({ monday, setMonday }) {
                 </Card>
               </div>
 
-              <div className="flex min-w-0 flex-col gap-3 @5xl/editor:min-h-0 @5xl/editor:overflow-y-auto @5xl/editor:pb-2 @5xl/editor:pr-1">
-                <Preview blocks={blocks} />
-              </div>
+              {previewVisible && (
+                <div className="flex min-w-0 flex-col gap-3 @5xl/editor:min-h-0 @5xl/editor:overflow-y-auto @5xl/editor:pb-2 @5xl/editor:pr-1">
+                  <Preview
+                    blocks={blocks}
+                    copier={copier}
+                    showWhitespace={showWhitespace}
+                    setShowWhitespace={setShowWhitespace}
+                    onHide={() => setLayout({ previewVisible: false })}
+                  />
+                </div>
+              )}
             </div>
           </div>
+          {!previewVisible && <CopyBar blocks={blocks} copier={copier} onShow={() => setLayout({ previewVisible: true })} />}
         </div>
       )}
     </div>

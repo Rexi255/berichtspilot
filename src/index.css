@@ -216,6 +216,35 @@ textarea,
   animation: view-in 160ms var(--ease-out);
 }
 
+/* "Leerzeichen anzeigen" in the preview (E-032): the markers are drawn by
+   CSS pseudo-elements over the real characters. Pseudo-elements are never
+   part of the text, so textContent and a mouse selection stay exactly the
+   copied output (src/lib/preview.js cuts the text into these spans). */
+.ws-on .ws {
+  position: relative;
+}
+.ws-on .ws::before {
+  position: absolute;
+  inset: 0;
+  text-align: center;
+  color: var(--color-ink-2);
+  pointer-events: none;
+}
+.ws-on .ws-space::before {
+  content: '·';
+}
+.ws-on .ws-tab::before {
+  content: '→';
+  text-align: left;
+}
+.ws-on .ws-nbsp::before {
+  content: '°';
+}
+.ws-on .eol::after {
+  content: '↵';
+  color: var(--color-ink-2);
+}
+
 /* Tooltip: appears after a short pause, so passing the mouse over a row of
    icons doesn't flash labels */
 @keyframes tip-in {

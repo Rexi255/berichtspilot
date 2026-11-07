@@ -143,6 +143,16 @@ const SENSITIVE_PATTERNS = [
   ['customer', /[A-Za-zÄÖÜäöüß]*[Kk]und(?:innen|in|en|e|schaft)\b|[Kk]unden-?(?:nummer|nr\.?)/g],
 ]
 
+/** German names of the kinds findSensitive() reports (warnings in the UI) */
+export const SENSITIVE_LABELS = {
+  email: 'E-Mail-Adresse',
+  ip: 'IP-Adresse',
+  mac: 'MAC-Adresse',
+  ticket: 'Ticketnummer',
+  phone: 'Telefonnummer',
+  customer: 'Kundenbezug',
+}
+
 /**
  * Find things that look like customer data in text that is about to leave the
  * app (e-mail, IP, MAC, ticket and phone numbers, the word "Kunde"). Returns

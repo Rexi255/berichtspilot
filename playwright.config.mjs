@@ -17,7 +17,7 @@ export default defineConfig({
   projects: [
     {
       name: 'browser',
-      testMatch: 'smoke.spec.mjs',
+      testMatch: ['smoke.spec.mjs', 'preview.spec.mjs'],
       use: {
         browserName: 'chromium',
         baseURL: 'http://127.0.0.1:4173',

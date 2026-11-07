@@ -36,6 +36,16 @@ versioning follows [Semantic Versioning](https://semver.org/).
   status (click to switch Entwurf/Fertig) and how many days are written;
   jumping to a date opens from the date range, deleting the week moved to
   the ⋯ menu (with undo).
+- **Exact preview:** the three blocks show exactly the text that gets
+  copied, without wrapping or trimming (long lines scroll sideways); each
+  block shows its number of lines and has its own copy button. "Leerzeichen
+  anzeigen" marks spaces with · and line ends with ↵ — only on screen, the
+  copied text stays the same. Strg+P hides the preview; a slim bar with the
+  three copy buttons stays at the bottom, and Strg+1/2/3 keep working.
+- **Privacy check before copying:** if a block contains what looks like
+  customer data (the word "Kunde", e-mail or IP addresses, ticket or phone
+  numbers), the block shows a warning and its button reads "Trotzdem
+  kopieren"; Strg+1/2/3 then needs a second press.
 - **Notes next to the bullets:** the notes area is one switch for all days
   (button in the editor header or Strg+Umschalt+N); the notes themselves
   stay per day.
