@@ -38,9 +38,10 @@ export default [
     },
   },
 
-  // Playwright: tests run in Node, page.evaluate() callbacks in the browser
+  // Playwright: tests and the ui-shots skill run in Node, page.evaluate()
+  // callbacks in the browser
   {
-    files: ['e2e/**/*.mjs', 'playwright.config.mjs'],
+    files: ['e2e/**/*.mjs', 'playwright.config.mjs', '.claude/skills/**/*.mjs'],
     languageOptions: {
       ecmaVersion: 'latest',
       sourceType: 'module',
