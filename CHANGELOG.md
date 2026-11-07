@@ -6,6 +6,21 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- **Electron 45.2 instead of 44.7:** the app's built-in browser engine
+  (Chromium 156) and Electron move to the newest major version. Copying,
+  pasting from the clipboard, saving and the in-app update work as before.
+  The updater (electron-updater 6.8.12) handles interrupted and redirected
+  partial downloads more reliably; React and the build tools were updated as
+  well.
+
+### Security
+
+- **Electron security fixes:** among them the fix for compromised eMudhra
+  intermediate certificates (GHSA-jr5w-w6x2-84p9) and the Chromium security
+  fixes released since 44.7.
+
 ## [2.0.3] - 2026-10-19
 
 The hardening release: Electron 44.7, an installed app that only runs its own

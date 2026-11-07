@@ -568,6 +568,8 @@ renderer build green. npm 11's install-script approval does not affect
 Electron: since 43 it has no install script and downloads its binary on the
 first start (`electron/index.js`).
 Electron 44.7 (2026-10-17) runs on Node 24.21 — CI stays on 24.
+Electron 45.2 (2026-11-07) runs on Node 24.22 — CI stays on 24. Node 26 comes
+with Electron 46; move CI, `.nvmrc` and the local Node together then.
 
 ### E-027 · Dependabot: majors by hand, except Electron · accepted
 Its first run (2026-10-17) opened six PRs at once, three of them majors of dev
@@ -587,6 +589,10 @@ tools (`eslint` 10 failed CI: it needs a config migration together with
 - GitHub Actions keep their majors (one grouped PR; they rarely break inputs).
 - Dependabot reads its config from `main` only, so a change here takes effect
   with the next release; PRs it opens before that are closed by hand.
+
+- Updates done by hand follow the same 7-day cooldown (pick the newest
+  version that is at least a week old); security fixes, Electron's patch
+  releases included, don't wait. No alpha/beta Electron in a release.
 
 Considered: switching Dependabot off — rejected, Electron's security
 releases would then depend on someone remembering them.

@@ -72,6 +72,8 @@ Releases are immutable: a published release can't get new or replaced files,
 a broken one is fixed with the next patch version — so the dry run right
 before tagging matters.
 
+**Dependencies are current (8.7, 2026-11-07)** and ship as **v2.0.4**.
+
 **Next: the UI overhaul (v2.1)** — "Later / to-do" → its workflow step 1
 (baseline: demo `daten.json` fixture + project skill `ui-shots`). The *what*
 is still open: ask the user what bothers them in the current UI before step 2.
@@ -92,8 +94,14 @@ right after the v2.0.3 merge — they opened #17). Dependabot alert #1
 electron-builder → @electron/get → global-agent → roarr and doesn't ship
 (`npm audit --omit=dev` = 0); it goes away with an electron-builder update.
 
-Electron support window: 44.x stays supported until Electron 47 is out; 45
-(beta on 2026-10-17) will come as a Dependabot PR — check it per E-027.
+Electron support window: we're on 45.2 since 8.7 (2026-11-07). Electron 46
+(alpha on 2026-11-05, ships Node 26) will come as a Dependabot PR once it's
+stable — check it per E-027 and move Node to 26 with it (E-026). Sync
+`safeStorage` calls are removed in 46 (we have none today — keep it that way).
+
+Locally npm 11.16+ warns about `electron-winstaller`'s install script
+(`allowScripts`): harmless, we build NSIS, not Squirrel. Electron has no
+install script; it downloads its binary on the first start.
 
 ## Open questions (for the user)
 
@@ -310,6 +318,28 @@ anything new is built.
       → `available 2.0.2`, as 2.0.2 → `none`, redirects to
       `release-assets.githubusercontent.com` allowed, staging header not sent);
       `build:win` packs 44.7.0, the unpacked app starts from `app.asar`
+- [x] 8.7 Everything current before the UI overhaul (user, 2026-11-07), done
+      by hand instead of the seven open Dependabot PRs (#19–#26, closed with
+      a pointer): Electron 44.7 → **45.2.3** (Node 24.22.2 inside, so CI stays
+      on 24; breaking changes read: sandboxed preloads lose the `events`/
+      `timers`/`url` shims and `Buffer` — ours only requires `electron`; sync
+      `safeStorage` deprecated — unused; `display-capture` permission name —
+      we grant a fixed allowlist; nothing else applies), electron-builder
+      26.18.1, electron-updater 6.8.12 (redirect/credential-header fixes for
+      differential downloads, no new hosts), Vitest 5.0.5 (no config change),
+      globals 17.13, React 19.3.1, Vite 8.3.5, Playwright 1.64.1 and the other
+      minor/patch bumps; `npm audit fix` for the dev-only transitive advisories
+      (fast-uri, follow-redirects, joi, zod). Versions younger than 7 days were
+      skipped like Dependabot's cooldown, except Electron (security fixes).
+      Left on purpose: ESLint 10 + `@eslint/js` 10 (`eslint-plugin-react`
+      7.37.5 only allows ESLint ≤ 9), `@electron/fuses` 2 (stays on the
+      version electron-builder uses, E-031), 6 moderate `minimatch` advisories
+      inside electron-builder (build-time globs only, wait for upstream).
+      Checked on Windows: lint, 290 tests, e2e (browser + Electron), `build:win`
+      packs 45.2.3, packaged check green; Electron via Playwright — all views,
+      clipboard with umlauts, `window.open` → null, navigation blocked,
+      notifications denied, `saveData(null)` refused, no console errors.
+      Not checked: a real in-app update (needs an NSIS-installed app)
 
 ### Phase 9 — Release hardening (supply chain)
 - [x] 9.1 `release.yml`: `check` → `build` (read-only token, `persist-credentials:
@@ -369,7 +399,8 @@ anything new is built.
 - [ ] Ideas from the old README roadmap: light theme, "copy all 3 blocks",
       full export/PDF, copy a single day from the previous week, character counter
 - [ ] **UI overhaul — planned for v2.1, not part of V2** (user, 2026-10-10).
-      Workflow agreed in chat (the *how*; the *what* is still open):
+      Workflow agreed in chat (the *how*; the *what* is still open). The user
+      (2026-11-07): the design gets redone more or less completely.
   1. Baseline: demo `daten.json` fixture (no customer data, reusable for README
      screenshots) + project skill `.claude/skills/ui-shots/` that builds the
      renderer and screenshots every view/state/theme via `--screenshot` from a
