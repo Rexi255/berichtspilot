@@ -744,3 +744,83 @@ Phase 10 of the code review: everything outside `src/lib` and the
 
 Considered: driving the packaged app with `_electron` — impossible with the
 inspector fuse off (E-029); Spectron — discontinued.
+
+---
+
+## UI overhaul v2.1 (from 2026-11-07)
+
+### E-032 · Design system "Kladde": warm neutrals, logo accent, one card level, CSS motion · accepted
+The user asked for a complete redesign of the interface (2026-11-07); data,
+logic, IPC and the output format stay untouched. The direction came from a
+separate chat; details in `docs/DESIGN.md`.
+
+- **Modes and accents instead of six dark themes:**
+  - **Modes:** dark (default) and an equal light mode.
+  - **Accents:** Logo-Blau, the logo file's #6CC9DE (default), Koralle, Flieder, Grün. Each accent has a
+    value per mode so text and marks reach 4.5:1.
+  - **Text on the accent:** dark or near white, never grey.
+  - **Test:** `src/theme.test.js` checks every pair against `src/index.css`.
+  - **Scope:** the accent only marks actions, the active navigation, written days and "Fertig".
+- **Neutrals:** warm greys without a blue cast (start values from the user).
+- **Status:** never shown by color alone; a letter or a shape always comes with it.
+- **Type:**
+  - Bricolage Grotesque for headings and big figures (≥ 20 px).
+  - Instrument Sans for the interface (calm, a little narrow, has `tnum`).
+  - JetBrains Mono only in the preview.
+  - All bundled via `@fontsource-variable/*`, because the CSP allows no font CDN. Inter goes.
+- **Shape:** radius card 16, button 10, day cell 8; 1 px lines instead of shadows; one card level.
+- **Motion:** CSS transitions only, one curve; `prefers-reduced-motion` respected. **GSAP and Lenis are
+  removed** — the count-ups, slides and smooth scrolling they drove are exactly the decoration the redesign
+  drops, and both packages leave the bundle.
+- **Keyboard:**
+  - Strg+1/2/3 copies the blocks, as the user specified. View switching therefore moves from Strg+1–4 to
+    Strg+Umschalt+1–4 (user's choice, 2026-11-07).
+  - New: Strg+B (sidebar), Strg+P (preview), Strg+Umschalt+N (notes area), Alt+1–5 (day tabs).
+  - One source, `src/lib/shortcuts.js`, matched by `e.code`.
+- **Exact preview:** the preview shows exactly the clipboard text: `white-space: pre`, nothing trimmed or
+  wrapped, the same `formatAll()` string. "Leerzeichen anzeigen" draws `·`/`↵` with CSS pseudo-elements, so
+  even a mouse selection copies the real text. Playwright compares `textContent` with the copied text.
+- **Privacy check on copy:**
+  - `findSensitive()` (now also the word "Kunde"/"Kundin"/"Kunden") runs on every output block and before
+    every AI prompt.
+  - A hit shows a warning, and the button reads "Trotzdem kopieren"; the shortcut needs a second press.
+  - The prompt's own rule lines are not scanned, only the user's text.
+- **AI per day:** in the notes area the user copies a prompt for that day, pastes the answer there and applies
+  it with undo. The whole-week panel stays (user's choice).
+- **Self-check:** the `ui-shots` skill (Playwright, fictional demo record) is used after every visible change
+  (user, 2026-11-07).
+
+Dropped with it:
+- the overview filter Alle/Entwürfe/Fertig (replaced by the figures, the warning bar and the search)
+- "Wochen in Serie"
+- the per-year heatmap (replaced by the year band)
+- export/import buttons in the sidebar (now Settings → Daten)
+
+Considered: shadcn/ui or another component library — a new UI framework (CLAUDE.md conventions) for a
+handful of components; Motion (framer) instead of GSAP — the redesign needs no JS animation at all.
+
+### E-033 · Appearance and layout switches live in `daten.json` (schema v12) · accepted
+The new switches must persist:
+- mode and accent
+- collapsed sidebar
+- preview visible
+- notes area visible (the user explicitly wants that one "in the settings")
+
+They go into `settings.appearance` and `settings.layout` (schema v12), next to the old `settings.theme` they
+replace:
+- one storage and one migration path
+- survives a reinstall
+- tested like every other setting
+
+`localStorage` would split the settings in two places and get lost with the Chromium profile.
+
+- **Migration v11 → v12:** the old theme becomes the accent:
+  - northern-lights, graphite → blue
+  - polar-night → lilac
+  - rose, amber → coral
+  - forest → green
+
+  The mode becomes dark, the layout gets its defaults, and `theme` is dropped.
+- **Import "Ersetzen" and restore keep the device's `appearance` and `layout`.** They are display
+  preferences of this machine, like the network opt-ins `replaceData()` already keeps (E-017, E-019); a
+  shared or restored file shouldn't flip the user's theme or hide their preview.

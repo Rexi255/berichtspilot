@@ -53,6 +53,7 @@ above + commit/PR) encode exactly this workflow.
 | `docs/DATA_MODEL.md` | touching `daten.json`, profiles, weeks, migrations |
 | `docs/OUTPUT_FORMAT.md` | anything that affects the three output blocks |
 | `docs/DECISIONS.md` | before making (or revisiting) a fundamental decision |
+| `docs/DESIGN.md` | any UI work: tokens, components, copy rules, shortcuts (v2.1 "Kladde") |
 | `docs/archive/original-brief.md` | historical only — the original v1.0 build brief (German) |
 
 Folder-specific rules live in `electron/CLAUDE.md` and `src/lib/CLAUDE.md`.

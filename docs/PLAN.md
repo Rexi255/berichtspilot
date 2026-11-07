@@ -74,9 +74,14 @@ before tagging matters.
 
 **Dependencies are current (8.7, 2026-11-07)** and ship as **v2.0.4**.
 
-**Next: the UI overhaul (v2.1)** — "Later / to-do" → its workflow step 1
-(baseline: demo `daten.json` fixture + project skill `ui-shots`). The *what*
-is still open: ask the user what bothers them in the current UI before step 2.
+**Now: the UI overhaul (v2.1) — Phase 11 below.** The user brought the
+direction from another chat and approved the plan on 2026-11-07 (design rules:
+`docs/DESIGN.md`, decisions E-032/E-033). Work through 11.1 → 11.9 in order,
+one commit each, CI green each time. **After every visible change, check it
+yourself with the `ui-shots` skill (Playwright, demo record) and read the
+screenshots** — the user asked for that explicitly. After 11.4 (tokens + basics)
+show the user the styleguide screenshots (both modes, all four accents) and
+wait for the go before rebuilding the views.
 
 **Dependabot** (E-027) opens its PRs against `development` on Mondays. Merge
 green ones with `gh pr merge <n> --squash` (the repo deletes merged branches
@@ -379,6 +384,48 @@ anything new is built.
       wire + start from `app.asar` over CDP) (2026-10-17; mutation checks:
       flush disabled → fails, unfused binary → fuse check fails)
 
+### Phase 11 — UI overhaul v2.1 (E-032, E-033, `docs/DESIGN.md`)
+Only the interface changes; `format.js`, its tests, `OUTPUT_FORMAT.md`,
+`storage.js`, IPC and preload stay untouched. Answers of 2026-11-07: AI per
+day in the notes area + the week panel stays; Strg+1–3 copies, views move to
+Strg+Umschalt+1–4; "Fertig x von y" counts the weeks due so far (training
+start → current week, so Fertig + Entwürfe + Ohne Eintrag = y); first
+checkpoint is a styleguide in code, no HTML prototype.
+- [x] 11.1 Baseline: fictional demo record `e2e/fixtures/demo-daten.json`
+      (generator `make-demo.mjs`, "today" 2026-11-04), project skill
+      `ui-shots` (Playwright, browser build or Electron, console + overflow
+      check), `src/demo-fixture.test.js`; "before" shots taken (2026-11-07)
+- [x] 11.2 Docs: `docs/DESIGN.md`, E-032, E-033, this phase, glossary (2026-11-07)
+- [ ] 11.3 Pure logic, no visible change: `src/lib/overview.js` (missing/due
+      weeks, stats, `dayState`, `weekProgress`, `yearBand`, `weekRows`,
+      `searchWeeks`), `preview.js` (lines + whitespace marks, invariant: parts
+      join to the input), `shortcuts.js`, `contrast.js`, `findSensitive()`
+      `customer` kind + user text only, per-day `buildPrompt(…, { dates })`,
+      `dayChoice()`/`withChoice()` in `model.js` — all with tests
+- [ ] 11.4 Tokens (`index.css`, `data-mode`/`data-accent`), fonts (Bricolage,
+      Instrument Sans, JetBrains Mono), `basics.jsx` (Card, StatusChip,
+      DayCell, Kbd, Tooltip, Menu …), schema v12 + `src/theme.test.js`,
+      Settings → Aussehen, dev styleguide view → **checkpoint with the user**
+- [ ] 11.5 Shell: Titlebar, Sidebar (collapse 68 px + Strg+B, badge, chip
+      "Lokal · kein Konto" with save state, mode switch), App (shortcuts,
+      fade, no aurora), toast, ErrorBoundary, UpdateHint; export/import →
+      Settings → Daten
+- [ ] 11.6 Overview: header + search, three figures, warning bar, year band,
+      week list (last 8, grouped by month)
+- [ ] 11.7a Editor frame: header, day tabs (Alt+1–5), editor card with the
+      5-way type switch, bullets, school subjects, instructions card, notes
+      area (global switch) with "Als Stichpunkte übernehmen"
+- [ ] 11.7b Preview column: block cards, line count, "Leerzeichen anzeigen",
+      privacy warning + "Trotzdem kopieren", hide → copy bar, Strg+1–3/P;
+      e2e: preview text === copied text in every state
+- [ ] 11.7c AI per day (copy prompt → paste answer → check → apply, undo),
+      week AI panel + WebUntis panel restyled
+- [ ] 11.8 Profiles, rest of Settings, setup wizard
+- [ ] 11.9 Clean-up: drop `gsap`, `lenis`, `@fontsource-variable/inter`;
+      `backgroundColor` in main; accessibility/critique/ux-copy reviews;
+      README screenshots from the demo record; CHANGELOG; then release
+      v2.1.0 on the user's go
+
 ### Later / to-do
 - [ ] Warning list for customer data: a local list of customer names / host
       names that the "Mit KI formulieren" check warns about (the regex
@@ -396,9 +443,12 @@ anything new is built.
 - [ ] Linux: set `desktopName` + `linux.syncDesktopName: true` in the
       electron-builder config so desktops link the running window to the
       AppImage's `.desktop` entry (hint printed by electron-builder 26.17)
-- [ ] Ideas from the old README roadmap: light theme, "copy all 3 blocks",
-      full export/PDF, copy a single day from the previous week, character counter
-- [ ] **UI overhaul — planned for v2.1, not part of V2** (user, 2026-10-10).
+- [ ] Ideas from the old README roadmap: "copy all 3 blocks",
+      full export/PDF, copy a single day from the previous week, character
+      counter (the light theme comes with phase 11)
+- [x] ~~**UI overhaul — planned for v2.1, not part of V2** (user, 2026-10-10).~~
+      → now Phase 11; the workflow below was its first sketch (Claude Design
+      exploration replaced by the user's direction from another chat).
       Workflow agreed in chat (the *how*; the *what* is still open). The user
       (2026-11-07): the design gets redone more or less completely.
   1. Baseline: demo `daten.json` fixture (no customer data, reusable for README
