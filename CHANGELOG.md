@@ -6,6 +6,12 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [2.0.4] - 2026-11-07
+
+The maintenance release: Electron 45.2 with its security fixes and updated
+libraries. From 2.0.0 – 2.0.3 the app updates itself (sidebar card or
+Settings → Updates); your data stays as it is.
+
 ### Changed
 
 - **Electron 45.2 instead of 44.7:** the app's built-in browser engine
