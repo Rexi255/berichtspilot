@@ -1,145 +1,150 @@
-@import '@fontsource-variable/inter';
+@import '@fontsource-variable/instrument-sans';
+@import '@fontsource-variable/bricolage-grotesque/opsz.css';
+@import '@fontsource-variable/jetbrains-mono';
 @import 'tailwindcss';
 
 /* ---------------------------------------------------------------------------
-   Design system "Nordlicht" — cool, dark neutrals with an ice-cyan accent.
-   All colors are Tailwind v4 tokens (usable as bg-base, text-ink, …).
+   Design system "Kladde" (E-032, docs/DESIGN.md): warm neutrals without a
+   blue cast, one accent, 1 px lines instead of shadows.
+
+   Two attributes on <html> pick the tokens: data-mode (dark | light) and
+   data-accent (blue | coral | lilac | green), both from settings.appearance.
+   The values below are the dark/blue defaults Tailwind builds its utilities
+   from (bg-canvas, text-ink, border-line, bg-accent …); the mode and accent
+   blocks further down override them. Colors stay hex: src/theme.test.js reads
+   this file and checks every mode × accent pair for contrast.
 --------------------------------------------------------------------------- */
 @theme {
-  --font-sans: 'Inter Variable', 'Segoe UI', system-ui, sans-serif;
-  --font-mono: ui-monospace, 'Cascadia Mono', 'JetBrains Mono', Consolas, monospace;
+  --font-sans: 'Instrument Sans Variable', 'Segoe UI', system-ui, sans-serif;
+  --font-display: 'Bricolage Grotesque Variable', 'Instrument Sans Variable', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', 'Cascadia Mono', Consolas, ui-monospace, monospace;
 
-  /* Surfaces (slightly blue-tinted neutrals) */
-  --color-base: oklch(0.16 0.012 235);
-  --color-surface: oklch(0.2 0.014 235);
-  --color-surface-2: oklch(0.24 0.016 235);
-  --color-inset: oklch(0.13 0.01 235);
+  /* Type scale (size / line height) */
+  --text-meta: 12px;
+  --text-meta--line-height: 16px;
+  --text-body: 13px;
+  --text-body--line-height: 20px;
+  --text-title: 14px;
+  --text-title--line-height: 20px;
+  --text-page: 24px;
+  --text-page--line-height: 30px;
+  --text-figure: 28px;
+  --text-figure--line-height: 32px;
+  --text-hero: 36px;
+  --text-hero--line-height: 40px;
 
-  /* Text */
-  --color-ink: oklch(0.94 0.006 230);
-  --color-ink-2: oklch(0.74 0.014 230);
-  --color-ink-3: oklch(0.56 0.018 230);
+  /* Radius: card 16 · button/input 10 · day cell 8 · chip/keycap 6 */
+  --radius-card: 16px;
+  --radius-control: 10px;
+  --radius-cell: 8px;
+  --radius-chip: 6px;
 
-  /* Accent: ice cyan */
-  --color-accent: oklch(0.82 0.1 205);
-  --color-accent-light: oklch(0.9 0.06 205);
-  --color-accent-deep: oklch(0.35 0.055 215);
+  /* One curve for everything that moves */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-smooth: cubic-bezier(0.22, 1, 0.36, 1);
 
-  /* Status */
-  --color-done: oklch(0.78 0.13 155);
-  --color-draft: oklch(0.82 0.12 85);
-  --color-sick: oklch(0.72 0.15 25);
-  --color-vacation: oklch(0.76 0.09 255);
-  --color-holiday: oklch(0.78 0.1 310);
+  /* Neutrals (dark defaults; see the mode blocks) */
+  --color-canvas: #121211;
+  --color-sidebar: #0d0d0c;
+  --color-surface: #1a1a18;
+  --color-surface-2: #242422;
+  --color-surface-3: #2c2c29;
+  --color-line: #2f2f2c;
+  --color-mark: #76756c;
+  --color-ink: #efeee8;
+  --color-ink-2: #a8a79e;
 
-  --ease-smooth: cubic-bezier(0.23, 1, 0.32, 1);
+  /* Accent (logo blue) and the text on it */
+  --color-accent: #6cc9de;
+  --color-on-accent: #121211;
+  --color-accent-hover: color-mix(in oklab, var(--color-accent) 86%, var(--color-ink));
+  --color-accent-soft: color-mix(in oklab, var(--color-accent) 20%, transparent);
 
-  /* Aurora shimmer colors (follow the accent of the active theme) */
-  --aurora-1: oklch(0.46 0.11 215 / 0.42);
-  --aurora-2: oklch(0.42 0.09 195 / 0.32);
+  /* Status — never shown by color alone (letter or shape comes with it) */
+  --color-draft: #e2c062;
+  --color-missing: #ee8577;
+  --color-holiday: #d9a2d2;
+  --color-sick: #e9a867;
+  --color-vacation: #92b9ea;
+  --color-warn: #e2c062;
+
+  --shadow-float: 0 10px 28px -10px rgb(0 0 0 / 0.55);
+
+  /* Transition aliases for views not yet rebuilt (phase 11; removed in 11.9) */
+  --color-base: var(--color-canvas);
+  --color-inset: var(--color-sidebar);
+  --color-ink-3: var(--color-ink-2);
+  --color-accent-light: var(--color-accent-hover);
+  --color-accent-deep: var(--color-accent-soft);
+  --color-done: var(--color-accent);
 }
 
-/* ---------------------------------------------------------------------------
-   Color themes, switched via data-theme on <html>. Each block overrides only
-   the color tokens; all Tailwind utilities (bg-accent, text-ink …) follow
-   automatically.
-
-   `northern-lights` deliberately gets its OWN block with the same values as
-   above: otherwise a theme preview card with data-theme='northern-lights' would
-   have no rule of its own and inherit the tokens from the active
-   <html data-theme> — the preview would take on the selected theme's colors.
---------------------------------------------------------------------------- */
-[data-theme='northern-lights'] {
-  --color-base: oklch(0.16 0.012 235);
-  --color-surface: oklch(0.2 0.014 235);
-  --color-surface-2: oklch(0.24 0.016 235);
-  --color-inset: oklch(0.13 0.01 235);
-  --color-ink: oklch(0.94 0.006 230);
-  --color-ink-2: oklch(0.74 0.014 230);
-  --color-ink-3: oklch(0.56 0.018 230);
-  --color-accent: oklch(0.82 0.1 205);
-  --color-accent-light: oklch(0.9 0.06 205);
-  --color-accent-deep: oklch(0.35 0.055 215);
-  --aurora-1: oklch(0.46 0.11 215 / 0.42);
-  --aurora-2: oklch(0.42 0.09 195 / 0.32);
+/* ------------------------------- Modes ---------------------------------- */
+[data-mode='dark'] {
+  color-scheme: dark;
+  --color-canvas: #121211;
+  --color-sidebar: #0d0d0c;
+  --color-surface: #1a1a18;
+  --color-surface-2: #242422;
+  --color-surface-3: #2c2c29;
+  --color-line: #2f2f2c;
+  --color-mark: #76756c;
+  --color-ink: #efeee8;
+  --color-ink-2: #a8a79e;
+  --color-draft: #e2c062;
+  --color-missing: #ee8577;
+  --color-holiday: #d9a2d2;
+  --color-sick: #e9a867;
+  --color-vacation: #92b9ea;
+  --color-warn: #e2c062;
+  --shadow-float: 0 10px 28px -10px rgb(0 0 0 / 0.55);
 }
 
-[data-theme='polar-night'] {
-  --color-base: oklch(0.16 0.005 280);
-  --color-surface: oklch(0.2 0.006 280);
-  --color-surface-2: oklch(0.24 0.007 280);
-  --color-inset: oklch(0.13 0.004 280);
-  --color-ink: oklch(0.94 0.004 285);
-  --color-ink-2: oklch(0.74 0.006 285);
-  --color-ink-3: oklch(0.56 0.009 285);
-  --color-accent: oklch(0.76 0.13 285);
-  --color-accent-light: oklch(0.86 0.09 285);
-  --color-accent-deep: oklch(0.37 0.09 285);
-  --aurora-1: oklch(0.48 0.14 285 / 0.44);
-  --aurora-2: oklch(0.42 0.11 265 / 0.32);
+[data-mode='light'] {
+  color-scheme: light;
+  --color-canvas: #f4f3ee;
+  --color-sidebar: #ebe9e2;
+  --color-surface: #fcfcfa;
+  --color-surface-2: #e7e5dd;
+  --color-surface-3: #dedbd1;
+  --color-line: #d8d6cc;
+  --color-mark: #7e7c71;
+  --color-ink: #161614;
+  --color-ink-2: #55544d;
+  --color-draft: #7f5a00;
+  --color-missing: #b3332a;
+  --color-holiday: #8b3f86;
+  --color-sick: #94500f;
+  --color-vacation: #2f5d98;
+  --color-warn: #7f5a00;
+  --shadow-float: 0 10px 28px -12px rgb(40 36 24 / 0.22);
 }
 
-[data-theme='forest'] {
-  --color-base: oklch(0.16 0.005 165);
-  --color-surface: oklch(0.2 0.006 165);
-  --color-surface-2: oklch(0.24 0.007 165);
-  --color-inset: oklch(0.13 0.004 165);
-  --color-ink: oklch(0.94 0.004 165);
-  --color-ink-2: oklch(0.74 0.006 165);
-  --color-ink-3: oklch(0.56 0.009 165);
-  --color-accent: oklch(0.8 0.13 162);
-  --color-accent-light: oklch(0.88 0.09 162);
-  --color-accent-deep: oklch(0.35 0.07 162);
-  --aurora-1: oklch(0.47 0.13 162 / 0.42);
-  --aurora-2: oklch(0.43 0.1 190 / 0.3);
-}
+/* ------------------------------ Accents --------------------------------- *
+   Per mode, adjusted to 4.5:1 on every surface; text on the accent is dark
+   in dark mode, near white in light mode. The second selector lets a single
+   element (the accent swatches in Settings) preview another accent.        */
+[data-mode='dark'][data-accent='blue'], [data-mode='dark'] [data-accent='blue'] { --color-accent: #6cc9de; --color-on-accent: #121211; }
+[data-mode='dark'][data-accent='coral'], [data-mode='dark'] [data-accent='coral'] { --color-accent: #f08a6e; --color-on-accent: #121211; }
+[data-mode='dark'][data-accent='lilac'], [data-mode='dark'] [data-accent='lilac'] { --color-accent: #b9a3f0; --color-on-accent: #121211; }
+[data-mode='dark'][data-accent='green'], [data-mode='dark'] [data-accent='green'] { --color-accent: #7ccb8e; --color-on-accent: #121211; }
+[data-mode='light'][data-accent='blue'], [data-mode='light'] [data-accent='blue'] { --color-accent: #1d6a7c; --color-on-accent: #fcfcfa; }
+[data-mode='light'][data-accent='coral'], [data-mode='light'] [data-accent='coral'] { --color-accent: #a83e22; --color-on-accent: #fcfcfa; }
+[data-mode='light'][data-accent='lilac'], [data-mode='light'] [data-accent='lilac'] { --color-accent: #6650b0; --color-on-accent: #fcfcfa; }
+[data-mode='light'][data-accent='green'], [data-mode='light'] [data-accent='green'] { --color-accent: #2a6f3e; --color-on-accent: #fcfcfa; }
 
-[data-theme='amber'] {
-  --color-base: oklch(0.16 0.005 65);
-  --color-surface: oklch(0.2 0.006 65);
-  --color-surface-2: oklch(0.24 0.007 65);
-  --color-inset: oklch(0.13 0.004 65);
-  --color-ink: oklch(0.94 0.004 75);
-  --color-ink-2: oklch(0.74 0.006 75);
-  --color-ink-3: oklch(0.56 0.009 75);
-  --color-accent: oklch(0.83 0.12 78);
-  --color-accent-light: oklch(0.9 0.09 82);
-  --color-accent-deep: oklch(0.39 0.07 70);
-  --aurora-1: oklch(0.52 0.11 78 / 0.42);
-  --aurora-2: oklch(0.46 0.09 45 / 0.3);
-}
-
-[data-theme='rose'] {
-  --color-base: oklch(0.16 0.005 350);
-  --color-surface: oklch(0.2 0.006 350);
-  --color-surface-2: oklch(0.24 0.007 350);
-  --color-inset: oklch(0.13 0.004 350);
-  --color-ink: oklch(0.94 0.004 350);
-  --color-ink-2: oklch(0.74 0.006 350);
-  --color-ink-3: oklch(0.56 0.009 350);
-  --color-accent: oklch(0.79 0.13 8);
-  --color-accent-light: oklch(0.87 0.09 8);
-  --color-accent-deep: oklch(0.37 0.09 8);
-  --aurora-1: oklch(0.48 0.14 8 / 0.44);
-  --aurora-2: oklch(0.43 0.11 330 / 0.32);
-}
-
-[data-theme='graphite'] {
-  --color-base: oklch(0.16 0.004 250);
-  --color-surface: oklch(0.2 0.005 250);
-  --color-surface-2: oklch(0.24 0.006 250);
-  --color-inset: oklch(0.13 0.004 250);
-  --color-ink: oklch(0.94 0.003 250);
-  --color-ink-2: oklch(0.74 0.006 250);
-  --color-ink-3: oklch(0.56 0.009 250);
-  --color-accent: oklch(0.8 0.05 240);
-  --color-accent-light: oklch(0.9 0.035 240);
-  --color-accent-deep: oklch(0.37 0.035 240);
-  --aurora-1: oklch(0.44 0.05 240 / 0.34);
-  --aurora-2: oklch(0.4 0.04 250 / 0.26);
+/* Derived accent tokens are computed where the accent is set, so a swatch
+   with its own data-accent gets its own hover and selection tint */
+[data-accent] {
+  --color-accent-hover: color-mix(in oklab, var(--color-accent) 86%, var(--color-ink));
+  --color-accent-soft: color-mix(in oklab, var(--color-accent) 20%, transparent);
 }
 
 /* --------------------------------- Base --------------------------------- */
+html {
+  color-scheme: dark;
+}
+
 html,
 body,
 #root {
@@ -149,10 +154,10 @@ body,
 
 body {
   font-family: var(--font-sans);
-  background: var(--color-base);
+  font-size: var(--text-body);
+  line-height: var(--text-body--line-height);
+  background: var(--color-canvas);
   color: var(--color-ink);
-  font-size: 14px;
-  line-height: 1.55;
   -webkit-font-smoothing: antialiased;
   user-select: none; /* app character; inputs/preview re-enable it */
 }
@@ -171,31 +176,29 @@ textarea,
   -webkit-app-region: no-drag;
 }
 
-/* -------------------------------- Polish -------------------------------- */
 ::selection {
-  background: var(--color-accent-deep);
-  color: var(--color-accent-light);
+  background: var(--color-accent-soft);
+  color: var(--color-ink);
 }
 
-*:focus-visible {
+:focus-visible {
   outline: 2px solid var(--color-accent);
-  outline-offset: 1px;
-  border-radius: 4px;
+  outline-offset: 2px;
 }
 
-/* Slim, subtle scrollbars */
+/* Quiet scrollbars in the ink color */
 ::-webkit-scrollbar {
   width: 10px;
   height: 10px;
 }
 ::-webkit-scrollbar-thumb {
-  background: oklch(0.34 0.02 235 / 0.6);
+  background: color-mix(in oklab, var(--color-ink) 18%, transparent);
   border-radius: 99px;
   border: 3px solid transparent;
   background-clip: content-box;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: oklch(0.44 0.02 235 / 0.8);
+  background: color-mix(in oklab, var(--color-ink) 32%, transparent);
   border: 3px solid transparent;
   background-clip: content-box;
 }
@@ -203,38 +206,34 @@ textarea,
   background: transparent;
 }
 
-/* Force native date/number inputs into dark mode */
-input[type='date'],
-input[type='number'] {
-  color-scheme: dark;
+/* View change: a short fade, nothing moves */
+@keyframes view-in {
+  from {
+    opacity: 0;
+  }
+}
+.view-in {
+  animation: view-in 160ms var(--ease-out);
 }
 
-/* Subtle aurora shimmer behind the content. The shimmer sits on a ::before
-   that is slightly larger than the content and drifts very slowly — the
-   background feels alive without distracting. Thanks to `isolation` and
-   z-index the content stays on top; `overflow: hidden` clips the drift. */
-.aurora {
-  position: relative;
-  isolation: isolate;
-  overflow: hidden;
-}
-.aurora::before {
-  content: '';
-  position: absolute;
-  inset: -25%;
-  z-index: -1;
-  pointer-events: none;
-  background:
-    radial-gradient(1300px 640px at 90% 12%, var(--aurora-1), transparent 62%),
-    radial-gradient(1150px 560px at 12% 88%, var(--aurora-2), transparent 62%);
-  animation: aurora-drift 34s var(--ease-smooth) infinite alternate;
-  will-change: transform;
-}
-@keyframes aurora-drift {
+/* Toast: fade and rise 8 px */
+@keyframes toast-in {
   from {
-    transform: translate3d(-2%, -1%, 0) scale(1);
+    opacity: 0;
+    transform: translateY(8px);
   }
-  to {
-    transform: translate3d(3%, 2%, 0) scale(1.1);
+}
+.toast-in {
+  animation: toast-in 180ms var(--ease-out);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

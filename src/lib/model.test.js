@@ -104,18 +104,18 @@ describe('migrateData', () => {
   it('migrates a full v2 file to the current version with English names and values', () => {
     const d = migrateData(v2File())
     expect(d.version).toBe(DATA_VERSION)
-    expect(DATA_VERSION).toBe(11)
+    expect(DATA_VERSION).toBe(12)
 
     expect(d.settings).toEqual({
       trainingStart: '2025-08-01',
       trainingEnd: '2028-07-31',
-      theme: 'forest',
       startView: 'profiles',
       snippets: ['Ticket bearbeitet'],
       eigenesFeld: 42,
       webuntis: { enabled: false, host: '', school: '' },
       autoCreateWeek: true,
       updateCheck: true, setupDone: true,
+      appearance: { mode: 'dark', accent: 'green' }, layout: { sidebarCollapsed: false, previewVisible: true, notesVisible: true },
     })
     expect(d.periods).toEqual([
       { id: 'zeitraum-1', type: 'vacation', label: 'Sommer', from: '2026-08-03', to: '2026-08-14' },
@@ -166,13 +166,14 @@ describe('migrateData', () => {
     expect(() => validateData(d)).not.toThrow()
   })
 
-  it('migrates every theme id and start view', () => {
+  it('migrates every theme id (v3 names, then the v12 accent) and start view', () => {
     const themes = {
-      nordlicht: 'northern-lights', polarnacht: 'polar-night', waldgruen: 'forest',
-      bernstein: 'amber', rose: 'rose', graphit: 'graphite',
+      nordlicht: 'blue', polarnacht: 'lilac', waldgruen: 'green', bernstein: 'coral', rose: 'coral', graphit: 'blue',
     }
     for (const [from, to] of Object.entries(themes)) {
-      expect(migrateData({ version: 2, einstellungen: { theme: from }, profile: [], wochen: [] }).settings.theme).toBe(to)
+      const settings = migrateData({ version: 2, einstellungen: { theme: from }, profile: [], wochen: [] }).settings
+      expect(settings.appearance).toEqual({ mode: 'dark', accent: to })
+      expect(settings).not.toHaveProperty('theme')
     }
     const views = { uebersicht: 'overview', editor: 'editor', profile: 'profiles', einstellungen: 'settings' }
     for (const [from, to] of Object.entries(views)) {
@@ -192,7 +193,7 @@ describe('migrateData', () => {
     expect(d.periods).toEqual([])
     expect(d.settings.startView).toBe('overview')
     expect(d.settings.snippets).toEqual([])
-    expect(d.settings.theme).toBe('graphite') // kept (and renamed)
+    expect(d.settings.appearance.accent).toBe('blue') // graphit → graphite → blue
     expect(d.profiles).toEqual([])
     expect(d.weeks).toEqual([])
   })
@@ -242,8 +243,9 @@ describe('migrateData', () => {
     const d = migrateData(v4)
     expect(d.version).toBe(DATA_VERSION)
     expect(d.settings).toEqual({
-      theme: 'forest', startView: 'editor', snippets: ['a'], webuntis: { enabled: false, host: '', school: '' }, autoCreateWeek: true,
+      startView: 'editor', snippets: ['a'], webuntis: { enabled: false, host: '', school: '' }, autoCreateWeek: true,
       updateCheck: true, setupDone: true,
+      appearance: { mode: 'dark', accent: 'green' }, layout: { sidebarCollapsed: false, previewVisible: true, notesVisible: true },
     })
     expect(() => validateData(d)).not.toThrow()
   })
@@ -266,6 +268,7 @@ describe('migrateData', () => {
     const d = migrateData({ version: 5, settings: 'kaputt', profiles: [], weeks: [] })
     expect(d.settings).toEqual({
       startView: 'overview', snippets: [], webuntis: { enabled: false, host: '', school: '' }, autoCreateWeek: true, updateCheck: true, setupDone: true,
+      appearance: { mode: 'dark', accent: 'blue' }, layout: { sidebarCollapsed: false, previewVisible: true, notesVisible: true },
     })
     expect(() => validateData(d)).not.toThrow()
   })
@@ -297,8 +300,9 @@ describe('migrateData', () => {
     const d = migrateData({ version: 6, settings: { theme: 'forest', webuntis: { enabled: true } }, profiles: [], weeks: [] })
     expect(d.version).toBe(DATA_VERSION)
     expect(d.settings).toEqual({
-      theme: 'forest', startView: 'overview', snippets: [], webuntis: { enabled: true, host: '', school: '' }, autoCreateWeek: true,
+      startView: 'overview', snippets: [], webuntis: { enabled: true, host: '', school: '' }, autoCreateWeek: true,
       updateCheck: true, setupDone: true,
+      appearance: { mode: 'dark', accent: 'green' }, layout: { sidebarCollapsed: false, previewVisible: true, notesVisible: true },
     })
     expect(() => validateData(d)).not.toThrow()
     expect(migrateData({ version: 7, settings: { autoCreateWeek: false }, profiles: [], weeks: [] })
@@ -318,8 +322,9 @@ describe('migrateData', () => {
     const d = migrateData({ version: 7, settings: { theme: 'forest', autoCreateWeek: false }, profiles: [], weeks: [] })
     expect(d.version).toBe(DATA_VERSION)
     expect(d.settings).toEqual({
-      theme: 'forest', startView: 'overview', snippets: [], webuntis: { enabled: false, host: '', school: '' }, autoCreateWeek: false,
+      startView: 'overview', snippets: [], webuntis: { enabled: false, host: '', school: '' }, autoCreateWeek: false,
       updateCheck: true, setupDone: true,
+      appearance: { mode: 'dark', accent: 'green' }, layout: { sidebarCollapsed: false, previewVisible: true, notesVisible: true },
     })
     expect(() => validateData(d)).not.toThrow()
     expect(migrateData({ version: 8, settings: { updateCheck: false }, profiles: [], weeks: [] })
@@ -464,11 +469,11 @@ describe('replaceData', () => {
     const imported = {
       ...seedData(),
       weeks: [{ id: '2026-07-06', status: 'done', instructions: '', days: [] }],
-      settings: { ...seedData().settings, theme: 'rose', webuntis: { enabled: true } },
+      settings: { ...seedData().settings, startView: 'editor', webuntis: { enabled: true } },
     }
     const result = replaceData(current, imported)
     expect(result.weeks).toEqual(imported.weeks)
-    expect(result.settings.theme).toBe('rose')
+    expect(result.settings.startView).toBe('editor')
     expect(result.settings.webuntis).toEqual({ enabled: false })
     expect(replaceData(imported, current).settings.webuntis).toEqual({ enabled: true })
   })
@@ -762,5 +767,74 @@ describe('dayChoice / withChoice (the 5-way switch)', () => {
     const sick = { ...work, status: 'sick' }
     expect(withChoice(sick, 'school')).toMatchObject({ type: 'school', status: 'normal', bullets: ['Patchen'] })
     expect(withChoice(withChoice(work, 'school'), 'work').bullets).toEqual(['Patchen'])
+  })
+})
+
+describe('schema v12: appearance and layout', () => {
+  const v11 = (settings) => ({ version: 11, settings, profiles: [], weeks: [] })
+  const DEFAULT_LAYOUT = { sidebarCollapsed: false, previewVisible: true, notesVisible: true }
+
+  it('turns each v11 theme into an accent, dark mode, default layout; drops theme', () => {
+    const accents = {
+      'northern-lights': 'blue', graphite: 'blue', 'polar-night': 'lilac', rose: 'coral', amber: 'coral', forest: 'green',
+    }
+    for (const [theme, accent] of Object.entries(accents)) {
+      const d = migrateData(v11({ theme, startView: 'editor' }))
+      expect(d.version).toBe(12)
+      expect(d.settings.appearance).toEqual({ mode: 'dark', accent })
+      expect(d.settings.layout).toEqual(DEFAULT_LAYOUT)
+      expect(d.settings).not.toHaveProperty('theme')
+      expect(d.settings.startView).toBe('editor')
+      expect(() => validateData(d)).not.toThrow()
+    }
+    expect(migrateData(v11({ theme: 'unbekannt' })).settings.appearance.accent).toBe('blue')
+    expect(migrateData(v11(undefined)).settings.appearance).toEqual({ mode: 'dark', accent: 'blue' })
+  })
+
+  it('keeps valid values, repairs malformed ones', () => {
+    const d = migrateData({
+      version: 12,
+      settings: { appearance: { mode: 'light', accent: 'lilac' }, layout: { sidebarCollapsed: true, previewVisible: false, notesVisible: false } },
+      profiles: [],
+      weeks: [],
+    })
+    expect(d.settings.appearance).toEqual({ mode: 'light', accent: 'lilac' })
+    expect(d.settings.layout).toEqual({ sidebarCollapsed: true, previewVisible: false, notesVisible: false })
+
+    const broken = migrateData({
+      version: 12,
+      settings: { appearance: { mode: 'sepia', accent: 7 }, layout: { sidebarCollapsed: 'ja', previewVisible: 0, notesVisible: null } },
+      profiles: [],
+      weeks: [],
+    })
+    expect(broken.settings.appearance).toEqual({ mode: 'dark', accent: 'blue' })
+    expect(broken.settings.layout).toEqual(DEFAULT_LAYOUT)
+    expect(migrateData({ version: 12, settings: { appearance: 'hell', layout: [] }, profiles: [], weeks: [] }).settings.layout)
+      .toEqual(DEFAULT_LAYOUT)
+  })
+
+  it('validateData rejects malformed appearance and layout', () => {
+    const file = (settings) => ({ version: 12, settings, profiles: [], weeks: [] })
+    expect(() => validateData(file({ appearance: 'hell' }))).toThrow(/Aussehen/)
+    expect(() => validateData(file({ appearance: { mode: 'sepia' } }))).toThrow(/Aussehen/)
+    expect(() => validateData(file({ appearance: { accent: 'pink' } }))).toThrow(/Aussehen/)
+    expect(() => validateData(file({ layout: { previewVisible: 'ja' } }))).toThrow(/Layout/)
+    expect(() => validateData(file({ appearance: { mode: 'light', accent: 'green' }, layout: { notesVisible: false } }))).not.toThrow()
+  })
+
+  it('seed data starts dark with the logo blue and everything visible', () => {
+    expect(seedData().settings.appearance).toEqual({ mode: 'dark', accent: 'blue' })
+    expect(seedData().settings.layout).toEqual(DEFAULT_LAYOUT)
+    expect(seedData().settings).not.toHaveProperty('theme')
+  })
+
+  it("import 'Ersetzen' keeps this device's appearance and layout", () => {
+    const layout = { sidebarCollapsed: true, previewVisible: false, notesVisible: true }
+    const current = { ...seedData(), settings: { ...seedData().settings, appearance: { mode: 'light', accent: 'coral' }, layout } }
+    const imported = { ...seedData(), settings: { ...seedData().settings, startView: 'profiles' } }
+    const result = replaceData(current, imported)
+    expect(result.settings.appearance).toEqual({ mode: 'light', accent: 'coral' })
+    expect(result.settings.layout).toEqual(layout)
+    expect(result.settings.startView).toBe('profiles')
   })
 })

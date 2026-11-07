@@ -28,11 +28,13 @@ Neutrals: warm, no blue cast. Tailwind names in brackets.
 
 | Role | Dark | Light |
 |---|---|---|
-| Page background (`bg`) | #121211 | #f4f3ee |
+| Page background (`canvas`) | #121211 | #f4f3ee |
 | Sidebar (`sidebar`) | #0d0d0c | #ebe9e2 |
 | Card (`surface`) | #1a1a18 | #fcfcfa |
-| Raised, inputs, hover (`surface-2`) | #242422 | #e7e5dd |
+| Raised: day-cell fill, active segment, keycaps (`surface-2`) | #242422 | #e7e5dd |
+| Hover on raised (`surface-3`) | #2c2c29 | #dedbd1 |
 | Line (`line`) | #2f2f2c | #d8d6cc |
+| Mark: dashed "open" cells, hovered input borders, ≥ 3:1 (`mark`) | #76756c | #7e7c71 |
 | Text (`ink`) | #efeee8 | #161614 |
 | Muted text and icons (`ink-2`) | #a8a79e | #55544d |
 
@@ -41,10 +43,13 @@ dark mode and near white (#fcfcfa) in light mode, never grey.
 
 | Accent | Dark | Light |
 |---|---|---|
-| Logo-Blau (default) | #6CC9DE (the logo file's value) | #1F6F82 (same hue, darker) |
-| Koralle | #F08A6E | #B6462B |
+| Logo-Blau (default) | #6CC9DE (the logo file's value) | #1D6A7C (same hue, darker) |
+| Koralle | #F08A6E | #A83E22 |
 | Flieder | #B9A3F0 (muted on purpose, never in a gradient) | #6650B0 |
-| Grün | #7CCB8E | #2F7A44 |
+| Grün | #7CCB8E | #2A6F3E |
+
+The light accents were darkened from the first draft until they reach 4.5:1 on the sidebar and on
+`surface-2` too (2026-11-07).
 
 **The accent is used only for:**
 - primary actions
@@ -53,6 +58,17 @@ dark mode and near white (#fcfcfa) in light mode, never grey.
 - the status "Fertig"
 
 Everything else stays neutral.
+
+Status colors (text, glyphs, F/K/U letters; all ≥ 4.5:1 on every surface):
+
+| Token | Dark | Light |
+|---|---|---|
+| `draft` (Entwurf) | #E2C062 | #7F5A00 |
+| `missing` (Fehlt) | #EE8577 | #B3332A |
+| `holiday` (Feiertag) | #D9A2D2 | #8B3F86 |
+| `sick` (Krank) | #E9A867 | #94500F |
+| `vacation` (Urlaub) | #92B9EA | #2F5D98 |
+| `warn` (privacy and other warnings) | = `draft` | = `draft` |
 
 **Status is never color alone**; each one has a shape or a letter too:
 

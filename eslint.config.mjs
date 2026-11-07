@@ -6,7 +6,8 @@ import react from 'eslint-plugin-react'
 import reactHooks from 'eslint-plugin-react-hooks'
 
 export default [
-  { ignores: ['dist/**', 'release/**', 'node_modules/**'] },
+  // scratch/ holds local, never committed experiments (.gitignore)
+  { ignores: ['dist/**', 'release/**', 'node_modules/**', 'scratch/**'] },
 
   js.configs.recommended,
 

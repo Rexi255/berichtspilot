@@ -1,5 +1,5 @@
 // App shell: title bar + sidebar + view switching with a GSAP transition.
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { Suspense, lazy, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { gsap } from 'gsap'
 import { FolderOpenIcon } from '@phosphor-icons/react'
 import { StoreProvider, useStore, api } from './store.jsx'
@@ -17,6 +17,11 @@ import { mondayOf } from './lib/dates.js'
 
 const VIEWS = ['overview', 'editor', 'profiles', 'settings']
 
+// Dev aid (E-032): the component gallery at "#styleguide" — only where a URL
+// can be typed (dev server, `vite preview`), never in the file:// app
+const Styleguide = lazy(() => import('./views/Styleguide.jsx'))
+const styleguideWanted = () => window.location.protocol.startsWith('http') && window.location.hash === '#styleguide'
+
 // "Neu laden" after a render error: write what isn't saved yet, then reload
 function useReload() {
   const { flush } = useStore()
@@ -28,11 +33,14 @@ function useReload() {
 function Content() {
   const { data, loadError, setupOpen } = useStore()
 
-  // Apply the selected color theme on <html>; the CSS tokens (data-theme) follow.
-  // Here rather than in the shell, so the setup wizard is themed too.
+  // Mode and accent on <html>; the CSS tokens (data-mode, data-accent) follow.
+  // Here rather than in the shell, so the setup wizard follows them too.
+  const mode = data?.settings?.appearance?.mode ?? 'dark'
+  const accent = data?.settings?.appearance?.accent ?? 'blue'
   useEffect(() => {
-    document.documentElement.dataset.theme = data?.settings?.theme || 'northern-lights'
-  }, [data?.settings?.theme])
+    document.documentElement.dataset.mode = mode
+    document.documentElement.dataset.accent = accent
+  }, [mode, accent])
 
   // Data comes from a newer app version, or daten.json and all backups are
   // unreadable: don't touch them, say so clearly — otherwise the next autosave
@@ -70,9 +78,10 @@ function Shell() {
   const { data } = useStore()
   const reload = useReload()
   // Start view from the settings (read only on the first render)
-  const [view, setView] = useState(() =>
-    VIEWS.includes(data.settings.startView) ? data.settings.startView : 'overview'
-  )
+  const [view, setView] = useState(() => {
+    if (styleguideWanted()) return 'styleguide'
+    return VIEWS.includes(data.settings.startView) ? data.settings.startView : 'overview'
+  })
   // Week selected in the editor (Monday as ISO date), default: current week
   const [monday, setMonday] = useState(() => mondayOf(new Date()))
   const viewRef = useRef(null)
@@ -88,6 +97,12 @@ function Shell() {
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
+  }, [])
+
+  useEffect(() => {
+    const onHash = () => styleguideWanted() && setView('styleguide')
+    window.addEventListener('hashchange', onHash)
+    return () => window.removeEventListener('hashchange', onHash)
   }, [])
 
   // Soft transition on view change
@@ -122,6 +137,11 @@ function Shell() {
             {view === 'editor' && <WeekEditor monday={monday} setMonday={setMonday} />}
             {view === 'profiles' && <Profiles />}
             {view === 'settings' && <Settings />}
+            {view === 'styleguide' && (
+              <Suspense fallback={null}>
+                <Styleguide />
+              </Suspense>
+            )}
           </ErrorBoundary>
         </div>
       </main>

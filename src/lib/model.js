@@ -8,7 +8,14 @@ export const DAY_STATUSES = ['normal', 'holiday', 'sick', 'vacation']
 
 // Current schema version of daten.json. Older files are upgraded on load/import
 // via migrateData(); newer ones are rejected (downgrade protection).
-export const DATA_VERSION = 11
+export const DATA_VERSION = 12
+
+// Appearance (schema v12, E-032/E-033): color mode and accent
+export const MODES = ['dark', 'light']
+export const ACCENTS = ['blue', 'coral', 'lilac', 'green']
+
+// Layout switches (schema v12) and their defaults
+export const LAYOUT_DEFAULTS = { sidebarCollapsed: false, previewVisible: true, notesVisible: true }
 
 let idCounter = 0
 export const newId = (prefix) =>
@@ -241,6 +248,29 @@ function migrateV10toV11(d) {
   return { ...d, version: 11, profiles }
 }
 
+// v11 color themes → v12 accents (E-033)
+const V12_ACCENT = {
+  'northern-lights': 'blue', graphite: 'blue', 'polar-night': 'lilac', rose: 'coral', amber: 'coral', forest: 'green',
+}
+
+/**
+ * Schema v11 -> v12: the six dark themes become a mode + one of four accents
+ * (`settings.appearance`), plus the layout switches (`settings.layout`).
+ * `theme` is dropped; an appearance already in the file wins.
+ */
+function migrateV11toV12(d) {
+  const { theme, ...settings } = isObject(d.settings) ? d.settings : {}
+  return {
+    ...d,
+    version: 12,
+    settings: {
+      ...settings,
+      appearance: isObject(settings.appearance) ? settings.appearance : { mode: 'dark', accent: V12_ACCENT[theme] ?? 'blue' },
+      layout: isObject(settings.layout) ? settings.layout : { ...LAYOUT_DEFAULTS },
+    },
+  }
+}
+
 /** Only string → string entries survive (hand-edited or broken files). */
 function cleanSubjectMap(map) {
   if (!isObject(map)) return {}
@@ -273,6 +303,7 @@ export function migrateData(raw) {
   if (d.version < 9) d = migrateV8toV9(d)
   if (d.version < 10) d = migrateV9toV10(d)
   if (d.version < 11) d = migrateV10toV11(d)
+  if (d.version < 12) d = migrateV11toV12(d)
 
   // Defensive defaults in case single fields are missing (e.g. hand-edited file)
   d.periods ??= []
@@ -284,6 +315,21 @@ export function migrateData(raw) {
   d.settings.updateCheck = d.settings.updateCheck !== false
   // Only a real `false` shows the wizard again — never for a malformed value
   d.settings.setupDone = d.settings.setupDone !== false
+  // Unknown mode/accent → the defaults; layout switches only change for a real
+  // boolean that differs from the default
+  const appearance = isObject(d.settings.appearance) ? d.settings.appearance : {}
+  d.settings.appearance = {
+    ...appearance,
+    mode: MODES.includes(appearance.mode) ? appearance.mode : 'dark',
+    accent: ACCENTS.includes(appearance.accent) ? appearance.accent : 'blue',
+  }
+  const layout = isObject(d.settings.layout) ? d.settings.layout : {}
+  d.settings.layout = {
+    ...layout,
+    sidebarCollapsed: layout.sidebarCollapsed === true,
+    previewVisible: layout.previewVisible !== false,
+    notesVisible: layout.notesVisible !== false,
+  }
   // Anything but a real `true` means off — a malformed value must not survive.
   // A malformed host is dropped here; the main process checks it again anyway
   const webuntis = isObject(d.settings.webuntis) ? d.settings.webuntis : {}
@@ -353,6 +399,17 @@ export function validateData(d) {
   if (updateCheck !== undefined && typeof updateCheck !== 'boolean') {
     fail('Die Einstellung „Beim Start nach Updates suchen" in der Datei ist ungültig.')
   }
+  const appearance = d.settings?.appearance
+  if (appearance !== undefined && (!isObject(appearance) ||
+      (appearance.mode !== undefined && !MODES.includes(appearance.mode)) ||
+      (appearance.accent !== undefined && !ACCENTS.includes(appearance.accent)))) {
+    fail('Die Einstellung „Aussehen“ in der Datei ist ungültig.')
+  }
+  const layout = d.settings?.layout
+  if (layout !== undefined && (!isObject(layout) ||
+      Object.keys(LAYOUT_DEFAULTS).some((key) => layout[key] !== undefined && typeof layout[key] !== 'boolean'))) {
+    fail('Die Einstellung „Layout“ in der Datei ist ungültig.')
+  }
   const setupDone = d.settings?.setupDone
   if (setupDone !== undefined && typeof setupDone !== 'boolean') {
     fail('Die Einstellung „Einrichtung abgeschlossen" in der Datei ist ungültig.')
@@ -363,11 +420,13 @@ export function validateData(d) {
 /**
  * Import "Ersetzen": take everything from the file except the WebUntis settings
  * (switch + address) and the update-check switch — they are this device's
- * opt-ins to network access (E-007), not part of the shared record.
+ * opt-ins to network access (E-007), not part of the shared record — and the
+ * appearance + layout switches, this device's display preferences (E-033).
  */
 export function replaceData(current, imported) {
-  const { webuntis, updateCheck } = current.settings
-  return { ...imported, settings: { ...imported.settings, webuntis, updateCheck } }
+  // appearance + layout are this machine's display preferences (E-033)
+  const { webuntis, updateCheck, appearance, layout } = current.settings
+  return { ...imported, settings: { ...imported.settings, webuntis, updateCheck, appearance, layout } }
 }
 
 /**
@@ -487,7 +546,8 @@ export function seedData() {
     settings: {
       trainingStart: '',
       trainingEnd: '',
-      theme: 'northern-lights',
+      appearance: { mode: 'dark', accent: 'blue' },
+      layout: { ...LAYOUT_DEFAULTS },
       startView: 'overview',
       snippets: [],
       webuntis: { enabled: false, host: '', school: '' },

@@ -74,6 +74,15 @@ const watch = (page, tag) => {
 const settle = (page) => page.waitForTimeout(450)
 
 async function openView(page, view) {
+  // The component gallery has no nav entry: App.jsx opens it on "#styleguide"
+  // (browser build only)
+  if (view === 'styleguide') {
+    await page.evaluate(() => {
+      window.location.hash = 'styleguide'
+    })
+    await settle(page)
+    return
+  }
   const nav = page.locator(`[data-nav="${view}"]`)
   if (await nav.count()) await nav.first().click()
   await settle(page)

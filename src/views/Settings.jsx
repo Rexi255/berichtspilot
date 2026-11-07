@@ -1,13 +1,12 @@
-// Settings: appearance (color themes), behavior (start view), snippets
+// Settings: appearance (mode + accent), behavior (start view), snippets
 // (autocomplete templates), connections (WebUntis), updates, data location and
 // a keyboard shortcut reference.
-// Each theme card carries data-theme={id} itself; that way its preview colors
-// (bg-base, bg-accent …) render in that theme automatically — without
+// Each accent swatch carries data-accent={id} itself; that way its preview
+// colors (bg-accent …) render in that accent automatically — without
 // duplicating the color values in JS.
 import { useCallback, useEffect, useState } from 'react'
 import {
   CheckIcon,
-  PaletteIcon,
   SlidersHorizontalIcon,
   TextAaIcon,
   FolderOpenIcon,
@@ -25,83 +24,46 @@ import {
   ClockCounterClockwiseIcon,
 } from '@phosphor-icons/react'
 import { useStore, api } from '../store.jsx'
-import { SectionTitle, Button, IconButton, Input, Segment, Panel, Pill, Switch, cx } from '../ui/basics.jsx'
+import { SectionTitle, Button, IconButton, Input, Segment, Panel, Pill, Switch, DayCell, cx } from '../ui/basics.jsx'
 import { showToast } from '../ui/toast.jsx'
 import { UpdateAction, useUpdateActions } from '../ui/UpdateHint.jsx'
 import { updateHint, updateSummary, canCheckForUpdate } from '../lib/update.js'
 import { parseWebuntisAddress } from '../lib/webuntis.js'
 import { BACKUP_KINDS, backupTitle, sizeLabel } from '../lib/backups.js'
 
-// Order + labels of the themes; the colors live in index.css.
-export const THEMES = [
-  { id: 'northern-lights', name: 'Nordlicht', description: 'Kühles Blau · Eis-Cyan' },
-  { id: 'polar-night', name: 'Polarnacht', description: 'Tiefes Violett · Indigo' },
-  { id: 'forest', name: 'Waldgrün', description: 'Dunkles Grün · Smaragd' },
-  { id: 'amber', name: 'Bernstein', description: 'Warmes Braun · Gold' },
-  { id: 'rose', name: 'Rosé', description: 'Gedämpftes Rosé · Magenta' },
-  { id: 'graphite', name: 'Graphit', description: 'Neutrales Grau · Stahl' },
+// Accents (schema v12, E-032); the colors live in index.css per mode
+export const ACCENT_OPTIONS = [
+  { id: 'blue', name: 'Logo-Blau' },
+  { id: 'coral', name: 'Koralle' },
+  { id: 'lilac', name: 'Flieder' },
+  { id: 'green', name: 'Grün' },
 ]
 
-// Miniature of an app screen in the theme's colors (purely decorative)
-function ThemePreview() {
-  return (
-    <div className="relative h-24 overflow-hidden rounded-lg bg-base shadow-[inset_0_0_0_1px_oklch(1_0_0/0.06)]">
-      {/* hint of the aurora */}
-      <div
-        className="absolute -right-6 -top-8 h-20 w-24 rounded-full opacity-60 blur-xl"
-        style={{ background: 'var(--aurora-1)' }}
-      />
-      {/* sidebar */}
-      <div className="absolute inset-y-0 left-0 w-1/4 border-r border-white/[0.06] bg-surface/80">
-        <div className="absolute left-2 top-2.5 h-2 w-6 rounded-full bg-accent" />
-        <div className="absolute left-2 top-6 h-2 w-5 rounded-full bg-ink-3/40" />
-        <div className="absolute left-2 top-9 h-2 w-5 rounded-full bg-ink-3/40" />
-      </div>
-      {/* content card */}
-      <div className="absolute bottom-2.5 left-[32%] right-2.5 top-2.5 rounded-md border border-white/[0.06] bg-surface/70 shadow-[inset_0_1px_0_0_oklch(1_0_0/0.05)]">
-        <div className="absolute left-2 top-2 h-2 w-12 rounded-full bg-ink-2/70" />
-        <div className="absolute left-2 top-6 flex gap-1.5">
-          <div className="h-4 w-8 rounded bg-accent" />
-          <div className="h-4 w-6 rounded bg-accent-deep" />
-        </div>
-        <div className="absolute bottom-2 left-2 right-2 h-2 rounded-full bg-white/[0.06]">
-          <div className="h-full w-2/3 rounded-full bg-accent/80" />
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function ThemeCard({ theme, active, onSelect }) {
+// One accent, previewed in its own colors: the swatch carries data-accent
+// itself, so the button and the day cells inside render in that accent
+function AccentSwatch({ accent, active, onSelect }) {
   return (
     <button
       type="button"
-      data-theme={theme.id}
+      data-accent={accent.id}
       onClick={onSelect}
       aria-pressed={active}
       className={cx(
-        'group relative flex flex-col gap-3 rounded-xl border p-3 text-left',
-        'transition-[border-color,transform,box-shadow] duration-150 ease-(--ease-smooth) active:scale-[0.99]',
-        active
-          ? 'border-accent/60 shadow-[0_0_0_1px_var(--color-accent),0_8px_24px_-12px_var(--color-accent-deep)]'
-          : 'border-white/[0.08] hover:border-white/20'
+        'flex flex-col gap-3 rounded-card border bg-surface p-3 text-left transition-colors duration-150',
+        active ? 'border-accent' : 'border-line hover:border-mark'
       )}
     >
-      <ThemePreview />
-      <div className="flex items-center justify-between gap-2 pl-0.5">
-        <div className="min-w-0">
-          <div className="text-[13.5px] font-semibold text-ink">{theme.name}</div>
-          <div className="truncate text-[11.5px] text-ink-3">{theme.description}</div>
-        </div>
-        <span
-          className={cx(
-            'grid h-5 w-5 shrink-0 place-items-center rounded-full transition-opacity duration-150',
-            active ? 'bg-accent text-inset opacity-100' : 'opacity-0'
-          )}
-        >
-          <CheckIcon size={12} weight="bold" />
+      <span className="flex items-center gap-2" aria-hidden="true">
+        <span className="inline-flex h-7 items-center rounded-control bg-accent px-2.5 text-meta font-medium text-on-accent">
+          Kopieren
         </span>
-      </div>
+        <DayCell state="written" letter="B" size="tab" />
+        <DayCell state="open" letter="B" size="tab" />
+      </span>
+      <span className="flex items-center justify-between gap-2">
+        <span className="text-body font-medium text-ink">{accent.name}</span>
+        {active && <CheckIcon size={16} className="text-accent" />}
+      </span>
     </button>
   )
 }
@@ -503,8 +465,8 @@ const SHORTCUTS = [
 /* -------------------------------- View -------------------------------- */
 
 export default function Settings() {
-  const { data, dataPath, updateSettings, openSetup } = useStore()
-  const activeTheme = data.settings.theme || 'northern-lights'
+  const { data, dataPath, updateSettings, setAppearance, openSetup } = useStore()
+  const appearance = data.settings.appearance
 
   return (
     <div className="flex h-full flex-col">
@@ -514,20 +476,25 @@ export default function Settings() {
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col gap-8 overflow-y-auto px-8 pb-8">
-        <section className="max-w-4xl">
-          <SectionTitle className="mb-1 flex items-center gap-1.5">
-            <PaletteIcon size={14} /> Aussehen
-          </SectionTitle>
-          <p className="mb-4 text-[12.5px] text-ink-3">
-            Wähle ein Farbthema — die Änderung ist sofort sichtbar und wird gespeichert.
-          </p>
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-            {THEMES.map((t) => (
-              <ThemeCard
-                key={t.id}
-                theme={t}
-                active={activeTheme === t.id}
-                onSelect={() => updateSettings({ theme: t.id })}
+        <section className="max-w-4xl" data-section="appearance">
+          <SectionTitle className="mb-1">Aussehen</SectionTitle>
+          <p className="mb-3 text-body text-ink-2">Dunkel oder hell, dazu eine Akzentfarbe für Aktionen und erledigte Tage.</p>
+          <Segment
+            label="Modus"
+            options={[
+              { value: 'dark', label: 'Dunkel' },
+              { value: 'light', label: 'Hell' },
+            ]}
+            value={appearance.mode}
+            onChange={(mode) => setAppearance({ mode })}
+          />
+          <div className="mt-4 grid max-w-3xl grid-cols-2 gap-3 lg:grid-cols-4">
+            {ACCENT_OPTIONS.map((a) => (
+              <AccentSwatch
+                key={a.id}
+                accent={a}
+                active={appearance.accent === a.id}
+                onSelect={() => setAppearance({ accent: a.id })}
               />
             ))}
           </div>

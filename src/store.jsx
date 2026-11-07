@@ -344,6 +344,16 @@ export function StoreProvider({ children }) {
     setData((d) => ({ ...d, settings: { ...d.settings, ...patch } }))
   }, [])
 
+  // Display preferences (schema v12, E-033): merged into their own objects,
+  // so a mode change keeps the accent and one switch keeps the others
+  const setAppearance = useCallback((patch) => {
+    setData((d) => ({ ...d, settings: { ...d.settings, appearance: { ...d.settings.appearance, ...patch } } }))
+  }, [])
+
+  const setLayout = useCallback((patch) => {
+    setData((d) => ({ ...d, settings: { ...d.settings, layout: { ...d.settings.layout, ...patch } } }))
+  }, [])
+
   // Only the switch and the address are stored — login state lives in the main
   // process, which follows them via the layout effect above
   const setWebuntisEnabled = useCallback((enabled) => {
@@ -497,6 +507,8 @@ export function StoreProvider({ children }) {
     updatePeriod,
     deletePeriod,
     updateSettings,
+    setAppearance,
+    setLayout,
     setWebuntisEnabled,
     setWebuntisAddress,
     exportData,

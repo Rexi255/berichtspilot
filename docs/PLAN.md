@@ -404,10 +404,15 @@ checkpoint is a styleguide in code, no HTML prototype.
       join to the input), `shortcuts.js`, `contrast.js`, `findSensitive()`
       `customer` kind + user text only, per-day `buildPrompt(…, { dates })`,
       `dayChoice()`/`withChoice()` in `model.js` — all with tests
-- [ ] 11.4 Tokens (`index.css`, `data-mode`/`data-accent`), fonts (Bricolage,
+- [x] 11.4 Tokens (`index.css`, `data-mode`/`data-accent`), fonts (Bricolage,
       Instrument Sans, JetBrains Mono), `basics.jsx` (Card, StatusChip,
       DayCell, Kbd, Tooltip, Menu …), schema v12 + `src/theme.test.js`,
       Settings → Aussehen, dev styleguide view → **checkpoint with the user**
+      (2026-11-07: done; old token names stay as aliases until 11.9, so the
+      not yet rebuilt views keep working; the styleguide opens at
+      `#styleguide` in the browser build; light accents darkened to reach
+      4.5:1 on every surface. **Waiting for the user's go on the
+      screenshots in `scratch/shots/checkpoint-11-4/`**)
 - [ ] 11.5 Shell: Titlebar, Sidebar (collapse 68 px + Strg+B, badge, chip
       "Lokal · kein Konto" with save state, mode switch), App (shortcuts,
       fade, no aurora), toast, ErrorBoundary, UpdateHint; export/import →

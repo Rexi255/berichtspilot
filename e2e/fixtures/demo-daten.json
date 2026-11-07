@@ -1,9 +1,17 @@
 {
-  "version": 11,
+  "version": 12,
   "settings": {
     "trainingStart": "2025-09-01",
     "trainingEnd": "2028-08-31",
-    "theme": "northern-lights",
+    "appearance": {
+      "mode": "dark",
+      "accent": "blue"
+    },
+    "layout": {
+      "sidebarCollapsed": false,
+      "previewVisible": true,
+      "notesVisible": true
+    },
     "startView": "overview",
     "snippets": [
       "Bearbeitung von Support-Tickets im Bereich Arbeitsplatzausstattung"

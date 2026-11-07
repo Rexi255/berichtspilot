@@ -8,6 +8,12 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- **Light mode and accent colors instead of six dark themes** (Settings →
+  Aussehen): dark or light, plus Logo-Blau, Koralle, Flieder or Grün. Your
+  previous theme becomes the closest accent. New fonts: Instrument Sans for
+  the interface, Bricolage Grotesque for headings, JetBrains Mono for the
+  text preview. The rest of the new design follows in the next steps.
+
 - **"Mit KI formulieren" also warns about the word "Kunde":** besides e-mail
   and IP addresses, MAC, ticket and phone numbers, the check before copying a
   prompt now flags "Kunde", "Kunden", "Endkunde" and customer numbers in your
