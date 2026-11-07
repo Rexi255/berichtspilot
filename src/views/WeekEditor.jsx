@@ -28,6 +28,7 @@ import { profileForDate, withStatus, restoreDays } from '../lib/model.js'
 import { formatAll } from '../lib/format.js'
 import { splitNotes, BULLET_PREFIX } from '../lib/notes.js'
 import { fillWeekFromWebuntis } from '../lib/webuntis.js'
+import { matchShortcut } from '../lib/shortcuts.js'
 import PhrasingPanel from './PhrasingPanel.jsx'
 import WebuntisPanel from './WebuntisPanel.jsx'
 
@@ -595,9 +596,8 @@ export default function WeekEditor({ monday, setMonday }) {
   const updateDay = (date, newDay) =>
     updateWeek(monday, (w) => ({ ...w, days: w.days.map((d) => (d.date === date ? newDay : d)) }))
 
-  // Editor shortcuts: Alt+←/→ change week, Ctrl+Shift+1/2/3 copy a block,
-  // Ctrl+N create the week. Uses e.code so it also works with the German
-  // layout (Shift+1 would otherwise be "!").
+  // Editor shortcuts (src/lib/shortcuts.js): Alt+←/→ change week, Strg+1/2/3
+  // copy a block, Strg+N create the week.
   useEffect(() => {
     const copyBlock = async (index) => {
       if (!blocks) return
@@ -616,13 +616,14 @@ export default function WeekEditor({ monday, setMonday }) {
     }
 
     const handler = (e) => {
-      if (e.altKey && !e.ctrlKey && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
+      const hit = matchShortcut(e, ['editor'])
+      if (hit?.id === 'week') {
         e.preventDefault()
-        changeWeek(e.key === 'ArrowLeft' ? -7 : 7)
-      } else if (e.ctrlKey && e.shiftKey && ['Digit1', 'Digit2', 'Digit3'].includes(e.code)) {
+        changeWeek(hit.arg * 7)
+      } else if (hit?.id === 'copy') {
         e.preventDefault()
-        copyBlock(Number(e.code.slice(-1)) - 1)
-      } else if (e.ctrlKey && !e.shiftKey && !e.altKey && e.code === 'KeyN' && !week) {
+        copyBlock(hit.arg)
+      } else if (hit?.id === 'createWeek' && !week) {
         e.preventDefault()
         createWeek(monday)
       }

@@ -411,12 +411,16 @@ checkpoint is a styleguide in code, no HTML prototype.
       (2026-11-07: done; old token names stay as aliases until 11.9, so the
       not yet rebuilt views keep working; the styleguide opens at
       `#styleguide` in the browser build; light accents darkened to reach
-      4.5:1 on every surface. **Waiting for the user's go on the
-      screenshots in `scratch/shots/checkpoint-11-4/`**)
-- [ ] 11.5 Shell: Titlebar, Sidebar (collapse 68 px + Strg+B, badge, chip
+      4.5:1 on every surface; the user approved the screenshots:
+      "Sieht gut aus. Weitermachen")
+- [x] 11.5 Shell: Titlebar, Sidebar (collapse 68 px + Strg+B, badge, chip
       "Lokal · kein Konto" with save state, mode switch), App (shortcuts,
       fade, no aurora), toast, ErrorBoundary, UpdateHint; export/import →
-      Settings → Daten
+      Settings → Daten (2026-11-07; the editor's copy shortcut moved to
+      Strg+1–3 already here, since Strg+Umschalt+1–3 now switches views;
+      Settings → Tastaturkürzel reads `SHORTCUT_HELP`; checked: shortcuts,
+      collapse persisted, rail tooltips, failed save → red "Nicht
+      gespeichert" chip, focus ring by Tab, Electron in both modes)
 - [ ] 11.6 Overview: header + search, three figures, warning bar, year band,
       week list (last 8, grouped by month)
 - [ ] 11.7a Editor frame: header, day tabs (Alt+1–5), editor card with the

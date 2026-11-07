@@ -299,9 +299,10 @@ export function DayCell({ state, letter, short, size = 'row', title, className }
 }
 
 /** Small count badge (sidebar: missing weeks) */
-export function Badge({ children, tone = 'missing', className }) {
+export function Badge({ children, tone = 'missing', className, ...props }) {
   return (
     <span
+      {...props}
       className={cx(
         'inline-flex h-5 min-w-5 items-center justify-center rounded-chip border px-1 text-[11px] font-semibold leading-none tabular-nums',
         tone === 'missing' ? 'border-missing/50 text-missing' : 'border-line text-ink-2',

@@ -22,14 +22,17 @@ import {
   ArrowCircleUpIcon,
   SparkleIcon,
   ClockCounterClockwiseIcon,
+  DownloadSimpleIcon,
+  UploadSimpleIcon,
 } from '@phosphor-icons/react'
 import { useStore, api } from '../store.jsx'
-import { SectionTitle, Button, IconButton, Input, Segment, Panel, Pill, Switch, DayCell, cx } from '../ui/basics.jsx'
+import { SectionTitle, Button, IconButton, Input, Segment, Panel, Pill, Switch, DayCell, Kbd, cx } from '../ui/basics.jsx'
 import { showToast } from '../ui/toast.jsx'
 import { UpdateAction, useUpdateActions } from '../ui/UpdateHint.jsx'
 import { updateHint, updateSummary, canCheckForUpdate } from '../lib/update.js'
 import { parseWebuntisAddress } from '../lib/webuntis.js'
 import { BACKUP_KINDS, backupTitle, sizeLabel } from '../lib/backups.js'
+import { SHORTCUT_HELP } from '../lib/shortcuts.js'
 
 // Accents (schema v12, E-032); the colors live in index.css per mode
 export const ACCENT_OPTIONS = [
@@ -450,23 +453,23 @@ function Backups() {
   )
 }
 
-/* ---------------------- Keyboard shortcut reference ---------------------- */
-
-const SHORTCUTS = [
-  ['Strg + 1 … 4', 'Übersicht · Editor · Profile · Einstellungen öffnen'],
-  ['Alt + ← / →', 'Vorherige / nächste Woche (im Editor)'],
-  ['Strg + Shift + 1 / 2 / 3', 'Block Betrieb / Unterweisungen / Berufsschule kopieren (im Editor)'],
-  ['Strg + N', 'Woche anlegen, falls sie noch fehlt (im Editor)'],
-  ['Enter', 'Neuer Stichpunkt unter dem aktuellen'],
-  ['Backspace (leerer Punkt)', 'Stichpunkt entfernen'],
-  ['↑ / ↓ (bei Vorschlägen)', 'Autocomplete-Vorschlag wählen, Enter übernimmt'],
-]
-
 /* -------------------------------- View -------------------------------- */
 
 export default function Settings() {
-  const { data, dataPath, updateSettings, setAppearance, openSetup } = useStore()
+  const { data, dataPath, updateSettings, setAppearance, openSetup, exportData, importData } = useStore()
   const appearance = data.settings.appearance
+
+  // Export/import of the whole record as one file (moved here from the sidebar)
+  const handleExport = async () => {
+    const res = await exportData()
+    if (res.ok) showToast('Daten exportiert')
+    else if (!res.canceled) showToast(res.error ?? 'Export fehlgeschlagen', { kind: 'error', duration: 5000 })
+  }
+  const handleImport = async () => {
+    const res = await importData()
+    if (res.ok) showToast(res.merged ? 'Daten zusammengeführt' : 'Daten importiert')
+    else if (!res.canceled) showToast(res.error ?? 'Import fehlgeschlagen', { kind: 'error', duration: 5000 })
+  }
 
   return (
     <div className="flex h-full flex-col">
@@ -572,19 +575,30 @@ export default function Settings() {
           <p className="mb-3 text-[12.5px] text-ink-3">
             Alle Berichte liegen in einer daten.json, jede Änderung wird sofort gespeichert. Im Ordner
             „sicherungen“ daneben legt Berichtspilot jeden Tag eine Sicherung an (die letzten 30 Tage)
-            und zusätzlich eine vor jedem Update, Import und Wiederherstellen. Export/Import als
-            weitere Kopie findest du in der Seitenleiste.
+            und zusätzlich eine vor jedem Update, Import und Wiederherstellen. Mit Exportieren legst
+            du eine weitere Kopie an, wo du willst.
           </p>
-          <Panel className="flex max-w-2xl items-center gap-3 px-4 py-3">
-            <div className="min-w-0 flex-1">
-              <div className="text-[12px] font-medium text-ink-2">Speicherort</div>
-              <div className="truncate text-[12px] text-ink-3 tabular-nums" title={dataPath}>
-                {dataPath || '—'}
+          <Panel className="max-w-2xl" data-section="data">
+            <div className="flex items-center gap-3 px-4 py-3">
+              <div className="min-w-0 flex-1">
+                <div className="text-meta font-medium text-ink-2">Speicherort</div>
+                <div className="selectable truncate text-meta text-ink" title={dataPath}>
+                  {dataPath || 'unbekannt'}
+                </div>
               </div>
+              <Button size="sm" onClick={() => api.revealDataFile()}>
+                <FolderOpenIcon size={14} /> Ordner öffnen
+              </Button>
             </div>
-            <Button size="sm" onClick={() => api.revealDataFile()}>
-              <FolderOpenIcon size={14} /> Ordner öffnen
-            </Button>
+            <div className="flex items-center gap-3 border-t border-line px-4 py-3">
+              <span className="min-w-0 flex-1 text-meta text-ink-2">Ganzen Datenbestand als Datei sichern oder einlesen</span>
+              <Button size="sm" onClick={handleExport}>
+                <DownloadSimpleIcon size={14} /> Exportieren
+              </Button>
+              <Button size="sm" onClick={handleImport}>
+                <UploadSimpleIcon size={14} /> Importieren
+              </Button>
+            </div>
           </Panel>
           <div className="mt-3">
             <Backups />
@@ -595,19 +609,13 @@ export default function Settings() {
           <SectionTitle className="mb-1 flex items-center gap-1.5">
             <KeyboardIcon size={14} /> Tastaturkürzel
           </SectionTitle>
-          <Panel className="mt-2 max-w-2xl overflow-hidden">
-            {SHORTCUTS.map(([keys, effect], i) => (
-              <div
-                key={keys}
-                className={cx(
-                  'flex items-center gap-4 px-4 py-2',
-                  i > 0 && 'border-t border-white/[0.05]'
-                )}
-              >
-                <kbd className="shrink-0 rounded-md border border-white/[0.1] bg-inset/60 px-2 py-0.5 text-[11.5px] font-medium text-ink-2 tabular-nums">
-                  {keys}
-                </kbd>
-                <span className="text-[12.5px] text-ink-3">{effect}</span>
+          <Panel className="mt-2 max-w-2xl overflow-hidden" data-section="shortcuts">
+            {SHORTCUT_HELP.map(([keys, effect], i) => (
+              <div key={keys} className={cx('flex items-center gap-4 px-4 py-2', i > 0 && 'border-t border-line')}>
+                <span className="w-44 shrink-0">
+                  <Kbd keys={keys} />
+                </span>
+                <span className="text-body text-ink">{effect}</span>
               </div>
             ))}
           </Panel>

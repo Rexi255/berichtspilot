@@ -13,6 +13,14 @@ versioning follows [Semantic Versioning](https://semver.org/).
   previous theme becomes the closest accent. New fonts: Instrument Sans for
   the interface, Bricolage Grotesque for headings, JetBrains Mono for the
   text preview. The rest of the new design follows in the next steps.
+- **New sidebar:** Übersicht (with the number of weeks still missing),
+  Woche, Profile, Einstellungen. It collapses to a narrow icon bar with the
+  button at the bottom or Strg+B and remembers that. A switch for dark/light
+  sits next to it. "Lokal · kein Konto" shows where your data lives and
+  turns red as "Nicht gespeichert" if saving ever fails.
+- **Export and import** moved from the sidebar to Settings → Daten.
+- **Keyboard shortcuts:** Strg+1/2/3 now copies output block 1/2/3 (was
+  Strg+Umschalt+1/2/3); the views moved to Strg+Umschalt+1–4 (was Strg+1–4).
 
 - **"Mit KI formulieren" also warns about the word "Kunde":** besides e-mail
   and IP addresses, MAC, ticket and phone numbers, the check before copying a

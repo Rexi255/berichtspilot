@@ -1,12 +1,13 @@
 // Lean, decoupled toast confirmations (e.g. "… kopiert").
 // showToast() fires a window event; the ToastHost (mounted once in the app)
 // listens to it and renders a short-lived message in the bottom right.
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { gsap } from 'gsap'
+// Motion (E-032): CSS only — a short fade and 8 px rise in, a fade out.
+import { useCallback, useEffect, useState } from 'react'
 import { CheckIcon, WarningIcon } from '@phosphor-icons/react'
 import { cx } from './basics.jsx'
 
 let idCounter = 0
+const LEAVE_MS = 160
 
 /**
  * Show a toast — callable from anywhere, no context/props needed.
@@ -18,48 +19,36 @@ export function showToast(text, { kind = 'success', duration = 2200, action = nu
 }
 
 function ToastRow({ toast, onDone }) {
-  const ref = useRef(null)
+  const [leaving, setLeaving] = useState(false)
 
   useEffect(() => {
-    const el = ref.current
-    if (el) {
-      gsap.fromTo(
-        el,
-        { opacity: 0, y: 12, scale: 0.96 },
-        { opacity: 1, y: 0, scale: 1, duration: 0.32, ease: 'back.out(2)' }
-      )
-    }
-    const done = () => onDone(toast.id)
+    let out
     const timer = setTimeout(() => {
-      if (el) {
-        gsap.to(el, { opacity: 0, y: 8, duration: 0.22, ease: 'power2.in', onComplete: done })
-      } else {
-        done()
-      }
+      setLeaving(true)
+      out = setTimeout(() => onDone(toast.id), LEAVE_MS)
     }, toast.duration)
-    return () => clearTimeout(timer)
+    return () => {
+      clearTimeout(timer)
+      clearTimeout(out)
+    }
     // onDone is stable (ToastHost) — a new toast must not restart this one's timer
   }, [toast.id, toast.duration, onDone])
 
   const isError = toast.kind === 'error'
   return (
     <div
-      ref={ref}
       className={cx(
-        'pointer-events-auto flex items-center gap-2.5 rounded-xl border px-3.5 py-2.5 text-[13px] font-medium',
-        'bg-surface-2/95 shadow-[inset_0_1px_0_0_oklch(1_0_0/0.06),0_10px_30px_-10px_oklch(0_0_0/0.7)] backdrop-blur',
-        isError ? 'border-sick/25 text-ink' : 'border-accent/25 text-ink'
+        'toast-in pointer-events-auto flex max-w-md items-center gap-2.5 rounded-control border border-line bg-surface-2 py-2 pl-3 pr-2 text-body text-ink shadow-float',
+        'transition-[opacity,transform] duration-150 ease-out',
+        leaving && 'translate-y-1 opacity-0'
       )}
     >
-      <span
-        className={cx(
-          'grid h-6 w-6 shrink-0 place-items-center rounded-full',
-          isError ? 'bg-sick/15 text-sick' : 'bg-accent/15 text-accent'
-        )}
-      >
-        {isError ? <WarningIcon size={14} weight="bold" /> : <CheckIcon size={14} weight="bold" />}
-      </span>
-      {toast.text}
+      {isError ? (
+        <WarningIcon size={16} className="shrink-0 text-missing" />
+      ) : (
+        <CheckIcon size={16} className="shrink-0 text-accent" />
+      )}
+      <span className="min-w-0 flex-1 pr-1">{toast.text}</span>
       {toast.action && (
         <button
           type="button"
@@ -67,7 +56,7 @@ function ToastRow({ toast, onDone }) {
             toast.action.onClick()
             onDone(toast.id)
           }}
-          className="ml-1 rounded-md border border-accent/30 bg-accent/10 px-2 py-1 text-[12px] font-semibold text-accent transition-colors duration-150 hover:bg-accent/20"
+          className="h-7 shrink-0 rounded-chip border border-line bg-surface px-2.5 text-meta font-medium text-ink transition-colors duration-150 hover:bg-surface-3"
         >
           {toast.action.label}
         </button>
@@ -93,7 +82,11 @@ export function ToastHost() {
   const remove = useCallback((id) => setToasts((list) => list.filter((t) => t.id !== id)), [])
 
   return (
-    <div className="pointer-events-none fixed bottom-5 right-5 z-50 flex flex-col items-end gap-2">
+    <div
+      role="status"
+      aria-live="polite"
+      className="pointer-events-none fixed bottom-5 right-5 z-50 flex flex-col items-end gap-2"
+    >
       {toasts.map((t) => (
         <ToastRow key={t.id} toast={t} onDone={remove} />
       ))}

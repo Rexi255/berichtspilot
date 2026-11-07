@@ -1,142 +1,153 @@
-// Navigation sidebar with an animated active indicator, the update hint and
-// backup actions.
-import { useEffect, useRef, useState } from 'react'
-import { gsap } from 'gsap'
+// Navigation sidebar (E-032): four entries, a badge with the weeks still
+// missing, collapsible to a 68 px icon rail (Strg+B, saved in
+// settings.layout). At the bottom: the update hint, the storage chip — which
+// also shows a failed save, so data loss can't go unnoticed — and the
+// switches for the color mode and the rail.
+import { useMemo } from 'react'
 import {
   SquaresFourIcon,
   PencilSimpleLineIcon,
-  UserGearIcon,
+  CalendarDotsIcon,
   GearSixIcon,
-  DownloadSimpleIcon,
-  UploadSimpleIcon,
+  LockSimpleIcon,
+  WarningIcon,
+  SunIcon,
+  MoonIcon,
+  SidebarSimpleIcon,
 } from '@phosphor-icons/react'
 import { useStore } from '../store.jsx'
-import { cx } from './basics.jsx'
+import { overviewStats } from '../lib/overview.js'
+import { mondayOf } from '../lib/dates.js'
+import { SHORTCUT_KEYS } from '../lib/shortcuts.js'
+import { Badge, IconButton, Tooltip, cx } from './basics.jsx'
 import UpdateHint from './UpdateHint.jsx'
 
 const ENTRIES = [
   { id: 'overview', label: 'Übersicht', Icon: SquaresFourIcon },
-  { id: 'editor', label: 'Woche bearbeiten', Icon: PencilSimpleLineIcon },
-  { id: 'profiles', label: 'Profile', Icon: UserGearIcon },
+  { id: 'editor', label: 'Woche', Icon: PencilSimpleLineIcon },
+  { id: 'profiles', label: 'Profile', Icon: CalendarDotsIcon },
   { id: 'settings', label: 'Einstellungen', Icon: GearSixIcon },
 ]
 
-// Subtitle + dot color of the save badge per state. The full storage path is
-// shown in the badge's tooltip (title).
-const SAVE_INFO = {
-  idle: { text: 'Automatisch gesichert', dot: 'bg-done' },
-  saving: { text: 'Speichert …', dot: 'bg-draft' },
-  saved: { text: 'Automatisch gesichert', dot: 'bg-done' },
-  error: { text: 'Fehler beim Speichern!', dot: 'bg-sick' },
+function NavItem({ entry, index, active, collapsed, badge, onClick }) {
+  const { Icon } = entry
+  const missingText = badge === 1 ? '1 Woche ohne Eintrag' : `${badge} Wochen ohne Eintrag`
+  const button = (
+    <button
+      type="button"
+      data-nav={entry.id}
+      aria-current={active ? 'page' : undefined}
+      aria-label={collapsed ? (badge > 0 ? `${entry.label}, ${missingText}` : entry.label) : undefined}
+      onClick={onClick}
+      className={cx(
+        'relative flex h-9 items-center rounded-control text-body font-medium transition-colors duration-150',
+        collapsed ? 'w-11 justify-center' : 'w-full gap-3 px-3',
+        active ? 'bg-surface-2 text-ink' : 'text-ink-2 hover:bg-surface hover:text-ink'
+      )}
+    >
+      <Icon size={18} className={cx('shrink-0', active && 'text-accent')} />
+      {!collapsed && <span className="min-w-0 flex-1 truncate text-left">{entry.label}</span>}
+      {badge > 0 &&
+        (collapsed ? (
+          <Badge className="absolute -right-1 -top-1 h-4 min-w-4 bg-sidebar text-[10px]">{badge}</Badge>
+        ) : (
+          <>
+            <Badge aria-hidden="true">{badge}</Badge>
+            <span className="sr-only">, {missingText}</span>
+          </>
+        ))}
+    </button>
+  )
+  if (!collapsed) return button
+  return (
+    <Tooltip label={entry.label} shortcut={SHORTCUT_KEYS.views[index]} side="right">
+      {button}
+    </Tooltip>
+  )
+}
+
+/** "Lokal · kein Konto" — and "Nicht gespeichert" in red when a save failed */
+function StorageChip({ collapsed, saveStatus, dataPath, onOpen }) {
+  const failed = saveStatus === 'error'
+  const Icon = failed ? WarningIcon : LockSimpleIcon
+  const text = failed ? 'Nicht gespeichert' : 'Lokal · kein Konto'
+  const tip = failed ? 'Speichern fehlgeschlagen, Einstellungen öffnen' : `Gespeichert in ${dataPath || 'daten.json'}`
+  return (
+    <Tooltip label={tip} side={collapsed ? 'right' : 'top'} className={collapsed ? '' : 'w-full'}>
+      <button
+        type="button"
+        onClick={onOpen}
+        aria-label={collapsed ? `${text}. ${tip}` : undefined}
+        className={cx(
+          'flex h-8 items-center rounded-control border text-meta font-medium transition-colors duration-150',
+          collapsed ? 'w-11 justify-center' : 'w-full gap-2 px-2.5',
+          failed ? 'border-missing/60 text-missing hover:bg-missing/10' : 'border-line text-ink-2 hover:bg-surface hover:text-ink'
+        )}
+      >
+        <Icon size={15} className="shrink-0" />
+        {!collapsed && <span className="truncate">{text}</span>}
+        <span className="sr-only" aria-live="polite">
+          {failed ? 'Speichern fehlgeschlagen' : ''}
+        </span>
+      </button>
+    </Tooltip>
+  )
 }
 
 export default function Sidebar({ view, onView }) {
-  const { saveStatus, dataPath, exportData, importData } = useStore()
-  const [message, setMessage] = useState(null)
-  const listRef = useRef(null)
-  const indicatorRef = useRef(null)
+  const { data, saveStatus, dataPath, setAppearance, setLayout } = useStore()
+  const collapsed = data.settings.layout.sidebarCollapsed
+  const dark = data.settings.appearance.mode === 'dark'
 
-  // Let the active indicator glide to the selected entry
-  useEffect(() => {
-    const list = listRef.current
-    const target = list?.querySelector(`[data-nav="${view}"]`)
-    if (!target || !indicatorRef.current) return
-    gsap.to(indicatorRef.current, {
-      y: target.offsetTop,
-      height: target.offsetHeight,
-      duration: 0.35,
-      ease: 'power3.out',
-    })
-  }, [view])
-
-  const flash = (text, isError = false) => {
-    setMessage({ text, isError })
-    setTimeout(() => setMessage(null), 3500)
-  }
-
-  const handleExport = async () => {
-    const res = await exportData()
-    if (res.ok) flash('Backup gespeichert')
-    else if (!res.canceled) flash(res.error ?? 'Export fehlgeschlagen', true)
-  }
-
-  const handleImport = async () => {
-    const res = await importData()
-    if (res.ok) flash('Daten importiert')
-    else if (!res.canceled) flash(res.error ?? 'Import fehlgeschlagen', true)
-  }
+  // Badge: due weeks without a report (same count as the overview)
+  const missing = useMemo(
+    () => overviewStats(data, mondayOf(new Date())).missing.length,
+    // only the weeks and the training dates change the count
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [data.weeks, data.settings.trainingStart, data.settings.trainingEnd]
+  )
 
   return (
-    <aside className="flex w-[228px] shrink-0 flex-col border-r border-white/[0.06] bg-surface/40">
-      <nav className="relative m-3 flex flex-col gap-1" ref={listRef}>
-        {/* sliding background of the active entry */}
-        <div
-          ref={indicatorRef}
-          className="pointer-events-none absolute left-0 right-0 top-0 rounded-lg border border-accent/15 bg-accent/[0.09]"
-          style={{ height: 36 }}
-        />
-        {ENTRIES.map(({ id, label, Icon }) => {
-          const active = view === id
-          return (
-            <button
-              key={id}
-              type="button"
-              data-nav={id}
-              onClick={() => onView(id)}
-              className={cx(
-                'relative z-10 flex h-9 items-center gap-2.5 rounded-lg px-3 text-[13px] font-medium',
-                'transition-colors duration-150',
-                active ? 'text-accent-light' : 'text-ink-2 hover:text-ink'
-              )}
-            >
-              <Icon size={17} weight={active ? 'fill' : 'regular'} />
-              {label}
-            </button>
-          )
-        })}
+    <aside
+      className={cx(
+        'flex shrink-0 flex-col border-r border-line bg-sidebar',
+        collapsed ? 'w-[68px] items-center' : 'w-[232px]'
+      )}
+    >
+      <nav aria-label="Ansichten" className={cx('flex flex-col gap-1 py-3', collapsed ? 'items-center' : 'px-3')}>
+        {ENTRIES.map((entry, index) => (
+          <NavItem
+            key={entry.id}
+            entry={entry}
+            index={index}
+            active={view === entry.id}
+            collapsed={collapsed}
+            badge={entry.id === 'overview' ? missing : 0}
+            onClick={() => onView(entry.id)}
+          />
+        ))}
       </nav>
 
-      <div className="mt-auto flex flex-col gap-1 border-t border-white/[0.06] p-3">
-        <UpdateHint />
-        <button
-          type="button"
-          onClick={handleExport}
-          className="flex h-8 items-center gap-2.5 rounded-lg px-3 text-[12.5px] text-ink-3 transition-colors duration-150 hover:bg-white/[0.05] hover:text-ink"
-        >
-          <DownloadSimpleIcon size={15} /> Daten exportieren
-        </button>
-        <button
-          type="button"
-          onClick={handleImport}
-          className="flex h-8 items-center gap-2.5 rounded-lg px-3 text-[12.5px] text-ink-3 transition-colors duration-150 hover:bg-white/[0.05] hover:text-ink"
-        >
-          <UploadSimpleIcon size={15} /> Daten importieren
-        </button>
-
-        {/* Transient message for export/import */}
-        <div className="min-h-[16px] px-1 pt-1 text-[11px]" aria-live="polite">
-          {message && (
-            <span className={message.isError ? 'text-sick' : 'text-done'}>{message.text}</span>
-          )}
-        </div>
-
-        {/* Storage badge: save state + location (full path in the tooltip) */}
-        <div
-          className="mt-1 flex items-center gap-2.5 rounded-lg border border-white/[0.06] bg-inset/50 px-2.5 py-2"
-          title={dataPath}
-        >
-          <span className="relative flex h-2 w-2 shrink-0">
-            {saveStatus === 'saving' && (
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-draft/60" />
-            )}
-            <span className={cx('h-2 w-2 rounded-full', SAVE_INFO[saveStatus].dot)} />
-          </span>
-          <span className="min-w-0 flex-1 leading-tight">
-            <span className="block text-[11.5px] font-medium text-ink-2">daten.json</span>
-            <span className="block truncate text-[10px] text-ink-3">
-              {SAVE_INFO[saveStatus].text}
-            </span>
-          </span>
+      <div className={cx('mt-auto flex flex-col gap-2 py-3', collapsed ? 'items-center' : 'px-3')}>
+        {!collapsed && <UpdateHint />}
+        <StorageChip collapsed={collapsed} saveStatus={saveStatus} dataPath={dataPath} onOpen={() => onView('settings')} />
+        <div className={cx('flex gap-1', collapsed ? 'flex-col items-center' : 'items-center justify-between')}>
+          <IconButton
+            label={dark ? 'Helles Design' : 'Dunkles Design'}
+            side={collapsed ? 'right' : 'top'}
+            onClick={() => setAppearance({ mode: dark ? 'light' : 'dark' })}
+          >
+            {dark ? <SunIcon size={17} /> : <MoonIcon size={17} />}
+          </IconButton>
+          <IconButton
+            label={collapsed ? 'Seitenleiste ausklappen' : 'Seitenleiste einklappen'}
+            shortcut={SHORTCUT_KEYS.sidebar}
+            side={collapsed ? 'right' : 'top'}
+            aria-expanded={!collapsed}
+            onClick={() => setLayout({ sidebarCollapsed: !collapsed })}
+          >
+            <SidebarSimpleIcon size={17} />
+          </IconButton>
         </div>
       </div>
     </aside>
