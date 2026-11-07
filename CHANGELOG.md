@@ -27,6 +27,18 @@ versioning follows [Semantic Versioning](https://semver.org/).
   ("15.10.") and text (Strg+F). The filter Alle/Entwürfe/Fertig and the
   "Wochen in Serie" tile are gone; creating a week now starts with
   "KW xx bearbeiten".
+- **New week editor:** one tab per day (Alt+1–5, or the arrow keys) with
+  its date, its day cell and whether it is written; the selected day opens
+  in one card. One switch sets the day to Betrieb, Schule, Feiertag, Krank or
+  Urlaub; for a holiday, sick or vacation day the card shows the exact line
+  the output will contain and whether it counts as a work or a school day.
+  School days list each subject with its topic. The header shows the week's
+  status (click to switch Entwurf/Fertig) and how many days are written;
+  jumping to a date opens from the date range, deleting the week moved to
+  the ⋯ menu (with undo).
+- **Notes next to the bullets:** the notes area is one switch for all days
+  (button in the editor header or Strg+Umschalt+N); the notes themselves
+  stay per day.
 - **Export and import** moved from the sidebar to Settings → Daten.
 - **Keyboard shortcuts:** Strg+1/2/3 now copies output block 1/2/3 (was
   Strg+Umschalt+1/2/3); the views moved to Strg+Umschalt+1–4 (was Strg+1–4).

@@ -426,9 +426,15 @@ checkpoint is a styleguide in code, no HTML prototype.
       it; the Electron e2e finds KW 18 by the search now, since the list only
       shows the newest 8 rows and that test runs with the real date; checked:
       search by number/text, Strg+F, band click opens the week, 940 px)
-- [ ] 11.7a Editor frame: header, day tabs (Alt+1–5), editor card with the
+- [x] 11.7a Editor frame: header, day tabs (Alt+1–5), editor card with the
       5-way type switch, bullets, school subjects, instructions card, notes
-      area (global switch) with "Als Stichpunkte übernehmen"
+      area (global switch) with "Als Stichpunkte übernehmen" (2026-11-07;
+      split into `src/views/editor/`; status days show the real output line
+      from `formatAll()` and a "zählt als Betriebstag/Schultag" switch;
+      notes beside the bullets of a work day from 672 px card width, above
+      the subjects of a school day; "Woche löschen" in the ⋯ menu relies on
+      the store's undo toast; tooltips render only while shown, so they
+      never widen a scroll area; checked at 940/1100/1280/1440 px)
 - [ ] 11.7b Preview column: block cards, line count, "Leerzeichen anzeigen",
       privacy warning + "Trotzdem kopieren", hide → copy bar, Strg+1–3/P;
       e2e: preview text === copied text in every state

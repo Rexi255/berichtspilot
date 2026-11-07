@@ -15,7 +15,7 @@ const BAND_STEP = 15
 // Week chips shown in the warning bar before "+n weitere"
 const CHIPS_SHOWN = 8
 
-const STATUS_TEXT = { done: 'Fertig', draft: 'Entwurf', missing: 'Fehlt', future: 'noch nicht dran' }
+const STATUS_TEXT = { done: 'Fertig', draft: 'Entwurf', missing: 'Fehlt', future: 'später' }
 
 // "KW 12" — with the year when it isn't this year's
 function weekLabel(monday, thisYear) {

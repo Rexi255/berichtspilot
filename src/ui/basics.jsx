@@ -232,7 +232,7 @@ export function StatusChip({ status, as: Comp = 'span', children, className, ...
 export const DAY_STATE_LABELS = {
   written: 'geschrieben',
   open: 'offen',
-  future: 'noch nicht dran',
+  future: 'später',
   holiday: 'Feiertag',
   sick: 'Krank',
   vacation: 'Urlaub',
@@ -344,12 +344,16 @@ const TOOLTIP_SIDES = {
   bottom: 'top-full left-1/2 mt-1.5 -translate-x-1/2',
   right: 'left-full top-1/2 ml-2 -translate-y-1/2',
   left: 'right-full top-1/2 mr-2 -translate-y-1/2',
+  // for triggers at the right edge: the tooltip ends where the trigger ends
+  'bottom-end': 'top-full right-0 mt-1.5',
+  'top-end': 'bottom-full right-0 mb-1.5',
 }
 
 /**
- * Label on hover (after a short delay) and on keyboard focus. The trigger
- * carries the accessible name itself; the tooltip is decoration for sighted
- * users (aria-hidden).
+ * Label on hover (after a short delay, .tip-in in index.css) and on keyboard
+ * focus. Rendered only while shown, so a hidden tooltip never widens a
+ * scroll area. The trigger carries the accessible name itself; the tooltip is
+ * decoration for sighted users (aria-hidden).
  */
 export function Tooltip({ label, shortcut, side = 'top', children, className }) {
   if (!label) return children
@@ -359,8 +363,8 @@ export function Tooltip({ label, shortcut, side = 'top', children, className }) 
       <span
         aria-hidden="true"
         className={cx(
-          'pointer-events-none absolute z-50 flex items-center gap-2 whitespace-nowrap rounded-chip border border-line bg-surface-2 px-2 py-1 text-meta text-ink shadow-float',
-          'opacity-0 transition-opacity duration-150 group-hover/tip:opacity-100 group-hover/tip:delay-300 group-has-[:focus-visible]/tip:opacity-100',
+          'tip-in pointer-events-none absolute z-50 hidden items-center gap-2 whitespace-nowrap rounded-chip border border-line bg-surface-2 px-2 py-1 text-meta text-ink shadow-float',
+          'group-hover/tip:flex group-has-[:focus-visible]/tip:flex',
           TOOLTIP_SIDES[side]
         )}
       >
@@ -375,7 +379,7 @@ export function Tooltip({ label, shortcut, side = 'top', children, className }) 
  * Small popover menu behind an icon button. items: [{ label, icon, onSelect,
  * danger }]. Arrow keys move, Escape and a click outside close it.
  */
-export function Menu({ label, icon, items, className }) {
+export function Menu({ label, icon, items, className, side = 'bottom-end' }) {
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
 
@@ -406,7 +410,7 @@ export function Menu({ label, icon, items, className }) {
 
   return (
     <div ref={ref} className={cx('relative', className)}>
-      <IconButton label={label} aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
+      <IconButton label={label} side={side} aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
         {icon}
       </IconButton>
       {open && (
