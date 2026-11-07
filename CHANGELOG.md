@@ -18,6 +18,15 @@ versioning follows [Semantic Versioning](https://semver.org/).
   button at the bottom or Strg+B and remembers that. A switch for dark/light
   sits next to it. "Lokal · kein Konto" shows where your data lives and
   turns red as "Nicht gespeichert" if saving ever fails.
+- **New overview:** three figures (finished weeks of those due so far, with
+  a bar; drafts; weeks without a report), a bar with the missing weeks to
+  open them in one click, the **year band** (one column per week of the
+  apprenticeship, one cell per day: written, open, holiday/sick/vacation
+  with F/K/U, still ahead) and the latest 8 weeks grouped by month, each
+  with its five days. The search understands week numbers ("KW 42"), dates
+  ("15.10.") and text (Strg+F). The filter Alle/Entwürfe/Fertig and the
+  "Wochen in Serie" tile are gone; creating a week now starts with
+  "KW xx bearbeiten".
 - **Export and import** moved from the sidebar to Settings → Daten.
 - **Keyboard shortcuts:** Strg+1/2/3 now copies output block 1/2/3 (was
   Strg+Umschalt+1/2/3); the views moved to Strg+Umschalt+1–4 (was Strg+1–4).

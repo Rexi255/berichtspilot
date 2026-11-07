@@ -61,9 +61,12 @@ test('closing right after typing keeps the text; a restart shows it', async () =
   const day = saved.weeks.find((w) => w.id === MONDAY)?.days.find((d) => d.date === WEDNESDAY)
   expect(day?.bullets).toEqual([BULLET])
 
-  // Restart: no wizard any more, the week is in the overview with the text
+  // Restart: no wizard any more, the week is in the overview with the text.
+  // The list shows the newest 8 rows and today's date is real here, so the
+  // search finds the week (it could lie months back)
   app = await launch(dir)
   page = await app.firstWindow()
+  await page.getByLabel('Wochen durchsuchen').fill('KW 18/2026')
   await page.locator('[data-row]', { hasText: 'KW 18' }).click()
   await expect.poll(() => block1Text(page)).toBe(BLOCK_1)
   await app.close()

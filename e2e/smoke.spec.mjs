@@ -9,7 +9,7 @@ test.use({ permissions: ['clipboard-read', 'clipboard-write'] })
 test('fresh start to the exact text of output block 1', async ({ page }) => {
   const errors = []
   page.on('pageerror', (error) => errors.push(error.message))
-  // "Today" is Wednesday of KW 18/2026, so "Neue Woche anlegen" creates it
+  // "Today" is Wednesday of KW 18/2026, so "KW 18 bearbeiten" opens it
   await page.clock.setFixedTime(new Date(`${WEDNESDAY}T09:00:00+02:00`))
   await page.goto('/')
 
@@ -18,7 +18,8 @@ test('fresh start to the exact text of output block 1', async ({ page }) => {
   await page.getByRole('button', { name: 'Überspringen' }).click()
 
   await expect(page.getByText('Noch keine Berichtswochen angelegt.')).toBeVisible()
-  await page.getByRole('button', { name: 'Neue Woche anlegen' }).click()
+  await page.getByRole('button', { name: 'KW 18 bearbeiten' }).click()
+  await page.getByRole('button', { name: 'Woche anlegen', exact: true }).click()
   await typeBullet(page)
 
   // Exact comparison — toHaveText() would normalise the blank lines away

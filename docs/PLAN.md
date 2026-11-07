@@ -421,8 +421,11 @@ checkpoint is a styleguide in code, no HTML prototype.
       Settings → Tastaturkürzel reads `SHORTCUT_HELP`; checked: shortcuts,
       collapse persisted, rail tooltips, failed save → red "Nicht
       gespeichert" chip, focus ring by Tab, Electron in both modes)
-- [ ] 11.6 Overview: header + search, three figures, warning bar, year band,
-      week list (last 8, grouped by month)
+- [x] 11.6 Overview: header + search, three figures, warning bar, year band,
+      week list (last 8, grouped by month) (2026-11-07; GSAP/Lenis gone from
+      it; the Electron e2e finds KW 18 by the search now, since the list only
+      shows the newest 8 rows and that test runs with the real date; checked:
+      search by number/text, Strg+F, band click opens the week, 940 px)
 - [ ] 11.7a Editor frame: header, day tabs (Alt+1–5), editor card with the
       5-way type switch, bullets, school subjects, instructions card, notes
       area (global switch) with "Als Stichpunkte übernehmen"

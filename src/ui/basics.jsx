@@ -69,8 +69,8 @@ export function IconButton({ className, danger = false, label, shortcut, size = 
 
 const FIELD =
   'w-full rounded-control border border-line bg-surface text-body text-ink placeholder:text-ink-2 ' +
-  'transition-[border-color,background-color] duration-150 hover:border-mark ' +
-  'focus:border-accent focus:outline-none disabled:opacity-45'
+  // focus: the global 2 px accent ring (index.css) — one ring, no border change
+  'transition-[border-color,background-color] duration-150 hover:border-mark disabled:opacity-45'
 
 export function Input({ className, ...props }) {
   return <input className={cx(FIELD, 'h-8 px-2.5', className)} {...props} />
