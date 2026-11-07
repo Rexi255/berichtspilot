@@ -15,7 +15,7 @@ import { api } from '../store.jsx'
 import { Button, IconButton, TextArea, Panel, cx } from '../ui/basics.jsx'
 import { showToast } from '../ui/toast.jsx'
 import { weekdayName, formatDE } from '../lib/dates.js'
-import { buildPrompt, parseResponse, findSensitive, phrasingCandidates } from '../lib/phrasing.js'
+import { buildPrompt, parseResponse, promptSensitive, phrasingCandidates } from '../lib/phrasing.js'
 
 // German labels for the kinds reported by findSensitive()
 const SENSITIVE_LABELS = {
@@ -24,6 +24,7 @@ const SENSITIVE_LABELS = {
   mac: 'MAC-Adresse',
   ticket: 'Ticketnummer',
   phone: 'Telefonnummer',
+  customer: 'Kundenbezug',
 }
 
 const CHAT_LINKS = [
@@ -51,7 +52,8 @@ export default function PhrasingPanel({ week, weeks, onApply, onClose }) {
   const [deselected, setDeselected] = useState(() => new Set())
 
   const prompt = useMemo(() => buildPrompt(week, weeks), [week, weeks])
-  const sensitive = useMemo(() => (prompt ? findSensitive(prompt) : []), [prompt])
+  // only the user's own text in the prompt (its rule lines mention "Kunden")
+  const sensitive = useMemo(() => promptSensitive(week, weeks), [week, weeks])
   const candidates = useMemo(() => phrasingCandidates(week), [week])
   const parsed = useMemo(() => parseResponse(answer), [answer])
 

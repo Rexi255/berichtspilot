@@ -6,6 +6,14 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- **"Mit KI formulieren" also warns about the word "Kunde":** besides e-mail
+  and IP addresses, MAC, ticket and phone numbers, the check before copying a
+  prompt now flags "Kunde", "Kunden", "Endkunde" and customer numbers in your
+  notes and in the example bullets it sends along. Words like "Kundenwunsch"
+  stay quiet.
+
 ## [2.0.4] - 2026-11-07
 
 The maintenance release: Electron 45.2 with its security fixes and updated

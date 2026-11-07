@@ -635,6 +635,29 @@ export function withStatus(day, status, state = 'SH') {
 }
 
 /**
+ * The editor's 5-way switch ("Typ-Umschalter", E-032) over the two fields a
+ * day really has: Betrieb/Schule are the type of a normal day; Feiertag,
+ * Krank and Urlaub are statuses that keep the type — it decides which output
+ * block the status line goes to (format.js), so it must survive.
+ */
+export const DAY_CHOICES = ['work', 'school', 'holiday', 'sick', 'vacation']
+
+/** The switch position of a day: its status, or its type on a normal day */
+export function dayChoice(day) {
+  return day.status && day.status !== 'normal' ? day.status : day.type
+}
+
+/**
+ * A day switched to `choice`. Work/school make it a normal day of that type;
+ * a status keeps the type (holiday suggests its name, see withStatus()).
+ * Bullets and subjects are never dropped — switching back brings them back.
+ */
+export function withChoice(day, choice, state = 'SH') {
+  if (choice === 'work' || choice === 'school') return { ...day, type: choice, status: 'normal' }
+  return withStatus(day, choice, state)
+}
+
+/**
  * Undo for "Mit KI formulieren" / "Aus WebUntis füllen": put back only `field`
  * (`bullets` or `subjects`) of the given dates from `snapshot` — edits made
  * elsewhere in the week since then stay.

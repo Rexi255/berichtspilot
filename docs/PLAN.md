@@ -396,7 +396,9 @@ checkpoint is a styleguide in code, no HTML prototype.
       `ui-shots` (Playwright, browser build or Electron, console + overflow
       check), `src/demo-fixture.test.js`; "before" shots taken (2026-11-07)
 - [x] 11.2 Docs: `docs/DESIGN.md`, E-032, E-033, this phase, glossary (2026-11-07)
-- [ ] 11.3 Pure logic, no visible change: `src/lib/overview.js` (missing/due
+- [x] 11.3 Pure logic, no visible change (2026-11-07; the week AI panel already
+      uses `promptSensitive()`, so the new "Kunde" check can't fire on the
+      prompt's own rules): `src/lib/overview.js` (missing/due
       weeks, stats, `dayState`, `weekProgress`, `yearBand`, `weekRows`,
       `searchWeeks`), `preview.js` (lines + whitespace marks, invariant: parts
       join to the input), `shortcuts.js`, `contrast.js`, `findSensitive()`

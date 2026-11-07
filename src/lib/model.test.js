@@ -19,6 +19,9 @@ import {
   shouldAutoCreate,
   trainingProgress,
   withStatus,
+  dayChoice,
+  withChoice,
+  DAY_CHOICES,
   restoreDays,
 } from './model.js'
 
@@ -737,3 +740,27 @@ describe('restoreDays', () => {
   })
 })
 
+
+describe('dayChoice / withChoice (the 5-way switch)', () => {
+  const work = { date: '2026-10-31', type: 'work', status: 'normal', holidayName: null, notes: '', bullets: ['Patchen'], subjects: [] }
+
+  it('shows the status, or the type on a normal day', () => {
+    expect(dayChoice(work)).toBe('work')
+    expect(dayChoice({ ...work, type: 'school' })).toBe('school')
+    expect(dayChoice({ ...work, type: 'school', status: 'sick' })).toBe('sick')
+    expect(DAY_CHOICES.map((c) => dayChoice(withChoice(work, c)))).toEqual(DAY_CHOICES)
+  })
+
+  it('keeps the type under a status, so the status line stays in its block', () => {
+    const school = { ...work, type: 'school' }
+    expect(withChoice(school, 'vacation')).toMatchObject({ type: 'school', status: 'vacation' })
+    // the real holiday name of the state is suggested (Reformationstag in SH)
+    expect(withChoice(work, 'holiday')).toMatchObject({ type: 'work', status: 'holiday', holidayName: 'Reformationstag' })
+  })
+
+  it('makes work/school a normal day and never drops content', () => {
+    const sick = { ...work, status: 'sick' }
+    expect(withChoice(sick, 'school')).toMatchObject({ type: 'school', status: 'normal', bullets: ['Patchen'] })
+    expect(withChoice(withChoice(work, 'school'), 'work').bullets).toEqual(['Patchen'])
+  })
+})
