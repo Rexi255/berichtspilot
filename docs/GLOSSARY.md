@@ -59,6 +59,21 @@ names consistently. Add new terms here before using them.
 | Sicherung (Ordner `sicherungen/`) | snapshot (`createStorage().snapshot()`, `backup:*` IPC) | copy of daten.json in `sicherungen/` (E-024); not the rolling `.bak1–3` |
 | Tagesbeginn / Vor dem Update / Vor dem Import / Vor dem Wiederherstellen | snapshot reason `daily` / `update` / `import` / `restore` | labels in `BACKUP_KINDS` (`src/lib/backups.js`) |
 | Wiederherstellen | restore (`restoreBackup()` in the store) | replace the record with a snapshot (current state is snapshotted first) |
+| Jahresband | year band (`yearBand()`, `YearBand`) | overview grid: one column per week, five day cells each (E-032) |
+| Tagesfeld | day cell (`DayCell`, `dayState()`) | the signature box per weekday: geschrieben / offen / F / K / U / Zukunft |
+| geschrieben / offen | `written` / `open` | day state: a normal day with / without content |
+| Fällige Wochen | due weeks (`dueWeeks()`) | training start → current week; "Fertig x von y" counts against them |
+| Ohne Eintrag | missing (week) | due week without a report (shown as "Fehlt" in the list) |
+| Vorschau | preview | the three output blocks exactly as copied (`white-space: pre`) |
+| Leerzeichen anzeigen | show whitespace (`previewLines()`) | `·` for spaces, `↵` for line ends via CSS, the text itself unchanged |
+| Datenschutz-Prüfung | privacy check (`findSensitive()`) | warns before copying a block or an AI prompt with likely customer data |
+| Trotzdem kopieren | copy anyway | the copy button's label while a privacy warning is shown |
+| Tages-Tab | day tab | editor tab per day (Alt+1–5) |
+| Typ-Umschalter | day choice (`dayChoice()` / `withChoice()`) | 5-way switch Betrieb · Schule · Feiertag · Krank · Urlaub over `type` + `status` |
+| Modus (Dunkel/Hell) | `settings.appearance.mode` | `dark` · `light`, schema v12 |
+| Akzentfarbe | `settings.appearance.accent` | `blue` (Logo-Blau) · `coral` (Koralle) · `lilac` (Flieder) · `green` (Grün), schema v12 |
+| Seitenleiste eingeklappt / Vorschau / Notizen-Bereich (Schalter) | `settings.layout.sidebarCollapsed` / `previewVisible` / `notesVisible` | schema v12, global switches |
+| Kladde | design system "Kladde" | the v2.1 design system (`docs/DESIGN.md`), replaced "Nordlicht" |
 
 ## Schema v2 → v3 field mapping (`daten.json`)
 

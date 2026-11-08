@@ -1,21 +1,27 @@
-// App shell: title bar + sidebar + view switching with a GSAP transition.
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { gsap } from 'gsap'
-import { FolderOpenIcon } from '@phosphor-icons/react'
+// App shell: title bar + sidebar + view switching (a short CSS fade) and the
+// global shortcuts (src/lib/shortcuts.js).
+import { Suspense, lazy, useEffect, useState } from 'react'
+import { FolderOpenIcon, WarningIcon } from '@phosphor-icons/react'
 import { StoreProvider, useStore, api } from './store.jsx'
 import Titlebar from './ui/Titlebar.jsx'
 import Sidebar from './ui/Sidebar.jsx'
 import { ToastHost } from './ui/toast.jsx'
 import ErrorBoundary from './ui/ErrorBoundary.jsx'
-import { Button } from './ui/basics.jsx'
+import { Button, Card } from './ui/basics.jsx'
 import Overview from './views/Overview.jsx'
 import WeekEditor from './views/WeekEditor.jsx'
 import Profiles from './views/Profiles.jsx'
 import Settings from './views/Settings.jsx'
 import SetupWizard from './views/SetupWizard.jsx'
 import { mondayOf } from './lib/dates.js'
+import { matchShortcut } from './lib/shortcuts.js'
 
 const VIEWS = ['overview', 'editor', 'profiles', 'settings']
+
+// Dev aid (E-032): the component gallery at "#styleguide" — only where a URL
+// can be typed (dev server, `vite preview`), never in the file:// app
+const Styleguide = lazy(() => import('./views/Styleguide.jsx'))
+const styleguideWanted = () => window.location.protocol.startsWith('http') && window.location.hash === '#styleguide'
 
 // "Neu laden" after a render error: write what isn't saved yet, then reload
 function useReload() {
@@ -28,35 +34,48 @@ function useReload() {
 function Content() {
   const { data, loadError, setupOpen } = useStore()
 
-  // Apply the selected color theme on <html>; the CSS tokens (data-theme) follow.
-  // Here rather than in the shell, so the setup wizard is themed too.
+  // Mode and accent on <html>; the CSS tokens (data-mode, data-accent) follow.
+  // Here rather than in the shell, so the setup wizard follows them too.
+  // Only once the data is there — until then main.jsx shows the cached values.
+  const mode = data?.settings?.appearance?.mode
+  const accent = data?.settings?.appearance?.accent
   useEffect(() => {
-    document.documentElement.dataset.theme = data?.settings?.theme || 'northern-lights'
-  }, [data?.settings?.theme])
+    if (!mode) return
+    document.documentElement.dataset.mode = mode
+    document.documentElement.dataset.accent = accent
+    try {
+      localStorage.setItem('appearance', JSON.stringify({ mode, accent }))
+    } catch {
+      // a missing cache only costs the start-up colors
+    }
+  }, [mode, accent])
 
   // Data comes from a newer app version, or daten.json and all backups are
   // unreadable: don't touch them, say so clearly — otherwise the next autosave
   // would silently damage the file.
   if (loadError) {
     return (
-      <div className="grid h-full place-items-center px-8 text-center">
-        <div className="max-w-md">
-          <div className="text-[15px] font-semibold text-sick">Daten können nicht geladen werden</div>
-          <p className="mt-2 text-[13px] leading-relaxed text-ink-2">{loadError.message}</p>
-          <p className="mt-2 text-[12px] text-ink-3">{loadError.hint}</p>
+      <div className="grid h-full place-items-center bg-canvas px-6" role="alert">
+        <Card className="w-full max-w-md p-5">
+          <div className="flex items-center gap-2">
+            <WarningIcon size={18} className="shrink-0 text-missing" />
+            <h2 className="text-title font-medium text-ink">Daten können nicht geladen werden</h2>
+          </div>
+          <p className="mt-2 text-body text-ink">{loadError.message}</p>
+          <p className="mt-2 text-body text-ink-2">{loadError.hint}</p>
           {loadError.canReveal && (
-            <Button size="sm" className="mt-4" onClick={() => api.revealDataFile()}>
-              <FolderOpenIcon size={14} /> Datenordner öffnen
+            <Button className="mt-4" onClick={() => api.revealDataFile()}>
+              <FolderOpenIcon size={16} /> Datenordner öffnen
             </Button>
           )}
-        </div>
+        </Card>
       </div>
     )
   }
 
   if (!data) {
     return (
-      <div className="grid h-full place-items-center text-[13px] text-ink-3">Lade Daten …</div>
+      <div className="grid h-full place-items-center bg-canvas text-body text-ink-2">Lade Daten …</div>
     )
   }
 
@@ -67,39 +86,36 @@ function Content() {
 }
 
 function Shell() {
-  const { data } = useStore()
+  const { data, setLayout } = useStore()
   const reload = useReload()
   // Start view from the settings (read only on the first render)
-  const [view, setView] = useState(() =>
-    VIEWS.includes(data.settings.startView) ? data.settings.startView : 'overview'
-  )
+  const [view, setView] = useState(() => {
+    if (styleguideWanted()) return 'styleguide'
+    return VIEWS.includes(data.settings.startView) ? data.settings.startView : 'overview'
+  })
   // Week selected in the editor (Monday as ISO date), default: current week
   const [monday, setMonday] = useState(() => mondayOf(new Date()))
-  const viewRef = useRef(null)
+  const collapsed = data.settings.layout.sidebarCollapsed
 
-  // Global shortcuts: Ctrl+1–4 switch views (via e.code, layout independent)
+  // Global shortcuts: Strg+Umschalt+1–4 switch views, Strg+B the sidebar.
+  // The views register theirs (editor, overview) the same way.
   useEffect(() => {
     const handler = (e) => {
-      if (!e.ctrlKey || e.shiftKey || e.altKey) return
-      const index = ['Digit1', 'Digit2', 'Digit3', 'Digit4'].indexOf(e.code)
-      if (index === -1) return
+      const hit = matchShortcut(e, ['global'])
+      if (!hit) return
       e.preventDefault()
-      setView(VIEWS[index])
+      if (hit.id === 'view') setView(VIEWS[hit.arg])
+      if (hit.id === 'sidebar') setLayout({ sidebarCollapsed: !collapsed })
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [])
+  }, [collapsed, setLayout])
 
-  // Soft transition on view change
-  useLayoutEffect(() => {
-    if (!viewRef.current) return
-    const anim = gsap.fromTo(
-      viewRef.current,
-      { opacity: 0, y: 10 },
-      { opacity: 1, y: 0, duration: 0.28, ease: 'power3.out', clearProps: 'transform' }
-    )
-    return () => anim.kill()
-  }, [view])
+  useEffect(() => {
+    const onHash = () => styleguideWanted() && setView('styleguide')
+    window.addEventListener('hashchange', onHash)
+    return () => window.removeEventListener('hashchange', onHash)
+  }, [])
 
   const openWeek = (id) => {
     setMonday(id)
@@ -109,19 +125,24 @@ function Shell() {
   return (
     <div className="flex min-h-0 flex-1">
       <Sidebar view={view} onView={setView} />
-      <main className="aurora min-w-0 flex-1">
-        <div ref={viewRef} className="h-full" key={view}>
+      <main className="min-w-0 flex-1 bg-canvas">
+        <div className="view-in h-full" key={view}>
           {/* keyed with the view: switching views clears an error — e.g. to
               restore a snapshot in Settings when one week can't be shown */}
           <ErrorBoundary
             title="Diese Ansicht konnte nicht angezeigt werden"
-            hint={'Deine Daten sind gespeichert. Wechsle links in eine andere Ansicht — z.\u00a0B. Einstellungen → Daten → Sicherungen — oder lade neu.'}
+            hint={'Deine Daten sind gespeichert. Wechsle links in eine andere Ansicht, z.\u00a0B. Einstellungen → Daten → Sicherungen, oder lade neu.'}
             onReload={reload}
           >
             {view === 'overview' && <Overview openWeek={openWeek} />}
             {view === 'editor' && <WeekEditor monday={monday} setMonday={setMonday} />}
             {view === 'profiles' && <Profiles />}
             {view === 'settings' && <Settings />}
+            {view === 'styleguide' && (
+              <Suspense fallback={null}>
+                <Styleguide />
+              </Suspense>
+            )}
           </ErrorBoundary>
         </div>
       </main>
@@ -136,7 +157,7 @@ function GuardedContent() {
   return (
     <ErrorBoundary
       title="Da ist etwas schiefgelaufen"
-      hint="Deine Daten sind gespeichert. Lade die Anzeige neu — ungespeicherte Eingaben werden vorher gesichert."
+      hint="Deine Daten sind gespeichert. Lade die Anzeige neu, ungespeicherte Eingaben werden vorher gesichert."
       onReload={reload}
     >
       <Content />

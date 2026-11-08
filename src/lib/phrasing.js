@@ -14,10 +14,14 @@ const DEFAULT_EXAMPLES = [
   'Durchführung von Patch-Arbeiten an der Netzwerkdose sowie Konfiguration der zugehörigen Switch-Ports',
 ]
 
-/** Days the AI should phrase: normal work days that have raw notes. */
-export function phrasingCandidates(week) {
+/**
+ * Days the AI should phrase: normal work days that have raw notes — only
+ * those in `dates` when given (the per-day prompt in the notes area).
+ */
+export function phrasingCandidates(week, { dates } = {}) {
   return (week?.days ?? []).filter(
-    (d) => d.type === 'work' && d.status === 'normal' && (d.notes ?? '').trim()
+    (d) =>
+      d.type === 'work' && d.status === 'normal' && (d.notes ?? '').trim() && (!dates || dates.includes(d.date))
   )
 }
 
@@ -46,14 +50,15 @@ export function styleExamples(weeks, limit = 12) {
 }
 
 /**
- * The complete prompt for the chat AI, or null if the week has no notes to
- * phrase. Day markers carry the ISO date so the answer can be mapped back
- * reliably, whatever the AI writes around it.
+ * The complete prompt for the chat AI, or null if there are no notes to
+ * phrase. `dates` limits it to those days (one day from the notes area);
+ * `examples` takes style examples the caller computed once. Day
+ * markers carry the ISO date so the answer can be mapped back reliably,
+ * whatever the AI writes around it.
  */
-export function buildPrompt(week, weeks) {
-  const days = phrasingCandidates(week)
+export function buildPrompt(week, weeks, { dates, examples = styleExamples(weeks) } = {}) {
+  const days = phrasingCandidates(week, { dates })
   if (days.length === 0) return null
-  const examples = styleExamples(weeks)
   const notes = days
     .map((d) => `### ${d.date} (${weekdayName(d.date)}, ${formatDE(d.date)})\n${d.notes.trim()}`)
     .join('\n\n')
@@ -125,6 +130,24 @@ export function parseResponse(text) {
   return { days, ignoredLines }
 }
 
+/**
+ * The bullets of one day from an answer to a single-day prompt: the section
+ * of that date when the AI kept the date line, otherwise — no date line at
+ * all — every bullet line of the answer. An answer with other dates only
+ * gives nothing (it belongs to another day).
+ */
+export function parseDayResponse(text, date) {
+  const { days } = parseResponse(text)
+  if (days[date]?.length) return days[date]
+  if (Object.keys(days).length > 0) return []
+  return (text ?? '')
+    .split(/\r?\n/)
+    .map((raw) => raw.replace(/\*\*/g, '').trim())
+    .filter((line) => BULLET_PREFIX.test(line) && !/^\d+\.\d/.test(line))
+    .map((line) => line.replace(BULLET_PREFIX, '').trim())
+    .filter((bullet) => bullet && bullet !== '…')
+}
+
 // Patterns that should not leave the machine unnoticed (warning only)
 const SENSITIVE_PATTERNS = [
   ['email', /[\w.+-]+@[\w-]+(?:\.[\w-]+)+/g],
@@ -132,18 +155,42 @@ const SENSITIVE_PATTERNS = [
   ['mac', /\b(?:[0-9A-F]{2}[:-]){5}[0-9A-F]{2}\b/gi],
   ['ticket', /(?:#\d{3,}|\b(?:INC|REQ|RITM|TKT|SR|CHG)[-_ ]?\d{3,}|\bTicket(?:nummer|[- ]?Nr\.?)?\s*:?\s*#?\d{3,})/gi],
   ['phone', /(?:\+49|\b0)\d[\d /-]{6,}\d/g],
+  // The word itself, also at the end of compounds ("Endkunde",
+  // "Stammkundin"), and customer numbers. "Kundenwunsch" (LF02's title) or
+  // "Kundendienst" are no customer data and stay quiet, as are words that
+  // only contain the letters: "Urkunde", "Sekunden", "erkunden", "bekunden".
+  [
+    'customer',
+    /[A-Za-zÄÖÜäöüß]*(?<![Uu]r|[Ss]e|\b[Ee]r|\b[Bb]e)[Kk]und(?:innen|in|en|e|schaft)\b|[Kk]unden-?(?:nummer|nr\.?)/g,
+  ],
 ]
+
+/** German names of the kinds findSensitive() reports (warnings in the UI) */
+export const SENSITIVE_LABELS = {
+  email: 'E-Mail-Adresse',
+  ip: 'IP-Adresse',
+  mac: 'MAC-Adresse',
+  ticket: 'Ticketnummer',
+  phone: 'Telefonnummer',
+  customer: 'Kundenbezug',
+}
 
 /**
  * Find things that look like customer data in text that is about to leave the
- * app (e-mail, IP, MAC, ticket and phone numbers). Returns [{ kind, match }],
- * unique per match. A hint for the user, not a filter.
+ * app (e-mail, IP, MAC, ticket and phone numbers, the word "Kunde"). Returns
+ * [{ kind, match }], unique per match. A hint for the user, not a filter.
+ * A match inside an earlier one (the "kunde" in "max@kunde.de") is skipped.
  */
 export function findSensitive(text) {
   const found = []
   const seen = new Set()
+  const spans = []
   for (const [kind, pattern] of SENSITIVE_PATTERNS) {
     for (const m of (text ?? '').matchAll(pattern)) {
+      const start = m.index
+      const end = start + m[0].length
+      if (spans.some(([s, e]) => start >= s && end <= e)) continue
+      spans.push([start, end])
       const match = m[0].trim()
       if (seen.has(match)) continue
       seen.add(match)
@@ -151,4 +198,15 @@ export function findSensitive(text) {
     }
   }
   return found
+}
+
+/**
+ * What the privacy check looks at before a prompt is copied: only the user's
+ * own text in it — the notes and the style examples. The prompt's fixed rule
+ * lines mention "Kunden" themselves and would always warn.
+ */
+export function promptSensitive(week, weeks, { dates, examples = styleExamples(weeks) } = {}) {
+  const days = phrasingCandidates(week, { dates })
+  if (days.length === 0) return []
+  return findSensitive([...days.map((d) => d.notes), ...examples].join('\n'))
 }

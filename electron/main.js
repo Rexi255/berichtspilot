@@ -85,7 +85,7 @@ function createWindow() {
     minWidth: 940,
     minHeight: 600,
     frame: false, // custom title bar in the renderer
-    backgroundColor: '#0a0c10',
+    backgroundColor: '#121211', // the dark canvas (src/index.css)
     icon: path.join(__dirname, 'icon.ico'), // window/taskbar icon (bundled)
     show: false,
     webPreferences: {
@@ -195,7 +195,7 @@ function createWindow() {
       type: 'error',
       title: 'Berichtspilot',
       message: 'Die Anzeige ist abgestürzt.',
-      detail: 'Deine gespeicherten Daten sind sicher — verloren ist höchstens die Eingabe der letzten Sekunde.',
+      detail: 'Deine gespeicherten Daten sind sicher. Verloren ist höchstens die Eingabe der letzten Sekunde.',
       buttons: ['Neu laden', 'Beenden'],
       defaultId: 0,
       cancelId: 1,

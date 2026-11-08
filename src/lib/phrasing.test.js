@@ -1,7 +1,7 @@
 // Clipboard bridge: prompt building, tolerant answer parsing and the
 // customer-data warning.
 import { describe, it, expect } from 'vitest'
-import { phrasingCandidates, styleExamples, buildPrompt, parseResponse, findSensitive } from './phrasing.js'
+import { phrasingCandidates, styleExamples, buildPrompt, parseResponse, parseDayResponse, findSensitive, promptSensitive } from './phrasing.js'
 
 const day = (date, patch = {}) => ({
   date,
@@ -122,5 +122,83 @@ describe('findSensitive', () => {
 
   it('does not flag dates or ordinary text', () => {
     expect(findSensitive('### 2026-09-30 (Mittwoch, 30.09.2026)\nDrucker getauscht, ca. 3 Tickets bearbeitet')).toEqual([])
+  })
+})
+
+describe('findSensitive: the word "Kunde"', () => {
+  const kinds = (text) => findSensitive(text).map((f) => `${f.kind}:${f.match}`)
+
+  it('flags the word, compounds ending in it and customer numbers', () => {
+    expect(kinds('Rückruf beim Kunden, Endkunde und Stammkundin informiert, Kundennummer 4711')).toEqual([
+      'customer:Kunden',
+      'customer:Endkunde',
+      'customer:Stammkundin',
+      'customer:Kundennummer',
+    ])
+    expect(kinds('kunde hat angerufen')).toEqual(['customer:kunde'])
+  })
+
+  it('stays quiet for "Kundenwunsch" (LF02) and "Kundendienst"', () => {
+    expect(findSensitive('Arbeitsplätze nach Kundenwunsch ausstatten, Kundendienst erklärt')).toEqual([])
+  })
+
+  it('stays quiet for words that only contain the letters (Urkunde, Sekunden, erkunden)', () => {
+    expect(findSensitive('Ausbildungsurkunde abgeholt, Urkunden beurkunden lassen')).toEqual([])
+    expect(findSensitive('Timeout nach 30 Sekunden, Netzwerk erkunden, Interesse bekunden')).toEqual([])
+    // compounds that name a real customer stay flagged
+    expect(kinds('Partnerkunde und Neukunde angerufen')).toEqual(['customer:Partnerkunde', 'customer:Neukunde'])
+  })
+
+  it('does not report the "kunde" inside an e-mail address twice', () => {
+    expect(kinds('Mail an max.muster@kunde.de')).toEqual(['email:max.muster@kunde.de'])
+  })
+})
+
+describe('per-day prompt and its privacy check', () => {
+  it('builds the prompt for the given dates only', () => {
+    const prompt = buildPrompt(week, [], { dates: ['2026-10-02'] })
+    expect(prompt).toContain('### 2026-10-02')
+    expect(prompt).not.toContain('### 2026-09-30')
+    expect(buildPrompt(week, [], { dates: ['2026-10-01'] })).toBeNull() // no notes that day
+  })
+
+  it('checks only the user text, never the prompt rules (which mention "Kunden")', () => {
+    expect(buildPrompt(week, [])).toMatch(/Kunden/)
+    expect(findSensitive(buildPrompt(week, [])).some((f) => f.kind === 'customer')).toBe(true)
+    expect(promptSensitive(week, [])).toEqual([])
+  })
+
+  it('flags customer data in the notes and in the style examples', () => {
+    const noisy = {
+      ...week,
+      days: week.days.map((d) => (d.date === '2026-09-30' ? { ...d, notes: 'Beim Kunden Drucker getauscht' } : d)),
+    }
+    expect(promptSensitive(noisy, [], { dates: ['2026-09-30'] })).toEqual([{ kind: 'customer', match: 'Kunden' }])
+    expect(promptSensitive(noisy, [], { dates: ['2026-10-02'] })).toEqual([])
+    const doneWeek = {
+      id: '2026-09-14', status: 'done',
+      days: [day('2026-09-14', { bullets: ['Einrichtung eines Notebooks für Kunde 192.168.1.20'] })],
+    }
+    expect(promptSensitive(week, [doneWeek]).map((f) => f.kind)).toEqual(['ip', 'customer'])
+  })
+})
+
+describe('parseDayResponse (one day from the notes area)', () => {
+  it('takes the section of that date when the AI kept the date line', () => {
+    const answer = 'Gern, hier die Stichpunkte:\n\n### 2026-10-02\n- Aufbau eines Arbeitsplatzes\n- Anschluss zweier Monitore\n\nViel Erfolg!'
+    expect(parseDayResponse(answer, '2026-10-02')).toEqual(['Aufbau eines Arbeitsplatzes', 'Anschluss zweier Monitore'])
+  })
+
+  it('takes every bullet line when the answer has no date line at all', () => {
+    expect(parseDayResponse('- **Aufbau** eines Arbeitsplatzes\n• Anschluss zweier Monitore\nDas war es.', '2026-10-02')).toEqual([
+      'Aufbau eines Arbeitsplatzes',
+      'Anschluss zweier Monitore',
+    ])
+  })
+
+  it('gives nothing for an answer about other days or without bullets', () => {
+    expect(parseDayResponse('### 2026-09-30\n- Drucker getauscht', '2026-10-02')).toEqual([])
+    expect(parseDayResponse('Ich habe leider keine Notizen gefunden.', '2026-10-02')).toEqual([])
+    expect(parseDayResponse('', '2026-10-02')).toEqual([])
   })
 })

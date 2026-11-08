@@ -1,107 +1,63 @@
-// Settings: appearance (color themes), behavior (start view), snippets
+// Settings: appearance (mode + accent), behavior (start view), snippets
 // (autocomplete templates), connections (WebUntis), updates, data location and
 // a keyboard shortcut reference.
-// Each theme card carries data-theme={id} itself; that way its preview colors
-// (bg-base, bg-accent …) render in that theme automatically — without
+// Each accent swatch carries data-accent={id} itself; that way its preview
+// colors (bg-accent …) render in that accent automatically — without
 // duplicating the color values in JS.
 import { useCallback, useEffect, useState } from 'react'
 import {
   CheckIcon,
-  PaletteIcon,
-  SlidersHorizontalIcon,
-  TextAaIcon,
   FolderOpenIcon,
-  KeyboardIcon,
   PlusIcon,
   XIcon,
-  PlugsConnectedIcon,
   ShieldCheckIcon,
   SignInIcon,
   SignOutIcon,
   CircleNotchIcon,
   ArrowClockwiseIcon,
-  ArrowCircleUpIcon,
-  SparkleIcon,
   ClockCounterClockwiseIcon,
+  DownloadSimpleIcon,
+  UploadSimpleIcon,
 } from '@phosphor-icons/react'
 import { useStore, api } from '../store.jsx'
-import { SectionTitle, Button, IconButton, Input, Segment, Panel, Pill, Switch, cx } from '../ui/basics.jsx'
+import { Button, Card, IconButton, Input, Segment, Pill, Switch, DayCell, Kbd, cx } from '../ui/basics.jsx'
 import { showToast } from '../ui/toast.jsx'
 import { UpdateAction, useUpdateActions } from '../ui/UpdateHint.jsx'
 import { updateHint, updateSummary, canCheckForUpdate } from '../lib/update.js'
 import { parseWebuntisAddress } from '../lib/webuntis.js'
 import { BACKUP_KINDS, backupTitle, sizeLabel } from '../lib/backups.js'
+import { SHORTCUT_HELP } from '../lib/shortcuts.js'
+import { ACCENTS, ACCENT_NAMES } from '../lib/model.js'
 
-// Order + labels of the themes; the colors live in index.css.
-export const THEMES = [
-  { id: 'northern-lights', name: 'Nordlicht', description: 'Kühles Blau · Eis-Cyan' },
-  { id: 'polar-night', name: 'Polarnacht', description: 'Tiefes Violett · Indigo' },
-  { id: 'forest', name: 'Waldgrün', description: 'Dunkles Grün · Smaragd' },
-  { id: 'amber', name: 'Bernstein', description: 'Warmes Braun · Gold' },
-  { id: 'rose', name: 'Rosé', description: 'Gedämpftes Rosé · Magenta' },
-  { id: 'graphite', name: 'Graphit', description: 'Neutrales Grau · Stahl' },
-]
+// Accents (schema v12, E-032) from the one list in model.js that migration
+// and validation use; the colors live in index.css per mode
+export const ACCENT_OPTIONS = ACCENTS.map((id) => ({ id, name: ACCENT_NAMES[id] }))
 
-// Miniature of an app screen in the theme's colors (purely decorative)
-function ThemePreview() {
-  return (
-    <div className="relative h-24 overflow-hidden rounded-lg bg-base shadow-[inset_0_0_0_1px_oklch(1_0_0/0.06)]">
-      {/* hint of the aurora */}
-      <div
-        className="absolute -right-6 -top-8 h-20 w-24 rounded-full opacity-60 blur-xl"
-        style={{ background: 'var(--aurora-1)' }}
-      />
-      {/* sidebar */}
-      <div className="absolute inset-y-0 left-0 w-1/4 border-r border-white/[0.06] bg-surface/80">
-        <div className="absolute left-2 top-2.5 h-2 w-6 rounded-full bg-accent" />
-        <div className="absolute left-2 top-6 h-2 w-5 rounded-full bg-ink-3/40" />
-        <div className="absolute left-2 top-9 h-2 w-5 rounded-full bg-ink-3/40" />
-      </div>
-      {/* content card */}
-      <div className="absolute bottom-2.5 left-[32%] right-2.5 top-2.5 rounded-md border border-white/[0.06] bg-surface/70 shadow-[inset_0_1px_0_0_oklch(1_0_0/0.05)]">
-        <div className="absolute left-2 top-2 h-2 w-12 rounded-full bg-ink-2/70" />
-        <div className="absolute left-2 top-6 flex gap-1.5">
-          <div className="h-4 w-8 rounded bg-accent" />
-          <div className="h-4 w-6 rounded bg-accent-deep" />
-        </div>
-        <div className="absolute bottom-2 left-2 right-2 h-2 rounded-full bg-white/[0.06]">
-          <div className="h-full w-2/3 rounded-full bg-accent/80" />
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function ThemeCard({ theme, active, onSelect }) {
+// One accent, previewed in its own colors: the swatch carries data-accent
+// itself, so the button and the day cells inside render in that accent
+function AccentSwatch({ accent, active, onSelect }) {
   return (
     <button
       type="button"
-      data-theme={theme.id}
+      data-accent={accent.id}
       onClick={onSelect}
       aria-pressed={active}
       className={cx(
-        'group relative flex flex-col gap-3 rounded-xl border p-3 text-left',
-        'transition-[border-color,transform,box-shadow] duration-150 ease-(--ease-smooth) active:scale-[0.99]',
-        active
-          ? 'border-accent/60 shadow-[0_0_0_1px_var(--color-accent),0_8px_24px_-12px_var(--color-accent-deep)]'
-          : 'border-white/[0.08] hover:border-white/20'
+        'flex flex-col gap-3 rounded-card border bg-surface p-3 text-left transition-colors duration-150',
+        active ? 'border-accent' : 'border-line hover:border-mark'
       )}
     >
-      <ThemePreview />
-      <div className="flex items-center justify-between gap-2 pl-0.5">
-        <div className="min-w-0">
-          <div className="text-[13.5px] font-semibold text-ink">{theme.name}</div>
-          <div className="truncate text-[11.5px] text-ink-3">{theme.description}</div>
-        </div>
-        <span
-          className={cx(
-            'grid h-5 w-5 shrink-0 place-items-center rounded-full transition-opacity duration-150',
-            active ? 'bg-accent text-inset opacity-100' : 'opacity-0'
-          )}
-        >
-          <CheckIcon size={12} weight="bold" />
+      <span className="flex items-center gap-2" aria-hidden="true">
+        <span className="inline-flex h-7 items-center rounded-control bg-accent px-2.5 text-meta font-medium text-on-accent">
+          Kopieren
         </span>
-      </div>
+        <DayCell state="written" letter="B" size="tab" />
+        <DayCell state="open" letter="B" size="tab" />
+      </span>
+      <span className="flex items-center justify-between gap-2">
+        <span className="text-body font-medium text-ink">{accent.name}</span>
+        {active && <CheckIcon size={16} className="text-accent" />}
+      </span>
     </button>
   )
 }
@@ -127,8 +83,8 @@ function SnippetEditor() {
         <div key={i} className="group/snippet flex items-center gap-1">
           <Input
             value={snippet}
+            aria-label={`Textbaustein ${i + 1}`}
             onChange={(e) => save(snippets.map((s, j) => (j === i ? e.target.value : s)))}
-            className="h-8 text-[12.5px]"
           />
           <IconButton
             label="Textbaustein entfernen"
@@ -136,7 +92,7 @@ function SnippetEditor() {
             onClick={() => save(snippets.filter((_, j) => j !== i))}
             className="opacity-0 transition-opacity duration-150 group-focus-within/snippet:opacity-100 group-hover/snippet:opacity-100"
           >
-            <XIcon size={13} />
+            <XIcon size={14} />
           </IconButton>
         </div>
       ))}
@@ -146,10 +102,10 @@ function SnippetEditor() {
           placeholder="z. B. Bearbeitung von Support-Tickets im Bereich …"
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && add()}
-          className="h-8 text-[12.5px]"
+          aria-label="Neuer Textbaustein"
         />
         <Button size="sm" onClick={add} disabled={!draft.trim()}>
-          <PlusIcon size={13} weight="bold" /> Hinzufügen
+          <PlusIcon size={14} /> Hinzufügen
         </Button>
       </div>
     </div>
@@ -166,7 +122,7 @@ function WebuntisStatus({ status }) {
   if (status.loggedIn) return <Pill color="done">Angemeldet</Pill>
   if (status.ok) return <Pill color="neutral">Nicht angemeldet</Pill>
   if (status.code === 'no-server') return <Pill color="neutral">Adresse fehlt</Pill>
-  return <Pill color="sick">{status.error || 'Status unbekannt'}</Pill>
+  return <Pill color="missing">{status.error || 'Status unbekannt'}</Pill>
 }
 
 // Stored host + school → an address the parser reads back the same way
@@ -269,20 +225,20 @@ function WebuntisConnection() {
   }
 
   return (
-    <Panel className="max-w-2xl">
+    <Card className="max-w-2xl">
       <div className="flex items-center gap-4 px-4 py-3">
         <div className="min-w-0 flex-1">
           <Switch checked={enabled} onChange={toggle} label="WebUntis-Import" disabled={busy} />
-          <p className="mt-1 text-[12px] text-ink-3">
+          <p className="mt-1 text-meta text-ink-2">
             Schultage, Fächer und Lehrstoff aus dem Stundenplan der Berufsschule übernehmen.
           </p>
         </div>
       </div>
 
       {enabled && (
-        <div className="flex flex-col gap-3 border-t border-white/[0.05] px-4 py-3">
+        <div className="flex flex-col gap-3 border-t border-line px-4 py-3">
           <div className="flex items-start gap-3">
-            <label htmlFor="webuntis-address" className="mt-2 w-16 shrink-0 text-[12px] font-medium text-ink-2">
+            <label htmlFor="webuntis-address" className="mt-2 w-16 shrink-0 text-meta font-medium text-ink-2">
               Adresse
             </label>
             <div className="min-w-0 flex-1">
@@ -296,9 +252,9 @@ function WebuntisConnection() {
                 spellCheck={false}
                 disabled={busy}
                 aria-invalid={Boolean(addressError)}
-                className={cx('h-8 text-[12.5px]', addressError && 'border-sick/60')}
+                className={cx(addressError && 'border-missing')}
               />
-              <p className={cx('mt-1 text-[11.5px]', addressError ? 'text-sick' : 'text-ink-3')}>
+              <p className={cx('mt-1 text-meta', addressError ? 'text-missing' : 'text-ink-2')}>
                 {addressError ||
                   (host
                     ? `Server ${host}${school ? ` · Schule „${school}“` : ''}`
@@ -308,12 +264,12 @@ function WebuntisConnection() {
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="w-16 shrink-0 text-[12px] font-medium text-ink-2">Status</div>
+            <div className="w-16 shrink-0 text-meta font-medium text-ink-2">Status</div>
             <div className="flex min-w-0 flex-1 items-center gap-1">
               <WebuntisStatus status={status} />
               {status && !status.ok && status.code !== 'no-server' && (
                 <IconButton label="Erneut prüfen" onClick={recheck} disabled={busy}>
-                  <ArrowClockwiseIcon size={13} />
+                  <ArrowClockwiseIcon size={14} />
                 </IconButton>
               )}
             </div>
@@ -336,17 +292,16 @@ function WebuntisConnection() {
             )}
           </div>
 
-          <p className="flex items-start gap-1.5 text-[11.5px] text-ink-3">
+          <p className="flex items-start gap-1.5 text-meta text-ink-2">
             <ShieldCheckIcon size={14} className="mt-px shrink-0" />
             <span>
-              Die Anmeldung läuft in einem eigenen Fenster direkt auf der Seite der Schule —
-              Berichtspilot sieht dein Passwort nie. Sie gilt, bis die App beendet wird; danach
-              einfach erneut anmelden.
+              Die Anmeldung läuft in einem eigenen Fenster direkt auf der Seite der Schule. Berichtspilot sieht
+              dein Passwort nie. Sie gilt, bis die App beendet wird, danach einfach erneut anmelden.
             </span>
           </p>
         </div>
       )}
-    </Panel>
+    </Card>
   )
 }
 
@@ -362,10 +317,10 @@ function UpdateSettings() {
   const unsupported = update?.state === 'unsupported'
 
   return (
-    <Panel className="max-w-2xl">
+    <Card className="max-w-2xl">
       <div className="flex items-center gap-3 px-4 py-3">
         <div className="min-w-0 flex-1">
-          <div className="text-[12px] font-medium text-ink-2">
+          <div className="text-meta font-medium text-ink-2">
             Berichtspilot {update?.current ? `Version ${update.current}` : ''}
           </div>
           <div className="mt-1 flex min-w-0 items-center gap-2">
@@ -390,20 +345,20 @@ function UpdateSettings() {
         )}
       </div>
 
-      <div className="border-t border-white/[0.05] px-4 py-3">
+      <div className="border-t border-line px-4 py-3">
         <Switch
           checked={data.settings.updateCheck !== false}
           onChange={(updateCheck) => updateSettings({ updateCheck })}
           label="Beim Start nach Updates suchen"
           disabled={unsupported}
         />
-        <p className="mt-1.5 text-[12px] text-ink-3">
-          Fragt bei jedem Start einmal bei GitHub nach, ob es eine neue Version gibt — dabei wird
-          nur die App-Version übertragen, keine Berichtsdaten. Heruntergeladen und installiert wird
-          nur, wenn du darauf klickst.
+        <p className="mt-1.5 text-meta text-ink-2">
+          Fragt bei jedem Start einmal bei GitHub nach, ob es eine neue Version gibt. Dabei wird nur die
+          App-Version übertragen, keine Berichtsdaten. Heruntergeladen und installiert wird nur, wenn du
+          darauf klickst.
         </p>
       </div>
-    </Panel>
+    </Card>
   )
 }
 
@@ -445,29 +400,29 @@ function Backups() {
   const visible = showAll ? backups : backups?.slice(0, BACKUPS_SHOWN)
 
   return (
-    <Panel className="max-w-2xl overflow-hidden" data-section="backups">
-      <div className="flex items-center gap-2 border-b border-white/[0.05] px-4 py-2.5">
-        <ClockCounterClockwiseIcon size={15} className="text-ink-3" />
-        <span className="mr-auto text-[12px] font-medium text-ink-2">Sicherungen</span>
-        <IconButton label="Liste aktualisieren" onClick={reload} disabled={busy}>
-          <ArrowClockwiseIcon size={13} />
+    <Card className="max-w-2xl overflow-hidden" data-section="backups">
+      <div className="flex items-center gap-2 border-b border-line py-2 pl-4 pr-2">
+        <ClockCounterClockwiseIcon size={16} className="text-ink-2" />
+        <span className="mr-auto text-body font-medium text-ink">Sicherungen</span>
+        <IconButton label="Liste aktualisieren" side="top-end" onClick={reload} disabled={busy}>
+          <ArrowClockwiseIcon size={14} />
         </IconButton>
       </div>
       {backups === null ? (
-        <p className="px-4 py-3 text-[12px] text-ink-3">Wird geladen …</p>
+        <p className="px-4 py-3 text-body text-ink-2">Wird geladen …</p>
       ) : backups.length === 0 ? (
-        <p className="px-4 py-3 text-[12px] text-ink-3">
-          Noch keine Sicherung — die erste entsteht beim ersten Speichern eines neuen Tages.
+        <p className="px-4 py-3 text-body text-ink-2">
+          Noch keine Sicherung. Die erste entsteht beim ersten Speichern eines neuen Tages.
         </p>
       ) : (
         <>
           {visible.map((b, i) => (
-            <div key={b.name} className={cx('flex items-center gap-3 px-4 py-2', i > 0 && 'border-t border-white/[0.04]')}>
-              <span className="w-44 shrink-0 text-[12.5px] text-ink tabular-nums">{backupTitle(b)}</span>
-              <Pill color={b.reason === 'daily' ? 'neutral' : 'accent'} dot={false}>
+            <div key={b.name} className={cx('flex items-center gap-3 px-4 py-2', i > 0 && 'border-t border-line')}>
+              <span className="w-44 shrink-0 text-body tabular-nums text-ink">{backupTitle(b)}</span>
+              <Pill color={b.reason === 'daily' ? 'neutral' : 'accent'}>
                 {BACKUP_KINDS[b.reason] ?? 'Sicherung'}
               </Pill>
-              <span className="mr-auto text-[11.5px] text-ink-3 tabular-nums">{sizeLabel(b.size)}</span>
+              <span className="mr-auto text-meta tabular-nums text-ink-2">{sizeLabel(b.size)}</span>
               <Button size="sm" variant="ghost" onClick={() => restore(b)} disabled={busy}>
                 Wiederherstellen
               </Button>
@@ -477,174 +432,200 @@ function Backups() {
             <button
               type="button"
               onClick={() => setShowAll((all) => !all)}
-              className="w-full border-t border-white/[0.04] px-4 py-2 text-left text-[12px] font-medium text-ink-3 transition-colors duration-150 hover:text-accent"
+              className="w-full border-t border-line px-4 py-2 text-left text-meta font-medium text-ink-2 transition-colors duration-150 hover:bg-surface-2 hover:text-ink"
             >
               {showAll ? 'Weniger anzeigen' : `Alle anzeigen (${backups.length})`}
             </button>
           )}
         </>
       )}
-    </Panel>
+    </Card>
   )
 }
 
-/* ---------------------- Keyboard shortcut reference ---------------------- */
-
-const SHORTCUTS = [
-  ['Strg + 1 … 4', 'Übersicht · Editor · Profile · Einstellungen öffnen'],
-  ['Alt + ← / →', 'Vorherige / nächste Woche (im Editor)'],
-  ['Strg + Shift + 1 / 2 / 3', 'Block Betrieb / Unterweisungen / Berufsschule kopieren (im Editor)'],
-  ['Strg + N', 'Woche anlegen, falls sie noch fehlt (im Editor)'],
-  ['Enter', 'Neuer Stichpunkt unter dem aktuellen'],
-  ['Backspace (leerer Punkt)', 'Stichpunkt entfernen'],
-  ['↑ / ↓ (bei Vorschlägen)', 'Autocomplete-Vorschlag wählen, Enter übernimmt'],
-]
-
 /* -------------------------------- View -------------------------------- */
 
+// One settings section: heading, a sentence what it is for, the controls
+function Section({ id, title, description, children }) {
+  return (
+    <section className="flex flex-col gap-3" data-section={id}>
+      <div>
+        <h2 className="text-title font-medium text-ink">{title}</h2>
+        {description && <p className="mt-0.5 max-w-2xl text-body text-ink-2">{description}</p>}
+      </div>
+      {children}
+    </section>
+  )
+}
+
 export default function Settings() {
-  const { data, dataPath, updateSettings, openSetup } = useStore()
-  const activeTheme = data.settings.theme || 'northern-lights'
+  const { data, dataPath, updateSettings, setAppearance, setLayout, openSetup, exportData, importData } = useStore()
+  const { appearance, layout } = data.settings
+
+  // Export/import of the whole record as one file (moved here from the sidebar)
+  const handleExport = async () => {
+    const res = await exportData()
+    if (res.ok) showToast('Daten exportiert')
+    else if (!res.canceled) showToast(res.error ?? 'Export fehlgeschlagen', { kind: 'error', duration: 5000 })
+  }
+  const handleImport = async () => {
+    const res = await importData()
+    if (res.ok) showToast(res.merged ? 'Daten zusammengeführt' : 'Daten importiert')
+    else if (!res.canceled) showToast(res.error ?? 'Import fehlgeschlagen', { kind: 'error', duration: 5000 })
+  }
 
   return (
     <div className="flex h-full flex-col">
-      <div className="px-8 pb-5 pt-7">
-        <h1 className="text-[22px] font-semibold tracking-tight">Einstellungen</h1>
-        <p className="mt-1 text-[13px] text-ink-2">Aussehen und Verhalten der App anpassen.</p>
-      </div>
+      <header className="px-6 pb-4 pt-5">
+        <h1 className="font-display text-page font-medium text-ink">Einstellungen</h1>
+        <p className="text-meta text-ink-2">Aussehen, Verhalten, Verbindungen und deine Daten.</p>
+      </header>
 
-      <div className="flex min-h-0 flex-1 flex-col gap-8 overflow-y-auto px-8 pb-8">
-        <section className="max-w-4xl">
-          <SectionTitle className="mb-1 flex items-center gap-1.5">
-            <PaletteIcon size={14} /> Aussehen
-          </SectionTitle>
-          <p className="mb-4 text-[12.5px] text-ink-3">
-            Wähle ein Farbthema — die Änderung ist sofort sichtbar und wird gespeichert.
-          </p>
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-            {THEMES.map((t) => (
-              <ThemeCard
-                key={t.id}
-                theme={t}
-                active={activeTheme === t.id}
-                onSelect={() => updateSettings({ theme: t.id })}
-              />
-            ))}
-          </div>
-        </section>
-
-        <section className="max-w-4xl">
-          <SectionTitle className="mb-1 flex items-center gap-1.5">
-            <SlidersHorizontalIcon size={14} /> Verhalten
-          </SectionTitle>
-          <p className="mb-3 text-[12.5px] text-ink-3">Mit welcher Ansicht die App startet.</p>
-          <Segment
-            options={[
-              { value: 'overview', label: 'Übersicht' },
-              { value: 'editor', label: 'Aktuelle Woche (Editor)' },
-            ]}
-            value={data.settings.startView ?? 'overview'}
-            onChange={(startView) => updateSettings({ startView })}
-          />
-          <div className="mt-5">
-            <Switch
-              checked={data.settings.autoCreateWeek !== false}
-              onChange={(autoCreateWeek) => updateSettings({ autoCreateWeek })}
-              label="Aktuelle Woche beim Start anlegen"
+      <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-8">
+        <div className="flex max-w-3xl flex-col gap-8">
+          <Section id="appearance" title="Aussehen" description="Dunkel oder hell, dazu eine Akzentfarbe für Aktionen und erledigte Tage.">
+            <Segment
+              label="Modus"
+              options={[
+                { value: 'dark', label: 'Dunkel' },
+                { value: 'light', label: 'Hell' },
+              ]}
+              value={appearance.mode}
+              onChange={(mode) => setAppearance({ mode })}
+              className="w-fit"
             />
-            <p className="mt-1.5 text-[12.5px] text-ink-3">
-              Fehlt die laufende Woche, legt die App sie Montag bis Freitag beim Start automatisch an —
-              mit Profil, Feiertagen und Urlaub, wie über „Woche anlegen“.
-            </p>
-          </div>
-          <div className="mt-5 flex items-center gap-3">
-            <Button size="sm" onClick={openSetup}>
-              <SparkleIcon size={14} /> Einrichtungsassistent starten
-            </Button>
-            <span className="text-[12.5px] text-ink-3">
-              Ausbildung, aktuelles Halbjahr und WebUntis noch einmal Schritt für Schritt durchgehen.
-            </span>
-          </div>
-        </section>
-
-        <section className="max-w-4xl">
-          <SectionTitle className="mb-1 flex items-center gap-1.5">
-            <TextAaIcon size={14} /> Textbausteine
-          </SectionTitle>
-          <p className="mb-3 text-[12.5px] text-ink-3">
-            Wiederkehrende Formulierungen — sie erscheinen im Editor als Autocomplete-Vorschläge,
-            zusätzlich zu allen bereits geschriebenen Stichpunkten.
-          </p>
-          <SnippetEditor />
-        </section>
-
-        <section className="max-w-4xl" data-section="connections">
-          <SectionTitle className="mb-1 flex items-center gap-1.5">
-            <PlugsConnectedIcon size={14} /> Verbindungen
-          </SectionTitle>
-          <p className="mb-3 text-[12.5px] text-ink-3">
-            Optionale Online-Dienste. Ausgeschaltet funktioniert alles wie bisher — ohne Netzwerk.
-          </p>
-          <WebuntisConnection />
-        </section>
-
-        <section className="max-w-4xl" data-section="updates">
-          <SectionTitle className="mb-1 flex items-center gap-1.5">
-            <ArrowCircleUpIcon size={14} /> Updates
-          </SectionTitle>
-          <p className="mb-3 text-[12.5px] text-ink-3">
-            Neue Versionen kommen direkt von GitHub und lassen sich mit einem Klick installieren.
-          </p>
-          <UpdateSettings />
-        </section>
-
-        <section className="max-w-4xl">
-          <SectionTitle className="mb-1 flex items-center gap-1.5">
-            <FolderOpenIcon size={14} /> Daten
-          </SectionTitle>
-          <p className="mb-3 text-[12.5px] text-ink-3">
-            Alle Berichte liegen in einer daten.json, jede Änderung wird sofort gespeichert. Im Ordner
-            „sicherungen“ daneben legt Berichtspilot jeden Tag eine Sicherung an (die letzten 30 Tage)
-            und zusätzlich eine vor jedem Update, Import und Wiederherstellen. Export/Import als
-            weitere Kopie findest du in der Seitenleiste.
-          </p>
-          <Panel className="flex max-w-2xl items-center gap-3 px-4 py-3">
-            <div className="min-w-0 flex-1">
-              <div className="text-[12px] font-medium text-ink-2">Speicherort</div>
-              <div className="truncate text-[12px] text-ink-3 tabular-nums" title={dataPath}>
-                {dataPath || '—'}
-              </div>
+            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+              {ACCENT_OPTIONS.map((a) => (
+                <AccentSwatch
+                  key={a.id}
+                  accent={a}
+                  active={appearance.accent === a.id}
+                  onSelect={() => setAppearance({ accent: a.id })}
+                />
+              ))}
             </div>
-            <Button size="sm" onClick={() => api.revealDataFile()}>
-              <FolderOpenIcon size={14} /> Ordner öffnen
-            </Button>
-          </Panel>
-          <div className="mt-3">
-            <Backups />
-          </div>
-        </section>
+          </Section>
 
-        <section className="max-w-4xl">
-          <SectionTitle className="mb-1 flex items-center gap-1.5">
-            <KeyboardIcon size={14} /> Tastaturkürzel
-          </SectionTitle>
-          <Panel className="mt-2 max-w-2xl overflow-hidden">
-            {SHORTCUTS.map(([keys, effect], i) => (
-              <div
-                key={keys}
-                className={cx(
-                  'flex items-center gap-4 px-4 py-2',
-                  i > 0 && 'border-t border-white/[0.05]'
-                )}
-              >
-                <kbd className="shrink-0 rounded-md border border-white/[0.1] bg-inset/60 px-2 py-0.5 text-[11.5px] font-medium text-ink-2 tabular-nums">
-                  {keys}
-                </kbd>
-                <span className="text-[12.5px] text-ink-3">{effect}</span>
+          <Section id="behavior" title="Verhalten">
+            <Card className="max-w-2xl">
+              <div className="flex flex-wrap items-center gap-3 px-4 py-3">
+                <span className="mr-auto text-body font-medium text-ink">Ansicht beim Start</span>
+                <Segment
+                  size="sm"
+                  label="Ansicht beim Start"
+                  options={[
+                    { value: 'overview', label: 'Übersicht' },
+                    { value: 'editor', label: 'Aktuelle Woche' },
+                  ]}
+                  value={data.settings.startView ?? 'overview'}
+                  onChange={(startView) => updateSettings({ startView })}
+                />
               </div>
-            ))}
-          </Panel>
-        </section>
+              <div className="border-t border-line px-4 py-3">
+                <Switch
+                  checked={data.settings.autoCreateWeek !== false}
+                  onChange={(autoCreateWeek) => updateSettings({ autoCreateWeek })}
+                  label="Aktuelle Woche beim Start anlegen"
+                />
+                <p className="mt-1 text-meta text-ink-2">
+                  Fehlt die laufende Woche, legt die App sie von Montag bis Freitag beim Start an, mit Profil,
+                  Feiertagen und Urlaub wie über „Woche anlegen“.
+                </p>
+              </div>
+              <div className="border-t border-line px-4 py-3">
+                <Switch
+                  checked={layout.notesVisible}
+                  onChange={(notesVisible) => setLayout({ notesVisible })}
+                  label="Notizen-Bereich im Editor"
+                />
+                <p className="mt-1 text-meta text-ink-2">
+                  Rohnotizen neben den Stichpunkten, für alle Tage. Auch mit Strg+Umschalt+N umschaltbar.
+                </p>
+              </div>
+              <div className="border-t border-line px-4 py-3">
+                <Switch
+                  checked={layout.previewVisible}
+                  onChange={(previewVisible) => setLayout({ previewVisible })}
+                  label="Vorschau im Editor"
+                />
+                <p className="mt-1 text-meta text-ink-2">
+                  Ausgeblendet bleibt unten eine Leiste mit den drei Kopieren-Buttons. Auch mit Strg+P umschaltbar.
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-3 border-t border-line px-4 py-3">
+                <span className="mr-auto text-meta text-ink-2">
+                  Ausbildung, aktuelles Halbjahr und WebUntis noch einmal Schritt für Schritt durchgehen
+                </span>
+                <Button size="sm" onClick={openSetup}>
+                  Einrichtungsassistent starten
+                </Button>
+              </div>
+            </Card>
+          </Section>
+
+          <Section
+            id="snippets"
+            title="Textbausteine"
+            description="Wiederkehrende Formulierungen. Sie erscheinen im Editor als Vorschläge, zusätzlich zu allen bereits geschriebenen Stichpunkten."
+          >
+            <SnippetEditor />
+          </Section>
+
+          <Section
+            id="connections"
+            title="Verbindungen"
+            description="Optionale Online-Dienste. Ausgeschaltet funktioniert alles wie bisher, ohne Netzwerk."
+          >
+            <WebuntisConnection />
+          </Section>
+
+          <Section id="updates" title="Updates" description="Neue Versionen kommen direkt von GitHub und lassen sich mit einem Klick installieren.">
+            <UpdateSettings />
+          </Section>
+
+          <Section
+            id="data-files"
+            title="Daten"
+            description="Alle Berichte liegen in einer daten.json, jede Änderung wird sofort gespeichert. Im Ordner „sicherungen“ daneben legt Berichtspilot jeden Tag eine Sicherung an (die letzten 30 Tage) und zusätzlich eine vor jedem Update, Import und Wiederherstellen."
+          >
+            <Card className="max-w-2xl" data-section="data">
+              <div className="flex items-center gap-3 px-4 py-3">
+                <div className="min-w-0 flex-1">
+                  <div className="text-meta font-medium text-ink-2">Speicherort</div>
+                  <div className="selectable truncate text-body text-ink" title={dataPath}>
+                    {dataPath || 'unbekannt'}
+                  </div>
+                </div>
+                <Button size="sm" onClick={() => api.revealDataFile()}>
+                  <FolderOpenIcon size={14} /> Ordner öffnen
+                </Button>
+              </div>
+              <div className="flex flex-wrap items-center gap-2 border-t border-line px-4 py-3">
+                <span className="mr-auto min-w-0 text-meta text-ink-2">Ganzen Datenbestand als Datei sichern oder einlesen</span>
+                <Button size="sm" onClick={handleExport}>
+                  <DownloadSimpleIcon size={14} /> Exportieren
+                </Button>
+                <Button size="sm" onClick={handleImport}>
+                  <UploadSimpleIcon size={14} /> Importieren
+                </Button>
+              </div>
+            </Card>
+            <Backups />
+          </Section>
+
+          <Section id="shortcuts" title="Tastaturkürzel">
+            <Card className="max-w-2xl overflow-hidden">
+              {SHORTCUT_HELP.map(([keys, effect], i) => (
+                <div key={keys} className={cx('flex items-center gap-4 px-4 py-2', i > 0 && 'border-t border-line')}>
+                  <span className="w-44 shrink-0">
+                    <Kbd keys={keys} />
+                  </span>
+                  <span className="text-body text-ink">{effect}</span>
+                </div>
+              ))}
+            </Card>
+          </Section>
+        </div>
       </div>
     </div>
   )

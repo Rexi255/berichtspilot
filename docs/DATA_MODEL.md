@@ -1,6 +1,6 @@
 # Data model — `daten.json`
 
-Current schema version: **11** (`DATA_VERSION` in `src/lib/model.js`).
+Current schema version: **12** (`DATA_VERSION` in `src/lib/model.js`).
 One JSON file holds the configuration **and** every training week. It is also the
 export/backup format. The file name stays German (`daten.json`) for compatibility
 with existing installations (DECISIONS E-014); all field names are English.
@@ -9,11 +9,19 @@ with existing installations (DECISIONS E-014); all field names are English.
 
 ```jsonc
 {
-  "version": 11,
+  "version": 12,
   "settings": {
     "trainingStart": "2025-08-01",   // optional; progress line + gap detection
     "trainingEnd": "2028-07-31",
-    "theme": "northern-lights",      // a theme id from src/index.css
+    "appearance": {                  // schema v12 (E-032/E-033): display preferences
+      "mode": "dark",                // dark | light
+      "accent": "blue"               // blue (Logo-Blau) | coral | lilac | green
+    },
+    "layout": {                      // schema v12: global switches, saved on toggle
+      "sidebarCollapsed": false,     // Strg+B
+      "previewVisible": true,        // Strg+P
+      "notesVisible": true           // notes area next to the bullets (Strg+Umschalt+N)
+    },
     "startView": "overview",         // overview | editor | profiles | settings
     "snippets": ["…"],               // user-defined autocomplete suggestions
     "webuntis": {                    // WebUntis import (login state lives in main)
@@ -100,6 +108,7 @@ with existing installations (DECISIONS E-014); all field names are English.
 | 8 → 9 | `settings.webuntis.host = ''`, `school = ''` (existing values kept) — the address is entered once in Settings (E-019); `validateData()` rejects non-string values |
 | 9 → 10 | `settings.setupDone = true` (existing files are set up; existing value kept); `validateData()` rejects a non-boolean value |
 | 10 → 11 | `profiles[].defaultBulletCount` 2 (the old default) → 1; any other value kept (E-021) |
+| 11 → 12 | `settings.theme` → `settings.appearance` (`mode: 'dark'`; accent: northern-lights/graphite → blue, polar-night → lilac, rose/amber → coral, forest → green, unknown → blue) and `settings.layout` with its defaults; `theme` is dropped, an existing `appearance`/`layout` wins (E-033) |
 
 Defensive defaults after migration: `settings` that is not an object becomes `{}`;
 `settings.webuntis` that is not an object, or whose `enabled` isn't `true`, becomes
@@ -107,9 +116,12 @@ Defensive defaults after migration: `settings` that is not an object becomes `{}
 (the main process checks it again before any request). `settings.autoCreateWeek` is only off for a real
 `false` — missing or malformed values become `true` (the default); the same
 holds for `settings.updateCheck` and `settings.setupDone` (only a real `false`
-opens the wizard). Import "Ersetzen" (`replaceData()`) keeps the
-device's current `settings.webuntis` (switch + address) and `settings.updateCheck` — opt-ins to
-network access are not taken from a shared file. `profile.webuntisSubjects` that is not an object becomes `{}`, and
+opens the wizard). `settings.appearance.mode`/`accent` outside the allowed values become
+`dark`/`blue`; the `settings.layout` switches only leave their default for a real boolean
+(`sidebarCollapsed` only a real `true`, the other two only a real `false`). Import "Ersetzen"
+(`replaceData()`) keeps the device's current `settings.webuntis` (switch + address) and
+`settings.updateCheck` — opt-ins to network access are not taken from a shared file — and its
+`settings.appearance` + `settings.layout`, the display preferences of this machine (E-033). `profile.webuntisSubjects` that is not an object becomes `{}`, and
 entries with non-string values are dropped. Keys are compared with
 `subjectKey()` (`src/lib/webuntis.js`: case, spaces, leading zeros ignored);
 `setMapping()` keeps one entry per key. The map is part of the shared record (no

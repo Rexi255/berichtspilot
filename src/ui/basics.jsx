@@ -1,28 +1,37 @@
-// Small, consistent building blocks of the design system.
+// Building blocks of the design system "Kladde" (E-032, docs/DESIGN.md).
+// Neutral by default; the accent only marks actions, the active navigation,
+// written days and "Fertig". Radius: card 16, control 10, cell 8, chip 6.
+import { useEffect, useRef, useState } from 'react'
+import { WarningIcon, InfoIcon } from '@phosphor-icons/react'
+
 export const cx = (...parts) => parts.filter(Boolean).join(' ')
 
+/* -------------------------------- Buttons -------------------------------- */
+
 const BUTTON_VARIANTS = {
-  primary:
-    'bg-accent text-inset font-semibold hover:bg-accent-light border border-transparent shadow-[0_1px_10px_-2px_var(--color-accent-deep)]',
-  outline:
-    'border border-white/10 bg-white/[0.04] text-ink hover:bg-white/[0.08] hover:border-white/15',
-  ghost: 'border border-transparent text-ink-2 hover:bg-white/[0.06] hover:text-ink',
-  danger: 'border border-transparent text-sick/90 hover:bg-sick/10 hover:text-sick',
+  primary: 'border-transparent bg-accent text-on-accent hover:bg-accent-hover',
+  secondary: 'border-line bg-surface-2 text-ink hover:bg-surface-3',
+  ghost: 'border-transparent text-ink-2 hover:bg-surface-2 hover:text-ink',
+  danger: 'border-transparent text-missing hover:bg-missing/10',
+  // "Trotzdem kopieren" and other actions taken despite a warning
+  warning: 'border-warn/60 bg-surface text-ink hover:bg-warn/10',
 }
+// Transition: the old name for "secondary"
+BUTTON_VARIANTS.outline = BUTTON_VARIANTS.secondary
 
 const BUTTON_SIZES = {
-  sm: 'h-7 px-2.5 text-[12.5px] gap-1 rounded-md',
-  md: 'h-9 px-3.5 text-[13.5px] gap-1.5 rounded-lg',
+  sm: 'h-7 gap-1.5 px-2.5 text-meta',
+  md: 'h-8 gap-1.5 px-3 text-body',
 }
 
-export function Button({ variant = 'outline', size = 'md', className, ...props }) {
+export function Button({ variant = 'secondary', size = 'md', className, ...props }) {
   return (
     <button
       type="button"
       className={cx(
-        'inline-flex select-none items-center justify-center whitespace-nowrap font-medium',
-        'transition-[background-color,border-color,color,transform] duration-150 ease-(--ease-smooth)',
-        'active:scale-[0.97] disabled:pointer-events-none disabled:opacity-40',
+        'inline-flex select-none items-center justify-center whitespace-nowrap rounded-control border font-medium',
+        'transition-[background-color,border-color,color,transform] duration-150 ease-out active:scale-[0.98]',
+        'disabled:pointer-events-none disabled:opacity-45',
         BUTTON_VARIANTS[variant],
         BUTTON_SIZES[size],
         className
@@ -32,78 +41,60 @@ export function Button({ variant = 'outline', size = 'md', className, ...props }
   )
 }
 
-/** Square icon button (move/delete bullets etc.); `label` becomes title + aria-label */
-export function IconButton({ className, danger = false, label, ...props }) {
+/**
+ * Square icon button; `label` is its accessible name and tooltip,
+ * `shortcut` (e.g. "Strg+B") shows as keycaps in the tooltip.
+ */
+export function IconButton({ className, danger = false, label, shortcut, size = 'md', side = 'top', ...props }) {
   return (
-    <button
-      type="button"
-      title={label}
-      aria-label={label}
-      className={cx(
-        'inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-transparent',
-        'text-ink-3 transition-[background-color,color,transform] duration-150 ease-(--ease-smooth) active:scale-90',
-        danger ? 'hover:bg-sick/10 hover:text-sick' : 'hover:bg-white/[0.07] hover:text-ink',
-        'disabled:pointer-events-none disabled:opacity-30',
-        className
-      )}
-      {...props}
-    />
+    <Tooltip label={label} shortcut={shortcut} side={side}>
+      <button
+        type="button"
+        aria-label={label}
+        className={cx(
+          'inline-flex shrink-0 items-center justify-center rounded-control border border-transparent text-ink-2',
+          'transition-[background-color,color,transform] duration-150 ease-out active:scale-[0.96]',
+          size === 'sm' ? 'h-7 w-7' : 'h-8 w-8',
+          danger ? 'hover:bg-missing/10 hover:text-missing' : 'hover:bg-surface-2 hover:text-ink',
+          'disabled:pointer-events-none disabled:opacity-35',
+          className
+        )}
+        {...props}
+      />
+    </Tooltip>
   )
 }
 
+/* ------------------------------ Form controls ------------------------------ */
+
+const FIELD =
+  'w-full rounded-control border border-line bg-surface text-body text-ink placeholder:text-ink-2 ' +
+  // focus: the global 2 px accent ring (index.css) — one ring, no border change
+  'transition-[border-color,background-color] duration-150 hover:border-mark disabled:opacity-45'
+
 export function Input({ className, ...props }) {
-  return (
-    <input
-      className={cx(
-        'h-9 w-full rounded-lg border border-white/[0.07] bg-inset/60 px-3 text-[13.5px] text-ink',
-        'placeholder:text-ink-3 transition-colors duration-150',
-        'hover:border-white/[0.12] focus:border-accent-deep focus:outline-none',
-        className
-      )}
-      {...props}
-    />
-  )
+  return <input className={cx(FIELD, 'h-8 px-2.5', className)} {...props} />
 }
 
 export function TextArea({ className, ...props }) {
-  return (
-    <textarea
-      className={cx(
-        'w-full resize-y rounded-lg border border-white/[0.07] bg-inset/60 px-3 py-2 text-[13.5px] text-ink',
-        'placeholder:text-ink-3 transition-colors duration-150',
-        'hover:border-white/[0.12] focus:border-accent-deep focus:outline-none',
-        className
-      )}
-      {...props}
-    />
-  )
+  return <textarea className={cx(FIELD, 'resize-y px-2.5 py-1.5', className)} {...props} />
 }
 
 export function Select({ className, children, ...props }) {
   return (
-    <select
-      className={cx(
-        'h-9 rounded-lg border border-white/[0.07] bg-inset/60 py-0 pl-2.5 pr-7 text-[13.5px] text-ink',
-        'transition-colors duration-150 hover:border-white/[0.12] focus:border-accent-deep focus:outline-none',
-        '[&>option]:bg-surface [&>option]:text-ink',
-        className
-      )}
-      {...props}
-    >
+    <select className={cx(FIELD, 'h-8 w-auto py-0 pl-2 pr-7', '[&>option]:bg-surface [&>option]:text-ink', className)} {...props}>
       {children}
     </select>
   )
 }
 
-/** Segmented control (e.g. Normal/Feiertag/Krank/Urlaub); options: [{ value, label }] */
-export function Segment({ options, value, onChange, size = 'md', className }) {
+/** Segmented control; options: [{ value, label, title? }] */
+export function Segment({ options, value, onChange, size = 'md', className, label }) {
   return (
     <div
       role="group"
-      className={cx(
-        'inline-flex items-center gap-0.5 rounded-lg border border-white/[0.07] bg-inset/60 p-0.5',
-        className
-      )}
+      aria-label={label}
+      className={cx('inline-flex items-center gap-0.5 rounded-control border border-line bg-surface p-0.5', className)}
     >
       {options.map((o) => {
         const active = o.value === value
@@ -111,14 +102,13 @@ export function Segment({ options, value, onChange, size = 'md', className }) {
           <button
             key={o.value}
             type="button"
+            title={o.title}
             aria-pressed={active}
             onClick={() => onChange(o.value)}
             className={cx(
-              'rounded-[6px] font-medium transition-[background-color,color] duration-150 ease-(--ease-smooth)',
-              size === 'sm' ? 'h-6 px-2 text-[11.5px]' : 'h-7 px-2.5 text-[12.5px]',
-              active
-                ? 'bg-surface-2 text-ink shadow-[inset_0_0_0_1px_oklch(1_0_0/0.06)]'
-                : 'text-ink-3 hover:text-ink-2'
+              'rounded-[7px] font-medium transition-[background-color,color] duration-150 ease-out',
+              size === 'sm' ? 'h-6 px-2 text-meta' : 'h-7 px-2.5 text-body',
+              active ? 'bg-surface-3 text-ink' : 'text-ink-2 hover:text-ink'
             )}
           >
             {o.label}
@@ -132,7 +122,7 @@ export function Segment({ options, value, onChange, size = 'md', className }) {
 /** On/off switch; `label` is the visible text next to it (clickable) */
 export function Switch({ checked, onChange, label, disabled = false, className }) {
   return (
-    <label className={cx('inline-flex cursor-pointer select-none items-center gap-2.5', disabled && 'pointer-events-none opacity-40', className)}>
+    <label className={cx('inline-flex cursor-pointer select-none items-center gap-2.5', disabled && 'pointer-events-none opacity-45', className)}>
       <button
         type="button"
         role="switch"
@@ -140,80 +130,349 @@ export function Switch({ checked, onChange, label, disabled = false, className }
         disabled={disabled}
         onClick={() => onChange(!checked)}
         className={cx(
-          'relative h-5 w-9 shrink-0 rounded-full border transition-[background-color,border-color] duration-150 ease-(--ease-smooth)',
-          checked ? 'border-transparent bg-accent' : 'border-white/[0.1] bg-inset/60 hover:border-white/20'
+          'relative h-5 w-9 shrink-0 rounded-full border transition-[background-color,border-color] duration-150 ease-out',
+          checked ? 'border-transparent bg-accent' : 'border-mark bg-surface-2'
         )}
       >
         <span
           className={cx(
-            'absolute top-1/2 h-3.5 w-3.5 -translate-y-1/2 rounded-full transition-[left,background-color] duration-150 ease-(--ease-smooth)',
-            checked ? 'left-[18px] bg-inset' : 'left-[2px] bg-ink-3'
+            'absolute left-[2px] top-1/2 h-3.5 w-3.5 -translate-y-1/2 rounded-full transition-[transform,background-color] duration-150 ease-out',
+            checked ? 'translate-x-4 bg-on-accent' : 'translate-x-0 bg-ink-2'
           )}
         />
       </button>
-      {label && <span className="text-[13px] font-medium text-ink">{label}</span>}
+      {label && <span className="text-body font-medium text-ink">{label}</span>}
     </label>
   )
 }
 
-const PILL_COLORS = {
-  done: 'text-done bg-done/10 border-done/20',
-  draft: 'text-draft bg-draft/10 border-draft/20',
-  sick: 'text-sick bg-sick/10 border-sick/20',
-  vacation: 'text-vacation bg-vacation/10 border-vacation/20',
-  holiday: 'text-holiday bg-holiday/10 border-holiday/20',
-  neutral: 'text-ink-2 bg-white/[0.05] border-white/10',
-  accent: 'text-accent bg-accent/10 border-accent/20',
+/** Labeled field (label above the control, hint or error below) */
+export function Field({ label, hint, error, children, className }) {
+  return (
+    <label className={cx('flex flex-col gap-1.5', className)}>
+      <span className="text-meta font-medium text-ink-2">{label}</span>
+      {children}
+      {error ? <span className="text-meta text-missing">{error}</span> : hint && <span className="text-meta text-ink-2">{hint}</span>}
+    </label>
+  )
 }
 
-/** Small status pill with a dot */
-export function Pill({ color = 'neutral', children, className, dot = true }) {
+/* ------------------------------- Surfaces ------------------------------- */
+
+/** The one card level: 16 px radius, a 1 px line, no shadow */
+export function Card({ as: Comp = 'div', className, ...props }) {
+  return <Comp className={cx('rounded-card border border-line bg-surface', className)} {...props} />
+}
+
+/** Warning or info bar (privacy check, profile warnings …); text stays ink */
+export function Notice({ tone = 'warn', icon = true, children, className, ...props }) {
+  const Icon = tone === 'warn' ? WarningIcon : InfoIcon
+  return (
+    <div
+      role={tone === 'warn' ? 'alert' : 'status'}
+      className={cx(
+        'flex items-start gap-2 rounded-control border px-3 py-2 text-body text-ink',
+        tone === 'warn' ? 'border-warn/50 bg-warn/[0.08]' : 'border-line bg-surface-2',
+        className
+      )}
+      {...props}
+    >
+      {icon && <Icon size={16} className={cx('mt-0.5 shrink-0', tone === 'warn' ? 'text-warn' : 'text-ink-2')} />}
+      <div className="min-w-0 flex-1">{children}</div>
+    </div>
+  )
+}
+
+/* ----------------------------- Status + days ----------------------------- */
+
+const STATUS = {
+  done: { label: 'Fertig', color: 'text-accent' },
+  draft: { label: 'Entwurf', color: 'text-draft' },
+  missing: { label: 'Fehlt', color: 'text-missing' },
+}
+
+/** The status shape: filled (done), half (draft), dashed (missing) */
+export function StatusGlyph({ status, className }) {
   return (
     <span
+      aria-hidden="true"
       className={cx(
-        'inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[11.5px] font-medium',
-        PILL_COLORS[color],
+        'relative inline-block h-2.5 w-2.5 shrink-0 overflow-hidden rounded-[3px] border-[1.5px] border-current',
+        status === 'done' && 'bg-current',
+        status === 'missing' && 'border-dashed',
         className
       )}
     >
-      {dot && <span className="h-1.5 w-1.5 rounded-full bg-current" />}
+      {status === 'draft' && <span className="absolute inset-x-0 bottom-0 h-1/2 bg-current" />}
+    </span>
+  )
+}
+
+/** Week status chip — Fertig / Entwurf / Fehlt with its shape. `as="button"` for a toggle. */
+export function StatusChip({ status, as: Comp = 'span', children, className, ...props }) {
+  const s = STATUS[status] ?? STATUS.draft
+  return (
+    <Comp
+      {...(Comp === 'button' ? { type: 'button' } : {})}
+      className={cx(
+        'inline-flex h-6 shrink-0 items-center gap-1.5 rounded-chip border border-line bg-surface px-2 text-meta font-medium',
+        Comp === 'button' && 'transition-colors duration-150 hover:border-mark',
+        s.color,
+        className
+      )}
+      {...props}
+    >
+      <StatusGlyph status={status} />
+      {children ?? s.label}
+    </Comp>
+  )
+}
+
+/** German names of the day-cell states (tooltips, legend, screen readers) */
+export const DAY_STATE_LABELS = {
+  written: 'geschrieben',
+  open: 'offen',
+  future: 'später',
+  holiday: 'Feiertag',
+  sick: 'Krank',
+  vacation: 'Urlaub',
+  none: 'kein Tag',
+}
+
+const CELL_STATES = {
+  written: 'border-transparent bg-accent text-on-accent',
+  open: 'border-dashed border-mark text-ink-2',
+  future: 'border-line text-ink-2/70',
+  holiday: 'border-transparent bg-surface-2 text-holiday',
+  sick: 'border-transparent bg-surface-2 text-sick',
+  vacation: 'border-transparent bg-surface-2 text-vacation',
+  none: 'border-transparent',
+}
+const STATUS_LETTERS = { holiday: 'F', sick: 'K', vacation: 'U' }
+
+/**
+ * The day cell (signature): written = accent fill, open = dashed, F/K/U =
+ * raised fill with the letter in the status color, future = faint.
+ * Sizes: `band` (12×16, letter only for F/K/U), `tab` (20×20 with the
+ * letter), `row` (weekday abbreviation + letter).
+ */
+export function DayCell({ state, letter, short, size = 'row', title, className }) {
+  const look = CELL_STATES[state] ?? CELL_STATES.open
+  const statusLetter = STATUS_LETTERS[state]
+  if (size === 'band') {
+    return (
+      <span
+        title={title}
+        className={cx(
+          'grid h-4 w-3 shrink-0 place-items-center rounded-[3px] border text-[9px] font-semibold leading-none',
+          look,
+          className
+        )}
+      >
+        {statusLetter}
+      </span>
+    )
+  }
+  if (size === 'tab') {
+    return (
+      <span
+        title={title}
+        className={cx('grid h-5 w-5 shrink-0 place-items-center rounded-[6px] border text-[11px] font-semibold leading-none', look, className)}
+      >
+        {statusLetter ?? letter}
+      </span>
+    )
+  }
+  return (
+    <span
+      title={title}
+      className={cx(
+        'inline-flex h-6 w-[42px] shrink-0 items-center justify-center gap-1 rounded-[7px] border text-[11px] leading-none tabular-nums',
+        look,
+        className
+      )}
+    >
+      <span className={state === 'written' ? '' : 'text-ink-2'}>{short}</span>
+      <span className="font-semibold">{statusLetter ?? letter}</span>
+    </span>
+  )
+}
+
+/** Small count badge (sidebar: missing weeks) */
+export function Badge({ children, tone = 'missing', className, ...props }) {
+  return (
+    <span
+      {...props}
+      className={cx(
+        'inline-flex h-5 min-w-5 items-center justify-center rounded-chip border px-1 text-[11px] font-semibold leading-none tabular-nums',
+        tone === 'missing' ? 'border-missing/50 text-missing' : 'border-line text-ink-2',
+        className
+      )}
+    >
       {children}
     </span>
   )
 }
 
-/** Labeled field (label above the control) */
-export function Field({ label, hint, children, className }) {
+/* ------------------------- Keycaps, tooltip, menu ------------------------- */
+
+/** Keycaps for "Strg+Umschalt+1", alternatives separated by " / " */
+export function Kbd({ keys, children, className }) {
+  const text = keys ?? children
+  const alternatives = String(text).split(' / ')
   return (
-    <label className={cx('flex flex-col gap-1.5', className)}>
-      <span className="text-[12px] font-medium tracking-wide text-ink-2">{label}</span>
-      {children}
-      {hint && <span className="text-[11.5px] text-ink-3">{hint}</span>}
-    </label>
+    <span className={cx('inline-flex items-center gap-1 align-middle', className)}>
+      {alternatives.map((alt, i) => (
+        <span key={i} className="inline-flex items-center gap-0.5">
+          {i > 0 && <span className="px-0.5 text-meta text-ink-2">/</span>}
+          {alt.split('+').map((k, j) => (
+            <kbd
+              key={j}
+              className="inline-flex h-5 min-w-5 items-center justify-center rounded-chip border border-line bg-surface-2 px-1 font-sans text-[11px] font-medium leading-none text-ink-2"
+            >
+              {k}
+            </kbd>
+          ))}
+        </span>
+      ))}
+    </span>
   )
 }
 
-/** Section heading in small-caps style */
-export function SectionTitle({ children, className }) {
+const TOOLTIP_SIDES = {
+  top: 'bottom-full left-1/2 mb-1.5 -translate-x-1/2',
+  bottom: 'top-full left-1/2 mt-1.5 -translate-x-1/2',
+  right: 'left-full top-1/2 ml-2 -translate-y-1/2',
+  left: 'right-full top-1/2 mr-2 -translate-y-1/2',
+  // for triggers at the right edge: the tooltip ends where the trigger ends
+  'bottom-end': 'top-full right-0 mt-1.5',
+  'top-end': 'bottom-full right-0 mb-1.5',
+}
+
+/**
+ * Label on hover (after a short delay, .tip-in in index.css) and on keyboard
+ * focus. Rendered only while shown, so a hidden tooltip never widens a
+ * scroll area. The trigger carries the accessible name itself; the tooltip is
+ * decoration for sighted users (aria-hidden).
+ */
+export function Tooltip({ label, shortcut, side = 'top', children, className }) {
+  if (!label) return children
   return (
-    <h3 className={cx('text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-3', className)}>
+    <span className={cx('group/tip relative inline-flex', className)}>
       {children}
-    </h3>
+      <span
+        aria-hidden="true"
+        className={cx(
+          'tip-in pointer-events-none absolute z-50 hidden items-center gap-2 whitespace-nowrap rounded-chip border border-line bg-surface-2 px-2 py-1 text-meta text-ink shadow-float',
+          'group-hover/tip:flex group-has-[:focus-visible]/tip:flex',
+          TOOLTIP_SIDES[side]
+        )}
+      >
+        {label}
+        {shortcut && <Kbd keys={shortcut} />}
+      </span>
+    </span>
   )
 }
 
-/** Panel surface of the design system — "lit from above": subtle top highlight
- *  (inset light edge), soft vertical gradient and a soft drop shadow. */
-export function Panel({ className, ...props }) {
+/**
+ * Small popover menu behind an icon button. items: [{ label, icon, onSelect,
+ * danger }]. Arrow keys move, Escape and a click outside close it.
+ */
+export function Menu({ label, icon, items, className, side = 'bottom-end' }) {
+  const [open, setOpen] = useState(false)
+  // Label of an item with `confirm` that was selected once: it shows its
+  // confirm text and runs only on the second select (destructive actions)
+  const [armed, setArmed] = useState(null)
+  const ref = useRef(null)
+
+  useEffect(() => {
+    if (!open) return
+    const outside = (e) => !ref.current?.contains(e.target) && setOpen(false)
+    const keys = (e) => {
+      if (e.key === 'Escape') {
+        setOpen(false)
+        ref.current?.querySelector('[aria-haspopup]')?.focus()
+        return
+      }
+      if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return
+      e.preventDefault()
+      const entries = [...(ref.current?.querySelectorAll('[role="menuitem"]') ?? [])]
+      const i = entries.indexOf(document.activeElement)
+      const next = e.key === 'ArrowDown' ? (i + 1) % entries.length : (i - 1 + entries.length) % entries.length
+      entries[next]?.focus()
+    }
+    document.addEventListener('mousedown', outside)
+    document.addEventListener('keydown', keys)
+    ref.current?.querySelector('[role="menuitem"]')?.focus()
+    return () => {
+      document.removeEventListener('mousedown', outside)
+      document.removeEventListener('keydown', keys)
+    }
+  }, [open])
+
   return (
-    <div
-      className={cx(
-        'rounded-xl border border-white/[0.06] bg-surface/80',
-        'bg-gradient-to-b from-white/[0.035] to-transparent to-[45%]',
-        'shadow-[inset_0_1px_0_0_oklch(1_0_0/0.05),0_2px_8px_-4px_oklch(0_0_0/0.45)]',
-        className
+    <div ref={ref} className={cx('relative', className)}>
+      <IconButton
+        label={label}
+        side={side}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        onClick={() => {
+          setArmed(null)
+          setOpen((o) => !o)
+        }}
+      >
+        {icon}
+      </IconButton>
+      {open && (
+        <div role="menu" className="absolute right-0 top-full z-40 mt-1 min-w-48 rounded-control border border-line bg-surface p-1 shadow-float">
+          {items.map((item) => (
+            <button
+              key={item.label}
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                if (item.confirm && armed !== item.label) {
+                  setArmed(item.label)
+                  return
+                }
+                setOpen(false)
+                item.onSelect()
+              }}
+              className={cx(
+                'flex h-8 w-full items-center gap-2 rounded-[6px] px-2 text-left text-body transition-colors duration-150 focus:outline-none',
+                item.danger ? 'text-missing hover:bg-missing/10 focus:bg-missing/10' : 'text-ink hover:bg-surface-2 focus:bg-surface-2'
+              )}
+            >
+              {item.icon}
+              {armed === item.label ? item.confirm : item.label}
+            </button>
+          ))}
+        </div>
       )}
-      {...props}
-    />
+    </div>
+  )
+}
+
+/* --------------------------------- Chips --------------------------------- */
+
+const PILL_COLORS = {
+  done: 'text-accent',
+  draft: 'text-draft',
+  sick: 'text-sick',
+  vacation: 'text-vacation',
+  holiday: 'text-holiday',
+  neutral: 'text-ink-2',
+  accent: 'text-accent',
+  missing: 'text-missing',
+}
+
+/** Quiet text chip for a state in words (WebUntis login, update result) */
+export function Pill({ color = 'neutral', children, className }) {
+  return (
+    <span className={cx('inline-flex h-6 items-center rounded-chip border border-line px-2 text-meta font-medium', PILL_COLORS[color], className)}>
+      {children}
+    </span>
   )
 }

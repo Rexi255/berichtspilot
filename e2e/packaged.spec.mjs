@@ -50,11 +50,12 @@ test('the packaged app starts from app.asar, saves and closes', async () => {
   child.stdout.on('data', (chunk) => (output += chunk))
   child.stderr.on('data', (chunk) => (output += chunk))
   const exited = new Promise((resolve) => child.on('exit', (code, signal) => resolve(signal ?? code)))
+  let browser = null
   try {
     const portFile = path.join(dir, 'DevToolsActivePort')
     await expect.poll(() => fs.existsSync(portFile), { timeout: 30_000 }).toBe(true)
     const port = fs.readFileSync(portFile, 'utf8').split('\n')[0]
-    const browser = await chromium.connectOverCDP(`http://127.0.0.1:${port}`)
+    browser = await chromium.connectOverCDP(`http://127.0.0.1:${port}`)
     await expect.poll(() => browser.contexts()[0]?.pages().length ?? 0).toBeGreaterThan(0)
     const page = browser.contexts()[0].pages()[0]
 
@@ -71,6 +72,10 @@ test('the packaged app starts from app.asar, saves and closes', async () => {
     console.log(`--- output of ${EXE}:\n${output.trim() || '(none)'}`)
     throw error
   } finally {
+    // Drop the CDP connection ourselves: left open, Playwright's teardown
+    // (trace) touches it after the app has exited and fails the test although
+    // every check passed (seen in the v2.1.0 dry run on Linux)
+    await browser?.close().catch(() => {})
     child.kill()
     try {
       fs.rmSync(dir, { recursive: true, force: true })

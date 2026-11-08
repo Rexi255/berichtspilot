@@ -72,11 +72,27 @@ Releases are immutable: a published release can't get new or replaced files,
 a broken one is fixed with the next patch version — so the dry run right
 before tagging matters.
 
-**Dependencies are current (8.7, 2026-11-07)** and ship as **v2.0.4**.
+**v2.0.4 is out** (2026-11-07, release published 20:03 UTC): the dependency
+update 8.7 (Electron 45.2). `main` = v2.0.4 (merge of PR #27, 3ba9eec).
 
-**Next: the UI overhaul (v2.1)** — "Later / to-do" → its workflow step 1
-(baseline: demo `daten.json` fixture + project skill `ui-shots`). The *what*
-is still open: ask the user what bothers them in the current UI before step 2.
+**Release v2.1.0 (step 11.10) is running** (user's go + permission for the
+merge and the tag, 2026-11-08): version bump + CHANGELOG `## [2.1.0]` →
+dry run → PR `development` → `main` → tag `v2.1.0`. If this paragraph is
+still here, check `gh run list`, `gh pr list` and the tags and continue the
+procedure where it stopped. Background: the UI
+overhaul (phase 11, `docs/DESIGN.md`, E-032/E-033) is complete on
+`development` (11.1–11.9, 2026-11-07/08). On 2026-11-08 the user ran
+`/code-review` and `/security-review` over `main...development`: the security
+review found nothing; the 10 code-review findings are fixed in 11.9b (two-step
+delete, AI per day keeps the week panel, visible per-day prompt, "Urkunde" no
+longer flagged, badge follows the running week …). Before tagging: ask the user whether
+they want to try the dev build first (`npm start` from a scratch folder, or
+`npm run build:win` + the unpacked app with `--user-data-dir`), then follow the
+release procedure above with version 2.1.0 (schema v12: older versions can't
+open the file afterwards — the CHANGELOG section must say so, like 2.0 did).
+For any further UI work: check every visible change yourself with the
+`ui-shots` skill (Playwright, demo record) and read the screenshots — the user
+asked for that explicitly.
 
 **Dependabot** (E-027) opens its PRs against `development` on Mondays. Merge
 green ones with `gh pr merge <n> --squash` (the repo deletes merged branches
@@ -104,6 +120,10 @@ Locally npm 11.16+ warns about `electron-winstaller`'s install script
 install script; it downloads its binary on the first start.
 
 ## Open questions (for the user)
+
+0. ~~**Release v2.1.0 now, or test the dev build first?**~~ Answered
+   2026-11-08: release now, the user gave Claude permission to merge into
+   `main` and push the tag.
 
 1. **Step 9.3b — the account part is left for the user (no decision
    needed):** two-factor authentication is on (user, 2026-10-20); still
@@ -379,6 +399,95 @@ anything new is built.
       wire + start from `app.asar` over CDP) (2026-10-17; mutation checks:
       flush disabled → fails, unfused binary → fuse check fails)
 
+### Phase 11 — UI overhaul v2.1 (E-032, E-033, `docs/DESIGN.md`)
+Only the interface changes; `format.js`, its tests, `OUTPUT_FORMAT.md`,
+`storage.js`, IPC and preload stay untouched. Answers of 2026-11-07: AI per
+day in the notes area + the week panel stays; Strg+1–3 copies, views move to
+Strg+Umschalt+1–4; "Fertig x von y" counts the weeks due so far (training
+start → current week, so Fertig + Entwürfe + Ohne Eintrag = y); first
+checkpoint is a styleguide in code, no HTML prototype.
+- [x] 11.1 Baseline: fictional demo record `e2e/fixtures/demo-daten.json`
+      (generator `make-demo.mjs`, "today" 2026-11-04), project skill
+      `ui-shots` (Playwright, browser build or Electron, console + overflow
+      check), `src/demo-fixture.test.js`; "before" shots taken (2026-11-07)
+- [x] 11.2 Docs: `docs/DESIGN.md`, E-032, E-033, this phase, glossary (2026-11-07)
+- [x] 11.3 Pure logic, no visible change (2026-11-07; the week AI panel already
+      uses `promptSensitive()`, so the new "Kunde" check can't fire on the
+      prompt's own rules): `src/lib/overview.js` (missing/due
+      weeks, stats, `dayState`, `weekProgress`, `yearBand`, `weekRows`,
+      `searchWeeks`), `preview.js` (lines + whitespace marks, invariant: parts
+      join to the input), `shortcuts.js`, `contrast.js`, `findSensitive()`
+      `customer` kind + user text only, per-day `buildPrompt(…, { dates })`,
+      `dayChoice()`/`withChoice()` in `model.js` — all with tests
+- [x] 11.4 Tokens (`index.css`, `data-mode`/`data-accent`), fonts (Bricolage,
+      Instrument Sans, JetBrains Mono), `basics.jsx` (Card, StatusChip,
+      DayCell, Kbd, Tooltip, Menu …), schema v12 + `src/theme.test.js`,
+      Settings → Aussehen, dev styleguide view → **checkpoint with the user**
+      (2026-11-07: done; old token names stay as aliases until 11.9, so the
+      not yet rebuilt views keep working; the styleguide opens at
+      `#styleguide` in the browser build; light accents darkened to reach
+      4.5:1 on every surface; the user approved the screenshots:
+      "Sieht gut aus. Weitermachen")
+- [x] 11.5 Shell: Titlebar, Sidebar (collapse 68 px + Strg+B, badge, chip
+      "Lokal · kein Konto" with save state, mode switch), App (shortcuts,
+      fade, no aurora), toast, ErrorBoundary, UpdateHint; export/import →
+      Settings → Daten (2026-11-07; the editor's copy shortcut moved to
+      Strg+1–3 already here, since Strg+Umschalt+1–3 now switches views;
+      Settings → Tastaturkürzel reads `SHORTCUT_HELP`; checked: shortcuts,
+      collapse persisted, rail tooltips, failed save → red "Nicht
+      gespeichert" chip, focus ring by Tab, Electron in both modes)
+- [x] 11.6 Overview: header + search, three figures, warning bar, year band,
+      week list (last 8, grouped by month) (2026-11-07; GSAP/Lenis gone from
+      it; the Electron e2e finds KW 18 by the search now, since the list only
+      shows the newest 8 rows and that test runs with the real date; checked:
+      search by number/text, Strg+F, band click opens the week, 940 px)
+- [x] 11.7a Editor frame: header, day tabs (Alt+1–5), editor card with the
+      5-way type switch, bullets, school subjects, instructions card, notes
+      area (global switch) with "Als Stichpunkte übernehmen" (2026-11-07;
+      split into `src/views/editor/`; status days show the real output line
+      from `formatAll()` and a "zählt als Betriebstag/Schultag" switch;
+      notes beside the bullets of a work day from 672 px card width, above
+      the subjects of a school day; "Woche löschen" in the ⋯ menu relies on
+      the store's undo toast; tooltips render only while shown, so they
+      never widen a scroll area; checked at 940/1100/1280/1440 px)
+- [x] 11.7b Preview column: block cards, line count, "Leerzeichen anzeigen",
+      privacy warning + "Trotzdem kopieren", hide → copy bar, Strg+1–3/P;
+      e2e: preview text === copied text in every state (2026-11-07;
+      `e2e/preview.spec.mjs` in the browser project with the demo record:
+      exact text with markers on/off, button vs Strg+1/3, copy bar when
+      hidden, saved switches after a reload, the warning + second press;
+      toasts move above the copy bar via `--toast-bottom`)
+- [x] 11.7c AI per day (copy prompt → paste answer → check → apply, undo),
+      week AI panel + WebUntis panel restyled (2026-11-07; `parseDayResponse()`
+      also takes an answer without the date line; the per-day prompt is
+      checked like the week's (`promptSensitive()`), "Trotzdem kopieren"
+      on a hit; e2e covers prompt → answer → apply → undo)
+- [x] 11.8 Profiles, rest of Settings, setup wizard (2026-11-08; profiles:
+      one card level, weekdays as rows, stacked order list → form → dates and
+      periods in a narrow window; settings: one section component, switches
+      for the notes area and the preview under "Verhalten"; wizard: progress
+      as five segments, rows instead of boxes, no aurora)
+- [x] 11.9 Clean-up: drop `gsap`, `lenis`, `@fontsource-variable/inter`;
+      `backgroundColor` in main; accessibility/critique/ux-copy reviews;
+      README screenshots from the demo record; CHANGELOG (2026-11-08;
+      transition aliases and `Panel`/`SectionTitle` removed; start-up cache
+      of mode/accent against a dark flash; axe-core over every view in both
+      modes → the only finding, the scrollable preview, is focusable now;
+      UI copy without dashes as pauses or exclamation marks, also in store
+      messages, profile warnings and two Electron dialogs; README texts +
+      three screenshots from the demo record)
+- [x] 11.9b Fixes from `/code-review` + `/security-review` of `main...development`
+      (2026-11-08; security: no findings. Code: delete week/profile in two
+      steps (`Menu` items take `confirm`), applying one day's AI answer keeps
+      the week panel, Alt+←/→ on a day tab changes only the week, "Auftrag
+      ansehen" in the notes area (hard rule 6), customer pattern skips
+      Urkunde/Sekunden/erkunden/bekunden, `useCurrentMonday()` for sidebar
+      badge + overview, help "Alt+1 … 6", style examples computed once,
+      comment + test on validateData after migrateData, accent options from
+      `ACCENTS`/`ACCENT_NAMES`; 3 new e2e tests)
+- [ ] 11.10 Release v2.1.0 — **only on the user's go** (procedure under
+      "Next step")
+
 ### Later / to-do
 - [ ] Warning list for customer data: a local list of customer names / host
       names that the "Mit KI formulieren" check warns about (the regex
@@ -396,9 +505,12 @@ anything new is built.
 - [ ] Linux: set `desktopName` + `linux.syncDesktopName: true` in the
       electron-builder config so desktops link the running window to the
       AppImage's `.desktop` entry (hint printed by electron-builder 26.17)
-- [ ] Ideas from the old README roadmap: light theme, "copy all 3 blocks",
-      full export/PDF, copy a single day from the previous week, character counter
-- [ ] **UI overhaul — planned for v2.1, not part of V2** (user, 2026-10-10).
+- [ ] Ideas from the old README roadmap: "copy all 3 blocks",
+      full export/PDF, copy a single day from the previous week, character
+      counter (the light theme comes with phase 11)
+- [x] ~~**UI overhaul — planned for v2.1, not part of V2** (user, 2026-10-10).~~
+      → now Phase 11; the workflow below was its first sketch (Claude Design
+      exploration replaced by the user's direction from another chat).
       Workflow agreed in chat (the *how*; the *what* is still open). The user
       (2026-11-07): the design gets redone more or less completely.
   1. Baseline: demo `daten.json` fixture (no customer data, reusable for README
@@ -478,3 +590,16 @@ anything new is built.
 | 2026-10-19 | 9.3b (repository part): rulesets `Release tags`/`main`/`development`, SHA pinning, release immutability, Dependabot alerts + security updates — set by Claude on the user's request; release dry run green (run 39316661700) | 07b0201 (docs) |
 | 2026-10-19 | v2.0.3: bump + CHANGELOG, dry run green (run 39325088802), PR #16 merged, tag pushed, release run green (39325719252, first real `release` job), feed checked | 21d4956, 183a6e1, tag `v2.0.3` |
 | 2026-10-20 | `main` and `development` brought level on the user's request (post-release docs + #17, no app code) | PR `development` → `main` |
+| 2026-11-07 | 8.7: all dependencies current (Electron 45.2), released as v2.0.4 | d5783b7, 09b8689, tag `v2.0.4` |
+| 2026-11-07 | 11.1: demo record + `ui-shots` skill (Playwright self-check) | 22187db |
+| 2026-11-07 | 11.2: `docs/DESIGN.md`, E-032, E-033, phase 11 | 00188d8 |
+| 2026-11-07 | 11.3: pure logic (overview, preview, shortcuts, contrast, per-day prompt, 5-way switch) | 4eb0c28 |
+| 2026-11-07 | 11.4: tokens, fonts, building blocks, schema v12, styleguide; checkpoint approved by the user | 88f54a8 |
+| 2026-11-07 | 11.5: shell (sidebar rail, title bar, CSS motion, global shortcuts) | 594cea1 |
+| 2026-11-07 | 11.6: overview (figures, missing weeks, year band, week list, search) | befbc8d |
+| 2026-11-07 | 11.7a: editor frame (day tabs, 5-way switch, notes area) | c1a23eb |
+| 2026-11-07 | 11.7b: exact preview, whitespace markers, privacy check, copy bar | 6e6513c |
+| 2026-11-07 | 11.7c: AI per day, week AI + WebUntis panels restyled | b8b30ec |
+| 2026-11-08 | 11.8: profiles, settings, setup wizard | b93c62e |
+| 2026-11-08 | 11.9: clean-up, a11y (axe-core) + copy pass, README; CI green (run 42482075316) | ad7bfce |
+| 2026-11-08 | 11.9b: fixes from code + security review (10 findings, 3 new e2e tests) | d034dfa |

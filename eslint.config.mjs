@@ -6,7 +6,8 @@ import react from 'eslint-plugin-react'
 import reactHooks from 'eslint-plugin-react-hooks'
 
 export default [
-  { ignores: ['dist/**', 'release/**', 'node_modules/**'] },
+  // scratch/ holds local, never committed experiments (.gitignore)
+  { ignores: ['dist/**', 'release/**', 'node_modules/**', 'scratch/**'] },
 
   js.configs.recommended,
 
@@ -38,9 +39,10 @@ export default [
     },
   },
 
-  // Playwright: tests run in Node, page.evaluate() callbacks in the browser
+  // Playwright: tests and the ui-shots skill run in Node, page.evaluate()
+  // callbacks in the browser
   {
-    files: ['e2e/**/*.mjs', 'playwright.config.mjs'],
+    files: ['e2e/**/*.mjs', 'playwright.config.mjs', '.claude/skills/**/*.mjs'],
     languageOptions: {
       ecmaVersion: 'latest',
       sourceType: 'module',

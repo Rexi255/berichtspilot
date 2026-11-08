@@ -77,7 +77,7 @@ function checkSaveData(data) {
     !Array.isArray(data.profiles) ||
     !Array.isArray(data.weeks)
   ) {
-    return 'Ungültige Daten — es wurde nichts gespeichert.'
+    return 'Ungültige Daten, es wurde nichts gespeichert.'
   }
   return null
 }

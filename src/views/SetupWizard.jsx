@@ -1,22 +1,12 @@
 // Setup wizard ("Einrichtung"): opens on a fresh install (settings.setupDone ===
 // false) and from Settings → Verhalten. Walks through training dates, the
 // current half-year profile, WebUntis and the start behavior; the logic
-// (suggestions, checks, applying) is in src/lib/setup.js.
+// (suggestions, checks, applying) is in src/lib/setup.js. One card, rows
+// separated by lines, progress as quiet segments (E-032).
 import { useState } from 'react'
-import {
-  ArrowLeftIcon,
-  ArrowRightIcon,
-  CheckIcon,
-  DownloadSimpleIcon,
-  GraduationCapIcon,
-  CalendarBlankIcon,
-  PlugsConnectedIcon,
-  SlidersHorizontalIcon,
-  SparkleIcon,
-  ShieldCheckIcon,
-} from '@phosphor-icons/react'
+import { ArrowLeftIcon, ArrowRightIcon, CheckIcon, DownloadSimpleIcon, ShieldCheckIcon, WarningIcon } from '@phosphor-icons/react'
 import { useStore } from '../store.jsx'
-import { Button, Input, Select, Segment, Panel, Field, Switch, cx } from '../ui/basics.jsx'
+import { Button, Card, Input, Select, Segment, Field, Switch, cx } from '../ui/basics.jsx'
 import { showToast } from '../ui/toast.jsx'
 import Logo from '../ui/Logo.jsx'
 import { SubjectEditor } from './Profiles.jsx'
@@ -25,15 +15,15 @@ import { STATES } from '../lib/holidays.js'
 import { SETUP_STEPS, setupDraft, setupErrors, trainingEndAfter } from '../lib/setup.js'
 import { parseWebuntisAddress } from '../lib/webuntis.js'
 
-// Steps with a progress dot (welcome has none)
-const STEP_META = {
-  training: { title: 'Deine Ausbildung', icon: GraduationCapIcon },
-  halfYear: { title: 'Aktuelles Schulhalbjahr', icon: CalendarBlankIcon },
-  webuntis: { title: 'WebUntis', icon: PlugsConnectedIcon },
-  behavior: { title: 'Beim Start', icon: SlidersHorizontalIcon },
-  summary: { title: 'Alles bereit', icon: CheckIcon },
+// The steps after the welcome screen, each one a segment of the progress bar
+const STEP_TITLES = {
+  training: 'Deine Ausbildung',
+  halfYear: 'Aktuelles Schulhalbjahr',
+  webuntis: 'WebUntis',
+  behavior: 'Beim Start',
+  summary: 'Alles bereit',
 }
-const DOTS = SETUP_STEPS.filter((s) => s !== 'welcome')
+const STEPS = SETUP_STEPS.filter((s) => s !== 'welcome')
 
 const DURATIONS = [
   { months: 24, label: '2 Jahre' },
@@ -43,31 +33,29 @@ const DURATIONS = [
 ]
 
 const stateName = (code) => STATES.find((s) => s.code === code)?.name ?? code
-const dateOrDash = (iso) => (iso ? formatDE(iso) : '—')
+const dateOrOpen = (iso) => (iso ? formatDE(iso) : 'offen')
 
 /* ------------------------------- Steps ------------------------------- */
 
 function WelcomeStep({ fresh, onStart, onImport, onSkip }) {
   return (
-    <div className="flex flex-col items-center py-6 text-center">
-      <Logo size={52} className="mb-4" />
-      <h1 className="text-[22px] font-semibold tracking-tight">
+    <div className="flex flex-col items-center px-8 py-10 text-center">
+      <Logo size={48} className="mb-4" />
+      <h1 className="font-display text-page font-medium text-ink">
         {fresh ? 'Willkommen bei Berichtspilot' : 'Einrichtung erneut durchlaufen'}
       </h1>
-      <p className="mt-3 max-w-md text-[13.5px] leading-relaxed text-ink-2">
-        In ein paar Schritten ist alles eingerichtet: dein Ausbildungszeitraum, das aktuelle
-        Schulhalbjahr mit Schul- und Betriebstagen und — wenn du magst — WebUntis.
-      </p>
-      <p className="mt-2 max-w-md text-[12.5px] text-ink-3">
-        Alles lässt sich später unter Profile und Einstellungen ändern.
+      <p className="mt-3 max-w-md text-body text-ink-2">
+        In ein paar Schritten ist alles eingerichtet: dein Ausbildungszeitraum, das aktuelle Schulhalbjahr mit
+        Schul- und Betriebstagen und, wenn du magst, WebUntis. Alles lässt sich später unter Profile und
+        Einstellungen ändern.
       </p>
       <div className="mt-7 flex flex-col items-center gap-2">
         <Button variant="primary" onClick={onStart} className="min-w-56">
-          <SparkleIcon size={15} /> Einrichtung starten
+          Einrichtung starten <ArrowRightIcon size={16} />
         </Button>
         {fresh && (
           <Button onClick={onImport} className="min-w-56" title="Export von einem anderen Gerät übernehmen">
-            <DownloadSimpleIcon size={15} /> Vorhandene Daten importieren
+            <DownloadSimpleIcon size={16} /> Vorhandene Daten importieren
           </Button>
         )}
         <Button variant="ghost" onClick={onSkip} className="min-w-56">
@@ -81,7 +69,7 @@ function WelcomeStep({ fresh, onStart, onImport, onSkip }) {
 function TrainingStep({ answers, set }) {
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-[13px] text-ink-2">
+      <p className="text-body text-ink-2">
         Mit Beginn und Ende zeigt die Übersicht deinen Fortschritt und erkennt fehlende Wochen.
       </p>
       <div className="grid grid-cols-2 gap-3">
@@ -93,7 +81,7 @@ function TrainingStep({ answers, set }) {
         </Field>
       </div>
       <div className="flex flex-wrap items-center gap-1.5">
-        <span className="mr-1 text-[12px] text-ink-3">Dauer:</span>
+        <span className="mr-1 text-meta text-ink-2">Dauer</span>
         {DURATIONS.map((d) => (
           <Button
             key={d.months}
@@ -106,8 +94,8 @@ function TrainingStep({ answers, set }) {
           </Button>
         ))}
       </div>
-      <Field label="Bundesland" hint="Bestimmt die Feiertage — sie werden automatisch eingetragen.">
-        <Select value={answers.state} onChange={(e) => set({ state: e.target.value })}>
+      <Field label="Bundesland" hint="Bestimmt die Feiertage, sie werden automatisch eingetragen.">
+        <Select value={answers.state} onChange={(e) => set({ state: e.target.value })} className="w-full">
           {STATES.map((s) => (
             <option key={s.code} value={s.code}>
               {s.name}
@@ -126,9 +114,9 @@ function HalfYearStep({ answers, set }) {
 
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-[13px] text-ink-2">
-        Welche Tage bist du in der Schule, welche im Betrieb? Daraus entstehen die Tage jeder neuen
-        Woche. Das nächste Halbjahr legst du später unter Profile an („Duplizieren“).
+      <p className="text-body text-ink-2">
+        Welche Tage bist du in der Schule, welche im Betrieb? Daraus entstehen die Tage jeder neuen Woche. Das
+        nächste Halbjahr legst du später unter Profile an („Duplizieren“).
       </p>
       <Field label="Name">
         <Input value={profile.name} onChange={(e) => patch({ name: e.target.value })} />
@@ -141,18 +129,18 @@ function HalfYearStep({ answers, set }) {
           <Input type="date" value={profile.validTo} onChange={(e) => patch({ validTo: e.target.value })} />
         </Field>
       </div>
-      <div className="flex flex-col gap-1.5">
+      <div className="border-t border-line">
         {WEEKDAY_KEYS.map((key) => {
           const day = profile.weekdays[key] ?? { type: 'off', subjects: [] }
           return (
-            <div
-              key={key}
-              className={cx('rounded-lg border border-white/[0.06] bg-inset/30 px-3 py-2', day.type === 'off' && 'opacity-70')}
-            >
-              <div className="flex items-center gap-3">
-                <span className="w-24 text-[13px] font-medium">{WEEKDAY_LABELS[key]}</span>
+            <div key={key} className="flex flex-col gap-2 border-b border-line py-3">
+              <div className="flex flex-wrap items-center gap-3">
+                <span className={cx('w-24 text-body font-medium', day.type === 'off' ? 'text-ink-2' : 'text-ink')}>
+                  {WEEKDAY_LABELS[key]}
+                </span>
                 <Segment
                   size="sm"
+                  label={`${WEEKDAY_LABELS[key]}: Art`}
                   options={[
                     { value: 'work', label: 'Betrieb' },
                     { value: 'school', label: 'Schule' },
@@ -162,7 +150,7 @@ function HalfYearStep({ answers, set }) {
                   onChange={(type) => patchDay(key, { type })}
                 />
                 {day.type === 'school' && !(day.subjects?.length > 0) && (
-                  <span className="text-[11.5px] text-ink-3">Fächer eintragen (oder später ergänzen)</span>
+                  <span className="text-meta text-ink-2">Fächer eintragen oder später ergänzen</span>
                 )}
               </div>
               {day.type === 'school' && (
@@ -180,17 +168,19 @@ function WebuntisStep({ answers, set }) {
   const parsed = answers.webuntisAddress.trim() ? parseWebuntisAddress(answers.webuntisAddress) : null
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-[13px] text-ink-2">
-        Nutzt deine Berufsschule WebUntis, kann Berichtspilot Schultage, Fächer und Lehrstoff einer
-        Woche daraus übernehmen. Ohne WebUntis funktioniert alles genauso — nur von Hand.
+      <p className="text-body text-ink-2">
+        Nutzt deine Berufsschule WebUntis, kann Berichtspilot Schultage, Fächer und Lehrstoff einer Woche daraus
+        übernehmen. Ohne WebUntis funktioniert alles genauso, nur von Hand.
       </p>
       <Segment
+        label="WebUntis"
         options={[
           { value: true, label: 'Mit WebUntis' },
           { value: false, label: 'Ohne WebUntis' },
         ]}
         value={answers.webuntisEnabled}
         onChange={(webuntisEnabled) => set({ webuntisEnabled })}
+        className="w-fit"
       />
       {answers.webuntisEnabled && (
         <>
@@ -206,16 +196,17 @@ function WebuntisStep({ answers, set }) {
             />
           </Field>
           {parsed?.ok && (
-            <p className="text-[12px] text-done">
+            <p className="flex items-center gap-1.5 text-meta text-ink">
+              <CheckIcon size={14} className="text-accent" />
               Erkannt: Server {parsed.host}
-              {parsed.school ? ` · Schule „${parsed.school}“` : ''}
+              {parsed.school ? `, Schule „${parsed.school}“` : ''}
             </p>
           )}
-          <p className="flex items-start gap-1.5 text-[11.5px] text-ink-3">
+          <p className="flex items-start gap-1.5 text-meta text-ink-2">
             <ShieldCheckIcon size={14} className="mt-px shrink-0" />
             <span>
-              Angemeldet wird erst, wenn du im Editor „Aus WebUntis füllen“ nutzt — in einem eigenen
-              Fenster direkt bei deiner Schule. Berichtspilot sieht dein Passwort nie.
+              Angemeldet wird erst, wenn du im Editor „Aus WebUntis“ nutzt, in einem eigenen Fenster direkt bei
+              deiner Schule. Berichtspilot sieht dein Passwort nie.
             </span>
           </p>
         </>
@@ -233,20 +224,16 @@ function BehaviorStep({ answers, set }) {
           onChange={(autoCreateWeek) => set({ autoCreateWeek })}
           label="Aktuelle Woche beim Start anlegen"
         />
-        <p className="mt-1.5 text-[12.5px] text-ink-3">
-          Fehlt die laufende Woche, legt die App sie Montag bis Freitag beim Start automatisch an — mit
-          deinen Schul- und Betriebstagen und den Feiertagen.
+        <p className="mt-1 text-meta text-ink-2">
+          Fehlt die laufende Woche, legt die App sie von Montag bis Freitag beim Start an, mit deinen Schul- und
+          Betriebstagen und den Feiertagen.
         </p>
       </div>
       <div>
-        <Switch
-          checked={answers.updateCheck}
-          onChange={(updateCheck) => set({ updateCheck })}
-          label="Beim Start nach Updates suchen"
-        />
-        <p className="mt-1.5 text-[12.5px] text-ink-3">
-          Fragt bei jedem Start einmal bei GitHub nach einer neuen Version — dabei wird nur die
-          App-Version übertragen, keine Berichtsdaten. Installiert wird nur, wenn du darauf klickst.
+        <Switch checked={answers.updateCheck} onChange={(updateCheck) => set({ updateCheck })} label="Beim Start nach Updates suchen" />
+        <p className="mt-1 text-meta text-ink-2">
+          Fragt bei jedem Start einmal bei GitHub nach einer neuen Version. Dabei wird nur die App-Version
+          übertragen, keine Berichtsdaten. Installiert wird nur, wenn du darauf klickst.
         </p>
       </div>
     </div>
@@ -255,9 +242,9 @@ function BehaviorStep({ answers, set }) {
 
 function SummaryRow({ label, children }) {
   return (
-    <div className="flex gap-3 border-b border-white/[0.05] py-2 last:border-b-0">
-      <div className="w-36 shrink-0 text-[12.5px] text-ink-3">{label}</div>
-      <div className="min-w-0 flex-1 text-[13px] text-ink">{children}</div>
+    <div className="flex gap-3 border-b border-line py-2.5">
+      <div className="w-36 shrink-0 text-body text-ink-2">{label}</div>
+      <div className="min-w-0 flex-1 text-body text-ink">{children}</div>
     </div>
   )
 }
@@ -270,16 +257,16 @@ function SummaryStep({ answers }) {
   const address = answers.webuntisEnabled ? parseWebuntisAddress(answers.webuntisAddress) : null
   return (
     <div className="flex flex-col gap-3">
-      <p className="text-[13px] text-ink-2">So wird Berichtspilot eingerichtet:</p>
-      <div className="rounded-lg border border-white/[0.06] bg-inset/30 px-4 py-1">
+      <p className="text-body text-ink-2">So wird Berichtspilot eingerichtet:</p>
+      <div className="border-t border-line">
         <SummaryRow label="Ausbildung">
           {answers.trainingStart || answers.trainingEnd
-            ? `${dateOrDash(answers.trainingStart)} – ${dateOrDash(answers.trainingEnd)}`
+            ? `${dateOrOpen(answers.trainingStart)} bis ${dateOrOpen(answers.trainingEnd)}`
             : 'nicht angegeben'}
         </SummaryRow>
         <SummaryRow label="Bundesland">{stateName(answers.state)}</SummaryRow>
         <SummaryRow label="Halbjahr">
-          {profile.name} ({dateOrDash(profile.validFrom)} – {dateOrDash(profile.validTo)})
+          {profile.name} ({dateOrOpen(profile.validFrom)} bis {dateOrOpen(profile.validTo)})
         </SummaryRow>
         <SummaryRow label="Schultage">
           {schoolDays.length === 0
@@ -289,7 +276,7 @@ function SummaryStep({ answers }) {
                 return (
                   <div key={k}>
                     {WEEKDAY_LABELS[k]}
-                    {subjects.length > 0 && <span className="text-ink-3"> — {subjects.join(', ')}</span>}
+                    {subjects.length > 0 && <span className="text-ink-2">: {subjects.join(', ')}</span>}
                   </div>
                 )
               })}
@@ -298,15 +285,12 @@ function SummaryStep({ answers }) {
           {workDays.length === 0 ? 'keine' : workDays.map((k) => WEEKDAY_LABELS[k]).join(', ')}
         </SummaryRow>
         <SummaryRow label="WebUntis">
-          {address?.ok ? `${address.host}${address.school ? ` · ${address.school}` : ''}` : 'aus'}
+          {address?.ok ? `${address.host}${address.school ? `, ${address.school}` : ''}` : 'aus'}
         </SummaryRow>
         <SummaryRow label="Beim Start">
-          {[
-            answers.autoCreateWeek ? 'aktuelle Woche anlegen' : null,
-            answers.updateCheck ? 'nach Updates suchen' : null,
-          ]
+          {[answers.autoCreateWeek ? 'aktuelle Woche anlegen' : null, answers.updateCheck ? 'nach Updates suchen' : null]
             .filter(Boolean)
-            .join(' · ') || '—'}
+            .join(', ') || 'nichts'}
         </SummaryRow>
       </div>
     </div>
@@ -321,6 +305,33 @@ const STEP_BODY = {
   webuntis: WebuntisStep,
   behavior: BehaviorStep,
   summary: SummaryStep,
+}
+
+// One segment per step: done and current in the accent, ahead in the raised
+// gray; done steps can be revisited
+function Progress({ step, go }) {
+  const current = STEPS.indexOf(step)
+  return (
+    <ol className="mb-4 grid grid-cols-5 gap-1.5" aria-label="Fortschritt der Einrichtung">
+      {STEPS.map((s, i) => (
+        <li key={s}>
+          <button
+            type="button"
+            onClick={() => i < current && go(s)}
+            disabled={i >= current}
+            aria-current={i === current ? 'step' : undefined}
+            aria-label={`${STEP_TITLES[s]}${i < current ? ', erledigt' : ''}`}
+            title={STEP_TITLES[s]}
+            className={cx(
+              'block h-1.5 w-full rounded-full transition-colors duration-150',
+              i <= current ? 'bg-accent' : 'bg-surface-2',
+              i < current && 'hover:bg-accent-hover'
+            )}
+          />
+        </li>
+      ))}
+    </ol>
+  )
 }
 
 export default function SetupWizard() {
@@ -356,64 +367,39 @@ export default function SetupWizard() {
     }
   }
 
-  const meta = STEP_META[step]
   const Body = STEP_BODY[step]
 
   return (
-    // .aurora clips (overflow: hidden, unlayered — beats Tailwind's overflow
-    // utilities), so the scrolling happens in an inner element
-    <main className="aurora min-h-0 flex-1">
+    <main className="min-h-0 flex-1 bg-canvas">
       <div className="h-full overflow-y-auto">
         <div className="mx-auto flex min-h-full max-w-2xl flex-col justify-center px-6 py-8">
           {step === 'welcome' ? (
-            <Panel className="px-8 py-6">
+            <Card>
               <WelcomeStep fresh={fresh} onStart={() => go('training')} onImport={importFromWizard} onSkip={skipSetup} />
-            </Panel>
+            </Card>
           ) : (
             <>
-              {/* progress: one dot per step, the current one with its title */}
-              <ol className="mb-4 flex items-center gap-2" aria-label="Fortschritt">
-                {DOTS.map((s, i) => {
-                  const done = i < DOTS.indexOf(step)
-                  const current = s === step
-                  return (
-                    <li key={s} className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => done && go(s)}
-                        disabled={!done}
-                        aria-current={current ? 'step' : undefined}
-                        title={STEP_META[s].title}
-                        className={cx(
-                          'grid h-6 w-6 place-items-center rounded-full text-[11px] font-semibold transition-colors duration-150',
-                          current && 'bg-accent text-inset',
-                          done && 'bg-accent/20 text-accent-light hover:bg-accent/30',
-                          !current && !done && 'bg-white/[0.06] text-ink-3'
-                        )}
-                      >
-                        {done ? <CheckIcon size={12} weight="bold" /> : i + 1}
-                      </button>
-                      {i < DOTS.length - 1 && <span className={cx('h-px w-6', done ? 'bg-accent/40' : 'bg-white/[0.08]')} />}
-                    </li>
-                  )
-                })}
-              </ol>
-
-              <Panel className="flex flex-col">
-                <div className="flex items-center gap-2 border-b border-white/[0.05] px-6 py-4">
-                  <meta.icon size={18} className="text-accent" />
-                  <h2 className="text-[16px] font-semibold">{meta.title}</h2>
-                  {step === 'webuntis' && <span className="text-[12px] text-ink-3">(optional)</span>}
+              <Progress step={step} go={go} />
+              <Card className="flex flex-col">
+                <div className="flex items-baseline gap-2 border-b border-line px-6 py-4">
+                  <h2 className="font-display text-[20px] font-medium leading-7 text-ink">{STEP_TITLES[step]}</h2>
+                  {step === 'webuntis' && <span className="text-meta text-ink-2">optional</span>}
                 </div>
                 <div className="px-6 py-5">{Body && <Body answers={answers} set={set} />}</div>
                 {errors.length > 0 && (
-                  <div className="mx-6 mb-4 rounded-lg border border-sick/30 bg-sick/[0.07] px-3 py-2 text-[12.5px] text-sick" role="alert">
-                    {errors.map((e) => (
-                      <div key={e}>{e}</div>
-                    ))}
+                  <div
+                    className="mx-6 mb-4 flex items-start gap-2 rounded-control border border-missing/50 bg-missing/[0.08] px-3 py-2 text-body text-ink"
+                    role="alert"
+                  >
+                    <WarningIcon size={16} className="mt-0.5 shrink-0 text-missing" />
+                    <div>
+                      {errors.map((e) => (
+                        <div key={e}>{e}</div>
+                      ))}
+                    </div>
                   </div>
                 )}
-                <div className="flex items-center gap-2 border-t border-white/[0.05] px-6 py-3">
+                <div className="flex items-center gap-2 border-t border-line px-6 py-3">
                   <Button variant="ghost" size="sm" onClick={skipSetup}>
                     {fresh ? 'Überspringen' : 'Abbrechen'}
                   </Button>
@@ -424,7 +410,7 @@ export default function SetupWizard() {
                   <Button variant="primary" size="sm" onClick={next}>
                     {step === 'summary' ? (
                       <>
-                        <CheckIcon size={14} weight="bold" /> Einrichtung abschließen
+                        <CheckIcon size={14} /> Einrichtung abschließen
                       </>
                     ) : (
                       <>
@@ -433,7 +419,7 @@ export default function SetupWizard() {
                     )}
                   </Button>
                 </div>
-              </Panel>
+              </Card>
             </>
           )}
         </div>

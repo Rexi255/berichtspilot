@@ -1,4 +1,5 @@
 // Custom title bar for the frameless window: drag zone + window controls.
+// Quiet on purpose (E-032): the name, nothing else — the content leads.
 import { useEffect, useState } from 'react'
 import { MinusIcon, SquareIcon, CopySimpleIcon, XIcon } from '@phosphor-icons/react'
 import { api } from '../store.jsx'
@@ -13,8 +14,9 @@ function WindowButton({ onClick, danger = false, label, children }) {
       aria-label={label}
       onClick={onClick}
       className={cx(
-        'no-drag flex h-full w-12 items-center justify-center text-ink-3 transition-colors duration-100',
-        danger ? 'hover:bg-[oklch(0.55_0.19_25)] hover:text-white' : 'hover:bg-white/[0.07] hover:text-ink'
+        'no-drag flex h-full w-11 items-center justify-center text-ink-2 transition-colors duration-100',
+        // the system's close red, so the button reads like every other window
+        danger ? 'hover:bg-[#c42b1c] hover:text-[#fcfcfa]' : 'hover:bg-surface-2 hover:text-ink'
       )}
     >
       {children}
@@ -28,27 +30,21 @@ export default function Titlebar() {
   useEffect(() => api.onMaximized(setMaximized), [])
 
   return (
-    <header className="drag relative z-20 flex h-11 shrink-0 items-stretch justify-between border-b border-white/[0.06] bg-base/80">
-      <div className="flex items-center gap-2.5 pl-4">
-        {/* App logo: an open training record book */}
-        <Logo size={17} />
-        <span className="text-[13px] font-semibold tracking-tight text-ink">Berichtspilot</span>
-        <span className="mt-px text-[11.5px] text-ink-3">Ausbildungsnachweise</span>
+    <header className="drag relative z-20 flex h-9 shrink-0 items-stretch justify-between border-b border-line bg-sidebar">
+      <div className="flex items-center gap-2 pl-3.5">
+        <Logo size={16} />
+        <span className="text-body font-medium text-ink">Berichtspilot</span>
       </div>
 
       <div className="flex items-stretch">
         <WindowButton label="Minimieren" onClick={() => api.minimize()}>
-          <MinusIcon size={15} weight="bold" />
+          <MinusIcon size={14} />
         </WindowButton>
         <WindowButton label={maximized ? 'Wiederherstellen' : 'Maximieren'} onClick={() => api.maximize()}>
-          {maximized ? (
-            <CopySimpleIcon size={14} weight="bold" style={{ transform: 'scaleX(-1)' }} />
-          ) : (
-            <SquareIcon size={13} weight="bold" />
-          )}
+          {maximized ? <CopySimpleIcon size={13} style={{ transform: 'scaleX(-1)' }} /> : <SquareIcon size={12} />}
         </WindowButton>
         <WindowButton label="Schließen" danger onClick={() => api.close()}>
-          <XIcon size={15} weight="bold" />
+          <XIcon size={14} />
         </WindowButton>
       </div>
     </header>

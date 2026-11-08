@@ -151,7 +151,7 @@ function createWebUntisSession({ fetchImpl, now = Date.now, electron = () => req
       width: 1000,
       height: 780,
       parent: parent && !parent.isDestroyed() ? parent : undefined,
-      title: 'WebUntis — Anmeldung',
+      title: 'WebUntis-Anmeldung',
       autoHideMenuBar: true,
       webPreferences: prefs,
     })

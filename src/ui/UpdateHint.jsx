@@ -34,15 +34,15 @@ export function UpdateAction({ hint, actions, className }) {
     return (
       <div className={className}>
         <div
-          className="h-1.5 overflow-hidden rounded-full bg-white/[0.07]"
+          className="h-1.5 overflow-hidden rounded-full bg-surface-2"
           role="progressbar"
           aria-valuemin={0}
           aria-valuemax={100}
           aria-valuenow={hint.percent}
         >
           <div
-            className="h-full rounded-full bg-accent transition-[width] duration-300 ease-(--ease-smooth)"
-            style={{ width: `${hint.percent}%` }}
+            className="h-full origin-left rounded-full bg-accent transition-transform duration-300 ease-out"
+            style={{ transform: `scaleX(${hint.percent / 100})` }}
           />
         </div>
       </div>
@@ -53,7 +53,7 @@ export function UpdateAction({ hint, actions, className }) {
       <Button size="sm" variant="primary" className={className} onClick={actions.install} disabled={actions.installing}>
         {actions.installing ? (
           <>
-            <CircleNotchIcon size={13} className="animate-spin" /> Wird gestartet …
+            <CircleNotchIcon size={14} className="animate-spin" /> Wird gestartet …
           </>
         ) : (
           'Jetzt installieren'
@@ -72,7 +72,7 @@ export function UpdateAction({ hint, actions, className }) {
 function subtitle(hint) {
   if (hint.step === 'download') return 'Neue Version verfügbar'
   if (hint.step === 'downloading') return `Wird heruntergeladen … ${hint.percent} %`
-  if (hint.step === 'install') return 'Bereit · App startet neu'
+  if (hint.step === 'install') return 'Bereit, die App startet neu'
   // Download or install failed — the retry downloads again (restores a missing installer too)
   return hint.error || 'Update fehlgeschlagen'
 }
@@ -96,13 +96,13 @@ export default function UpdateHint() {
 
   if (!hint) return null
   return (
-    <div className="mb-2 rounded-lg border border-accent/20 bg-accent/[0.06] p-2.5" aria-live="polite">
+    <div className="rounded-control border border-line bg-surface p-2.5" aria-live="polite">
       <div className="flex items-start gap-2">
-        <ArrowCircleUpIcon size={17} weight="fill" className="mt-px shrink-0 text-accent" />
-        <div className="min-w-0 leading-tight">
-          <div className="text-[12px] font-semibold text-ink">Update auf {versionLabel(hint.version)}</div>
+        <ArrowCircleUpIcon size={16} className="mt-0.5 shrink-0 text-ink-2" />
+        <div className="min-w-0">
+          <div className="text-meta font-medium text-ink">Update auf {versionLabel(hint.version)}</div>
           <div
-            className={hint.step === 'retry' ? 'mt-0.5 text-[10.5px] text-sick' : 'mt-0.5 text-[10.5px] text-ink-3'}
+            className={hint.step === 'retry' ? 'text-meta text-missing' : 'text-meta text-ink-2'}
             title={hint.step === 'retry' ? hint.error : undefined}
           >
             {subtitle(hint)}

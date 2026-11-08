@@ -1,20 +1,10 @@
 // Profile management: half-year profiles (weekdays, subjects, federal state),
-// periods (vacation/school breaks) + global training dates.
+// periods (vacation/school breaks) + global training dates. One card level
+// (E-032): rows inside a card are separated by lines.
 import { useMemo, useState } from 'react'
-import {
-  PlusIcon,
-  XIcon,
-  ArrowUpIcon,
-  ArrowDownIcon,
-  TrashIcon,
-  CalendarBlankIcon,
-  CopyIcon,
-  WarningIcon,
-  SunIcon,
-  ArrowRightIcon,
-} from '@phosphor-icons/react'
+import { PlusIcon, XIcon, ArrowUpIcon, ArrowDownIcon, TrashIcon, CopyIcon, ArrowRightIcon } from '@phosphor-icons/react'
 import { useStore } from '../store.jsx'
-import { Button, IconButton, Input, Select, Segment, Panel, Field, SectionTitle, Pill, cx } from '../ui/basics.jsx'
+import { Button, Card, IconButton, Input, Select, Segment, Field, Notice, cx } from '../ui/basics.jsx'
 import { WEEKDAY_KEYS, WEEKDAY_LABELS, formatDE } from '../lib/dates.js'
 import { STATES } from '../lib/holidays.js'
 import { checkProfiles } from '../lib/model.js'
@@ -26,6 +16,17 @@ const move = (arr, from, to) => {
   const [el] = copy.splice(from, 1)
   copy.splice(to, 0, el)
   return copy
+}
+
+const TYPE_LETTER = { work: 'B', school: 'S' }
+
+function CardHeader({ title, children }) {
+  return (
+    <div className="flex flex-wrap items-center gap-2 border-b border-line px-4 py-3">
+      <h2 className="mr-auto text-title font-medium text-ink">{title}</h2>
+      {children}
+    </div>
+  )
 }
 
 /* ----------------------- Subjects of a school day ----------------------- */
@@ -41,35 +42,47 @@ export function SubjectEditor({ subjects, onChange }) {
   }
 
   return (
-    <div className="mt-2 flex flex-col gap-1">
-      {subjects.map((label, i) => (
-        <div key={`${label}-${i}`} className="group/subject flex items-center gap-1">
-          <span className="flex h-7 min-w-24 items-center rounded-md border border-accent/15 bg-accent/[0.07] px-2.5 text-[12.5px] font-medium text-accent-light">
-            {label}
-          </span>
-          <div className="flex opacity-0 transition-opacity duration-150 group-hover/subject:opacity-100">
-            <IconButton label="Nach oben" disabled={i === 0} onClick={() => onChange(move(subjects, i, i - 1))}>
-              <ArrowUpIcon size={13} />
-            </IconButton>
-            <IconButton label="Nach unten" disabled={i === subjects.length - 1} onClick={() => onChange(move(subjects, i, i + 1))}>
-              <ArrowDownIcon size={13} />
-            </IconButton>
-            <IconButton label="Fach entfernen" danger onClick={() => onChange(subjects.filter((_, j) => j !== i))}>
-              <XIcon size={13} />
-            </IconButton>
-          </div>
+    <div className="flex flex-col gap-2">
+      {subjects.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {subjects.map((label, i) => (
+            <span
+              key={`${label}-${i}`}
+              className="group/subject inline-flex h-7 items-center gap-0.5 rounded-chip border border-line bg-surface-2 pl-2.5 pr-0.5 text-body font-medium text-ink"
+            >
+              {label}
+              <span className="flex opacity-0 transition-opacity duration-150 group-focus-within/subject:opacity-100 group-hover/subject:opacity-100">
+                <IconButton label="Nach vorn" size="sm" className="h-6 w-6" disabled={i === 0} onClick={() => onChange(move(subjects, i, i - 1))}>
+                  <ArrowUpIcon size={12} className="-rotate-90" />
+                </IconButton>
+                <IconButton
+                  label="Nach hinten"
+                  size="sm"
+                  className="h-6 w-6"
+                  disabled={i === subjects.length - 1}
+                  onClick={() => onChange(move(subjects, i, i + 1))}
+                >
+                  <ArrowDownIcon size={12} className="-rotate-90" />
+                </IconButton>
+                <IconButton label="Fach entfernen" size="sm" className="h-6 w-6" danger onClick={() => onChange(subjects.filter((_, j) => j !== i))}>
+                  <XIcon size={12} />
+                </IconButton>
+              </span>
+            </span>
+          ))}
         </div>
-      ))}
-      <div className="mt-1 flex items-center gap-1.5">
+      )}
+      <div className="flex items-center gap-1.5">
         <Input
           value={draft}
           placeholder="z. B. LF07 oder Englisch"
+          aria-label="Neues Fach"
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && add()}
-          className="h-8 max-w-52"
+          className="max-w-52"
         />
         <Button size="sm" onClick={add} disabled={!draft.trim()}>
-          <PlusIcon size={13} weight="bold" /> Fach
+          <PlusIcon size={14} /> Fach
         </Button>
       </div>
     </div>
@@ -110,34 +123,34 @@ function WebuntisSubjectMap({ profile }) {
           {l}
         </option>
       ))}
-      <option value={IGNORE}>— ignorieren —</option>
+      <option value={IGNORE}>ignorieren</option>
     </>
   )
 
   return (
-    <div>
-      <SectionTitle className="mb-2 px-1">WebUntis-Fächer</SectionTitle>
-      <Panel className="flex flex-col gap-2 px-4 py-3">
-        <p className="text-[12px] text-ink-3">
-          Gleich benannte Fächer (z. B. LF07) erkennt der Import selbst. Hier nur Abkürzungen eintragen
-          (z. B. kom → Kommunikation) oder Fächer ignorieren, die nicht ins Berichtsheft gehören.
+    <Card>
+      <CardHeader title="WebUntis-Fächer" />
+      <div className="flex flex-col gap-2 p-4">
+        <p className="text-meta text-ink-2">
+          Gleich benannte Fächer (z. B. LF07) erkennt der Import selbst. Hier nur Abkürzungen eintragen (z. B. kom →
+          Kommunikation) oder Fächer ignorieren, die nicht ins Berichtsheft gehören.
         </p>
         {entries.map(([key, value]) => (
           <div key={key} className="flex items-center gap-2">
-            <span className="flex h-7 w-28 items-center truncate rounded-md border border-white/[0.07] bg-inset/60 px-2.5 text-[12.5px] font-medium">
+            <span className="flex h-8 w-28 items-center truncate rounded-control border border-line bg-surface-2 px-2.5 text-body font-medium text-ink">
               {key}
             </span>
-            <ArrowRightIcon size={13} className="shrink-0 text-ink-3" />
+            <ArrowRightIcon size={14} className="shrink-0 text-ink-2" />
             <Select
               value={value === '' ? IGNORE : value}
               onChange={(e) => setWebuntisSubject(profile.id, key, e.target.value === IGNORE ? '' : e.target.value)}
-              className="h-7 w-48 text-[12.5px]"
+              className="w-48"
               aria-label={`Zuordnung für ${key}`}
             >
               {options(value)}
             </Select>
             <IconButton label="Zuordnung entfernen" danger onClick={() => setWebuntisSubject(profile.id, key, null)}>
-              <XIcon size={13} />
+              <XIcon size={14} />
             </IconButton>
           </div>
         ))}
@@ -148,25 +161,19 @@ function WebuntisSubjectMap({ profile }) {
               placeholder="z. B. kom"
               onChange={(e) => setShort(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && add()}
-              className="h-8"
               aria-label="Fach in WebUntis"
             />
           </div>
-          <ArrowRightIcon size={13} className="shrink-0 text-ink-3" />
-          <Select
-            value={choice}
-            onChange={(e) => setLabel(e.target.value)}
-            className="h-8 w-48 text-[12.5px]"
-            aria-label="Fach im Profil"
-          >
+          <ArrowRightIcon size={14} className="shrink-0 text-ink-2" />
+          <Select value={choice} onChange={(e) => setLabel(e.target.value)} className="w-48" aria-label="Fach im Profil">
             {options('')}
           </Select>
           <Button size="sm" onClick={add} disabled={!short.trim()}>
-            <PlusIcon size={13} weight="bold" /> Zuordnen
+            <PlusIcon size={14} /> Zuordnen
           </Button>
         </div>
-      </Panel>
-    </div>
+      </div>
+    </Card>
   )
 }
 
@@ -174,8 +181,8 @@ function WebuntisSubjectMap({ profile }) {
 
 function ProfileForm({ profile, onDuplicate }) {
   const { data, updateProfile, deleteProfile } = useStore()
+  const [armedId, setArmedId] = useState(null)
   const webuntisEnabled = data.settings.webuntis?.enabled === true
-  const [confirmDelete, setConfirmDelete] = useState(false)
 
   const patch = (p) => updateProfile(profile.id, (old) => ({ ...old, ...p }))
   const patchWeekday = (key, p) =>
@@ -193,7 +200,7 @@ function ProfileForm({ profile, onDuplicate }) {
         const day = p.weekdays[key]
         if (day?.type !== 'school' || !(day.subjects?.length > 0)) continue
         if (p.id === profile.id && key === targetKey) continue
-        sources.push({ profileId: p.id, key, label: `${WEEKDAY_LABELS[key]} — ${p.name}` })
+        sources.push({ profileId: p.id, key, label: `${WEEKDAY_LABELS[key]} (${p.name})` })
       }
     }
     return sources
@@ -206,104 +213,108 @@ function ProfileForm({ profile, onDuplicate }) {
   }
 
   return (
-    <div className="flex flex-col gap-5">
-      <Panel className="flex flex-col gap-4 p-5">
-        <div className="flex items-end gap-3">
-          <Field label="Name des Profils" className="flex-1">
+    <div className="flex flex-col gap-4">
+      <Card className="@container">
+        <CardHeader title="Profil">
+          <Button size="sm" variant="ghost" onClick={onDuplicate} title="Kopie dieses Profils anlegen, z. B. fürs nächste Halbjahr">
+            <CopyIcon size={14} /> Duplizieren
+          </Button>
+          {/* Two steps: the first click arms, the second deletes; leaving the button disarms */}
+          <Button
+            size="sm"
+            variant="danger"
+            onClick={() => (armedId === profile.id ? deleteProfile(profile.id) : setArmedId(profile.id))}
+            onBlur={() => setArmedId(null)}
+          >
+            <TrashIcon size={14} /> {armedId === profile.id ? 'Wirklich löschen?' : 'Löschen'}
+          </Button>
+        </CardHeader>
+        <div className="flex flex-col gap-4 p-4">
+          <Field label="Name des Profils">
             <Input value={profile.name} onChange={(e) => patch({ name: e.target.value })} />
           </Field>
-          <Button variant="ghost" onClick={onDuplicate} title="Kopie dieses Profils anlegen (z. B. fürs nächste Halbjahr)">
-            <CopyIcon size={15} /> Duplizieren
-          </Button>
-          {confirmDelete ? (
-            <Button variant="danger" onClick={() => deleteProfile(profile.id)} onBlur={() => setConfirmDelete(false)}>
-              Wirklich löschen?
-            </Button>
-          ) : (
-            <Button variant="ghost" onClick={() => setConfirmDelete(true)}>
-              <TrashIcon size={15} /> Löschen
-            </Button>
-          )}
+          <div className="grid grid-cols-2 gap-3 @3xl:grid-cols-4">
+            <Field label="Gültig von">
+              <Input type="date" value={profile.validFrom} onChange={(e) => patch({ validFrom: e.target.value })} />
+            </Field>
+            <Field label="Gültig bis">
+              <Input type="date" value={profile.validTo} onChange={(e) => patch({ validTo: e.target.value })} />
+            </Field>
+            <Field label="Bundesland" hint="steuert die Feiertage">
+              <Select value={profile.state} onChange={(e) => patch({ state: e.target.value })} className="w-full">
+                {STATES.map((s) => (
+                  <option key={s.code} value={s.code}>
+                    {s.name}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+            <Field label="Leere Stichpunkte" hint="Startvorlage je Betriebstag">
+              <Input
+                type="number"
+                min="1"
+                max="10"
+                value={profile.defaultBulletCount}
+                onChange={(e) => patch({ defaultBulletCount: Math.max(1, Math.min(10, Number(e.target.value) || 1)) })}
+              />
+            </Field>
+          </div>
         </div>
+      </Card>
 
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <Field label="Gültig von">
-            <Input type="date" value={profile.validFrom} onChange={(e) => patch({ validFrom: e.target.value })} />
-          </Field>
-          <Field label="Gültig bis">
-            <Input type="date" value={profile.validTo} onChange={(e) => patch({ validTo: e.target.value })} />
-          </Field>
-          <Field label="Bundesland" hint="steuert die Feiertage">
-            <Select value={profile.state} onChange={(e) => patch({ state: e.target.value })}>
-              {STATES.map((s) => (
-                <option key={s.code} value={s.code}>
-                  {s.name}
-                </option>
-              ))}
-            </Select>
-          </Field>
-          <Field label="Leere Stichpunkte" hint="Startvorlage je Betriebstag">
-            <Input
-              type="number"
-              min="1"
-              max="10"
-              value={profile.defaultBulletCount}
-              onChange={(e) => patch({ defaultBulletCount: Math.max(1, Math.min(10, Number(e.target.value) || 1)) })}
-            />
-          </Field>
-        </div>
-      </Panel>
-
-      <div>
-        <SectionTitle className="mb-2 px-1">Wochentage</SectionTitle>
-        <div className="flex flex-col gap-1.5">
-          {WEEKDAY_KEYS.map((key) => {
-            const day = profile.weekdays[key] ?? { type: 'off', subjects: [] }
-            return (
-              <Panel key={key} className={cx('shrink-0 px-4 py-3', day.type === 'off' && 'opacity-70')}>
-                <div className="flex items-center gap-3">
-                  <span className="w-24 text-[13.5px] font-medium">{WEEKDAY_LABELS[key]}</span>
-                  <Segment
-                    size="sm"
-                    options={[
-                      { value: 'work', label: 'Betrieb' },
-                      { value: 'school', label: 'Schule' },
-                      { value: 'off', label: 'Frei' },
-                    ]}
-                    value={day.type}
-                    onChange={(type) => patchWeekday(key, { type })}
-                  />
-                  <span className="text-[12px] text-ink-3">
-                    {day.type === 'work' && '→ Block „Betriebliche Tätigkeiten"'}
-                    {day.type === 'school' && '→ Block „Berufsschule"'}
-                    {day.type === 'off' && 'wird ignoriert'}
-                  </span>
+      <Card>
+        <CardHeader title="Wochentage" />
+        {WEEKDAY_KEYS.map((key) => {
+          const day = profile.weekdays[key] ?? { type: 'off', subjects: [] }
+          const sources = day.type === 'school' ? subjectSources(key) : []
+          return (
+            <div key={key} className="flex flex-col gap-3 border-b border-line px-4 py-3 last:border-b-0">
+              <div className="flex flex-wrap items-center gap-3">
+                <span className={cx('w-24 text-body font-medium', day.type === 'off' ? 'text-ink-2' : 'text-ink')}>
+                  {WEEKDAY_LABELS[key]}
+                </span>
+                <Segment
+                  size="sm"
+                  label={`${WEEKDAY_LABELS[key]}: Art`}
+                  options={[
+                    { value: 'work', label: 'Betrieb' },
+                    { value: 'school', label: 'Schule' },
+                    { value: 'off', label: 'Frei' },
+                  ]}
+                  value={day.type}
+                  onChange={(type) => patchWeekday(key, { type })}
+                />
+                <span className="text-meta text-ink-2">
+                  {day.type === 'work' && 'Block 1, Betriebliche Tätigkeiten'}
+                  {day.type === 'school' && 'Block 3, Berufsschule'}
+                  {day.type === 'off' && 'nicht im Bericht'}
+                </span>
+              </div>
+              {day.type === 'school' && (
+                <div className="flex flex-col gap-2 pl-0 @xl:pl-27">
+                  <SubjectEditor subjects={day.subjects ?? []} onChange={(subjects) => patchWeekday(key, { subjects })} />
+                  {sources.length > 0 && (
+                    <Select
+                      value=""
+                      onChange={(e) => e.target.value && copySubjects(key, e.target.value)}
+                      className="w-fit text-meta text-ink-2"
+                      title="Fächerliste eines anderen Schultags in diesen Tag kopieren"
+                      aria-label="Fächer übernehmen von"
+                    >
+                      <option value="">Fächer übernehmen von …</option>
+                      {sources.map((s) => (
+                        <option key={`${s.profileId}|${s.key}`} value={`${s.profileId}|${s.key}`}>
+                          {s.label}
+                        </option>
+                      ))}
+                    </Select>
+                  )}
                 </div>
-                {day.type === 'school' && (
-                  <>
-                    <SubjectEditor subjects={day.subjects ?? []} onChange={(subjects) => patchWeekday(key, { subjects })} />
-                    {subjectSources(key).length > 0 && (
-                      <Select
-                        value=""
-                        onChange={(e) => e.target.value && copySubjects(key, e.target.value)}
-                        className="mt-2 h-7 text-[11.5px] text-ink-3"
-                        title="Fächerliste eines anderen Schultags in diesen Tag kopieren"
-                      >
-                        <option value="">Fächer übernehmen von …</option>
-                        {subjectSources(key).map((s) => (
-                          <option key={`${s.profileId}|${s.key}`} value={`${s.profileId}|${s.key}`}>
-                            {s.label}
-                          </option>
-                        ))}
-                      </Select>
-                    )}
-                  </>
-                )}
-              </Panel>
-            )
-          })}
-        </div>
-      </div>
+              )}
+            </div>
+          )
+        })}
+      </Card>
 
       {webuntisEnabled && <WebuntisSubjectMap profile={profile} />}
     </div>
@@ -312,59 +323,49 @@ function ProfileForm({ profile, onDuplicate }) {
 
 /* ------------------- Periods (vacation / school breaks) ------------------- */
 
-function PeriodPanel() {
+function PeriodCard() {
   const { data, createPeriod, updatePeriod, deletePeriod } = useStore()
 
   return (
-    <Panel className="flex shrink-0 flex-col gap-3 p-4">
-      <SectionTitle className="flex items-center gap-1.5">
-        <SunIcon size={13} /> Zeiträume (Urlaub / Ferien)
-      </SectionTitle>
+    <Card>
+      <CardHeader title="Urlaub und Ferien">
+        <Button size="sm" variant="ghost" onClick={createPeriod}>
+          <PlusIcon size={14} /> Zeitraum
+        </Button>
+      </CardHeader>
       {data.periods.map((p) => (
-        <div key={p.id} className="flex flex-col gap-1.5 rounded-lg border border-white/[0.06] bg-inset/40 p-2.5">
+        <div key={p.id} className="flex flex-col gap-1.5 border-b border-line px-4 py-3">
           <div className="flex items-center gap-1.5">
             <Select
               value={p.type}
               onChange={(e) => updatePeriod(p.id, { type: e.target.value })}
-              className="h-8 flex-1 text-[12.5px]"
+              className="flex-1"
+              aria-label="Art des Zeitraums"
             >
               <option value="vacation">Urlaub</option>
               <option value="schoolBreak">Schulferien</option>
             </Select>
-            <IconButton label="Zeitraum löschen" danger onClick={() => deletePeriod(p.id)}>
-              <XIcon size={13} />
+            <IconButton label="Zeitraum löschen" side="top-end" danger onClick={() => deletePeriod(p.id)}>
+              <XIcon size={14} />
             </IconButton>
           </div>
           <Input
             value={p.label}
             placeholder="Bezeichnung (optional)"
+            aria-label="Bezeichnung"
             onChange={(e) => updatePeriod(p.id, { label: e.target.value })}
-            className="h-8 text-[12.5px]"
           />
           <div className="grid grid-cols-2 gap-1.5">
-            <Input
-              type="date"
-              value={p.from}
-              onChange={(e) => updatePeriod(p.id, { from: e.target.value })}
-              className="h-8 text-[12px]"
-            />
-            <Input
-              type="date"
-              value={p.to}
-              onChange={(e) => updatePeriod(p.id, { to: e.target.value })}
-              className="h-8 text-[12px]"
-            />
+            <Input type="date" aria-label="Von" value={p.from} onChange={(e) => updatePeriod(p.id, { from: e.target.value })} />
+            <Input type="date" aria-label="Bis" value={p.to} onChange={(e) => updatePeriod(p.id, { to: e.target.value })} />
           </div>
         </div>
       ))}
-      <Button size="sm" onClick={createPeriod} className="w-fit">
-        <PlusIcon size={13} weight="bold" /> Zeitraum
-      </Button>
-      <p className="text-[11.5px] text-ink-3">
-        Urlaub setzt leere Tage im Zeitraum automatisch auf „Urlaub" (auch in bestehenden Wochen).
-        Schulferien machen Schultage beim Anlegen neuer Wochen zu Betriebstagen.
+      <p className="px-4 py-3 text-meta text-ink-2">
+        Urlaub setzt leere Tage im Zeitraum auf „Urlaub“, auch in bestehenden Wochen. Schulferien machen Schultage
+        beim Anlegen neuer Wochen zu Betriebstagen.
       </p>
-    </Panel>
+    </Card>
   )
 }
 
@@ -390,107 +391,97 @@ export default function Profiles() {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex items-end justify-between px-8 pb-5 pt-7">
-        <div>
-          <h1 className="text-[22px] font-semibold tracking-tight">Profile</h1>
-          <p className="mt-1 text-[13px] text-ink-2">
-            Ein Profil pro Halbjahr — die App wählt anhand des Wochendatums automatisch das passende.
-          </p>
+      <header className="flex flex-wrap items-center gap-3 px-6 pb-4 pt-5">
+        <div className="mr-auto">
+          <h1 className="font-display text-page font-medium text-ink">Profile</h1>
+          <p className="text-meta text-ink-2">Ein Profil pro Halbjahr. Die App wählt anhand des Wochendatums das passende.</p>
         </div>
         <Button variant="primary" onClick={addProfile}>
-          <PlusIcon size={15} weight="bold" /> Neues Profil
+          <PlusIcon size={16} /> Neues Profil
         </Button>
-      </div>
+      </header>
 
-      {warnings.length > 0 && (
-        <div className="px-8 pb-4">
-          <Panel className="border-draft/25 bg-draft/[0.05] px-4 py-3">
-            <div className="flex items-start gap-2.5">
-              <WarningIcon size={16} className="mt-0.5 shrink-0 text-draft" />
-              <div className="flex min-w-0 flex-col gap-1">
-                {warnings.map((w, i) => (
-                  <span key={i} className="text-[12.5px] leading-snug text-ink-2">
-                    {w}
+      <div className="@container min-h-0 flex-1 overflow-y-auto px-6 pb-6">
+        {warnings.length > 0 && (
+          <Notice className="mb-4 max-w-[1100px]">
+            <ul className="flex flex-col gap-1">
+              {warnings.map((w, i) => (
+                <li key={i}>{w}</li>
+              ))}
+            </ul>
+          </Notice>
+        )}
+
+        {/* Wide: list + dates + periods on the left, the form spanning the
+            right. Stacked (narrow window): list, then the form, then the rest —
+            so the profile being edited never ends up below all periods. */}
+        <div className="grid max-w-[1100px] gap-4 @4xl:grid-cols-[280px_minmax(0,1fr)] @4xl:items-start">
+          <div className="flex flex-col gap-4 @4xl:col-start-1 @4xl:row-start-1">
+            <Card className="overflow-hidden">
+              <CardHeader title="Halbjahre" />
+              {data.profiles.map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  aria-current={active?.id === p.id ? 'true' : undefined}
+                  onClick={() => setActiveId(p.id)}
+                  className={cx(
+                    'flex w-full flex-col gap-1.5 border-b border-line px-4 py-3 text-left transition-colors duration-150 last:border-b-0',
+                    active?.id === p.id ? 'bg-surface-2' : 'hover:bg-surface-2/60'
+                  )}
+                >
+                  <span className="text-body font-medium text-ink">{p.name}</span>
+                  <span className="text-meta tabular-nums text-ink-2">
+                    {p.validFrom ? formatDE(p.validFrom) : 'offen'} bis {p.validTo ? formatDE(p.validTo) : 'offen'}
                   </span>
-                ))}
-              </div>
-            </div>
-          </Panel>
-        </div>
-      )}
-
-      <div className="grid min-h-0 flex-1 grid-cols-[280px_1fr] gap-5 px-8 pb-8">
-        {/* list */}
-        <div className="flex min-h-0 flex-col gap-3 overflow-y-auto pr-1">
-          <div className="flex shrink-0 flex-col gap-1.5">
-            {data.profiles.map((p) => (
-              <button
-                key={p.id}
-                type="button"
-                onClick={() => setActiveId(p.id)}
-                className={cx(
-                  'flex flex-col gap-1 rounded-xl border px-4 py-3 text-left transition-colors duration-150',
-                  active?.id === p.id
-                    ? 'border-accent/25 bg-accent/[0.07]'
-                    : 'border-white/[0.05] bg-surface/60 hover:border-white/[0.1] hover:bg-surface-2/70'
-                )}
-              >
-                <span className="text-[13.5px] font-medium">{p.name}</span>
-                <span className="text-[11.5px] text-ink-3 tabular-nums">
-                  {p.validFrom ? formatDE(p.validFrom) : '—'} bis {p.validTo ? formatDE(p.validTo) : '—'}
-                </span>
-                <div className="mt-0.5 flex gap-1">
-                  {WEEKDAY_KEYS.map((k) => {
-                    const type = p.weekdays[k]?.type ?? 'off'
-                    if (type === 'off') return null
-                    return (
-                      <Pill key={k} dot={false} color={type === 'school' ? 'accent' : 'neutral'} className="px-1.5">
-                        {WEEKDAY_LABELS[k].slice(0, 2)}
-                      </Pill>
-                    )
-                  })}
-                </div>
-              </button>
-            ))}
+                  <span className="flex flex-wrap gap-1">
+                    {WEEKDAY_KEYS.map((k) => {
+                      const type = p.weekdays[k]?.type ?? 'off'
+                      if (type === 'off') return null
+                      return (
+                        <span
+                          key={k}
+                          className="inline-flex h-5 items-center gap-1 rounded-chip border border-line px-1.5 text-[11px] text-ink-2"
+                        >
+                          {WEEKDAY_LABELS[k].slice(0, 2)}
+                          <span className="font-semibold text-ink">{TYPE_LETTER[type]}</span>
+                        </span>
+                      )
+                    })}
+                  </span>
+                </button>
+              ))}
+            </Card>
           </div>
 
-          {/* training dates (app-wide) */}
-          <Panel className="flex shrink-0 flex-col gap-3 p-4">
-            <SectionTitle className="flex items-center gap-1.5">
-              <CalendarBlankIcon size={13} /> Ausbildung (optional)
-            </SectionTitle>
-            <Field label="Beginn">
-              <Input
-                type="date"
-                value={data.settings.trainingStart}
-                onChange={(e) => updateSettings({ trainingStart: e.target.value })}
-              />
-            </Field>
-            <Field label="Ende">
-              <Input
-                type="date"
-                value={data.settings.trainingEnd}
-                onChange={(e) => updateSettings({ trainingEnd: e.target.value })}
-              />
-            </Field>
-            <p className="text-[11.5px] text-ink-3">
-              Aktiviert in der Übersicht die Anzeige „Woche X von ca. Y".
-            </p>
-          </Panel>
+          <div className="min-w-0 @4xl:col-start-2 @4xl:row-span-2 @4xl:row-start-1">
+            {active ? (
+              <ProfileForm key={active.id} profile={active} onDuplicate={duplicate} />
+            ) : (
+              <Card className="p-5 text-body text-ink-2">Noch kein Profil. Leg über „Neues Profil“ eines an.</Card>
+            )}
+          </div>
 
-          {/* vacation / school breaks — affect status or day type of new weeks */}
-          <PeriodPanel />
-        </div>
+          <div className="flex flex-col gap-4 @4xl:col-start-1 @4xl:row-start-2">
+            <Card>
+              <CardHeader title="Ausbildung" />
+              <div className="flex flex-col gap-3 p-4">
+                <Field label="Beginn">
+                  <Input
+                    type="date"
+                    value={data.settings.trainingStart}
+                    onChange={(e) => updateSettings({ trainingStart: e.target.value })}
+                  />
+                </Field>
+                <Field label="Ende">
+                  <Input type="date" value={data.settings.trainingEnd} onChange={(e) => updateSettings({ trainingEnd: e.target.value })} />
+                </Field>
+                <p className="text-meta text-ink-2">Für die Ausbildungswoche, die fälligen Wochen und das Jahresband in der Übersicht.</p>
+              </div>
+            </Card>
 
-        {/* form */}
-        <div className="min-h-0 overflow-y-auto pr-1">
-          {active ? (
-            <ProfileForm key={active.id} profile={active} onDuplicate={duplicate} />
-          ) : (
-            <Panel className="grid h-40 place-items-center text-[13px] text-ink-3">
-              Kein Profil vorhanden — leg eines an.
-            </Panel>
-          )}
+            <PeriodCard />
+          </div>
         </div>
       </div>
     </div>

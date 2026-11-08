@@ -2,12 +2,12 @@
 
 Electron desktop app that produces the weekly IHK training record ("Berichtsheft")
 for an apprentice (IT specialist for system integration, Schleswig-Holstein,
-Germany). Current release: v2.0.3 — entry by hand or from notes, WebUntis
+Germany). Current release: v2.0.4 — entry by hand or from notes, WebUntis
 import, AI phrasing via the clipboard, in-app updates, daily backups → three
 exactly formatted text blocks to copy into the IHK portal.
-Phases 9–10 of the 2026-10-15 code review (release hardening, end-to-end tests)
-ship with v2.0.3. **Next:** the UI overhaul (v2.1); voice dictation is
-parked — see `docs/PLAN.md`.
+The UI overhaul v2.1 (phase 11, design system "Kladde", `docs/DESIGN.md`) is
+built on `development` and waits for its release; voice dictation is parked —
+see `docs/PLAN.md`.
 
 ## Language rules
 
@@ -53,6 +53,7 @@ above + commit/PR) encode exactly this workflow.
 | `docs/DATA_MODEL.md` | touching `daten.json`, profiles, weeks, migrations |
 | `docs/OUTPUT_FORMAT.md` | anything that affects the three output blocks |
 | `docs/DECISIONS.md` | before making (or revisiting) a fundamental decision |
+| `docs/DESIGN.md` | any UI work: tokens, components, copy rules, shortcuts (v2.1 "Kladde") |
 | `docs/archive/original-brief.md` | historical only — the original v1.0 build brief (German) |
 
 Folder-specific rules live in `electron/CLAUDE.md` and `src/lib/CLAUDE.md`.
@@ -68,7 +69,13 @@ npm run lint           # ESLint (required by CI)
 npm run build:renderer # Vite build — proves the renderer compiles
 npm run dev            # Vite + Electron with hot reload (needs a display)
 electron . --screenshot=shot.png [--view=editor|profiles|settings] [--scroll=<css selector>]  # headless UI check (unpacked runs only)
+node .claude/skills/ui-shots/shots.mjs --views=editor --modes=dark,light  # Playwright shots with the demo record (skill ui-shots)
+node --no-warnings e2e/fixtures/make-demo.mjs   # regenerate the fictional demo record after a schema change
 ```
+
+UI work: check every visible change yourself with the `ui-shots` skill and
+read the screenshots (user, 2026-11-07). The component gallery opens at
+`#styleguide` in the browser build (`npx vite preview`).
 
 Dev mode keeps `daten.json` in the **current working directory** — run screenshot
 checks from a scratch folder (`<repo>/node_modules/electron/dist/electron <repo> …`)
@@ -123,11 +130,11 @@ electron/net.js      network layer: host allowlist, timeout, German error texts 
 electron/updater.js  auto-update via electron-updater (E-017): check / download / install, allowlist on its session
 electron/webuntis-probe.js  dev spike `--webuntis-probe` (E-013); shape.js = JSON/URL anonymiser
 src/store.jsx        central state (React context), 400 ms autosave, all mutations
-src/lib/             PURE logic, fully tested: dates · holidays · format · model · notes · phrasing · webuntis · update · setup · backups
-src/views/           screens: overview · week editor (+ PhrasingPanel, WebuntisPanel) · profiles · settings · setup wizard
-src/ui/              design system: Titlebar, Sidebar, UpdateHint, ErrorBoundary, basics, toast, Logo
-src/index.css        Tailwind v4 + design tokens/themes (data-theme on <html>)
-e2e/                 Playwright: browser smoke · Electron end-to-end · packaged check (E-031)
+src/lib/             PURE logic, fully tested: dates · holidays · format · model · notes · phrasing · webuntis · update · setup · backups · overview · preview · shortcuts · contrast
+src/views/           screens: overview · week editor (parts in editor/: tabs, day card, notes, preview; + PhrasingPanel, WebuntisPanel) · profiles · settings · setup wizard · dev Styleguide
+src/ui/              design system: Titlebar, Sidebar, UpdateHint, ErrorBoundary, basics (Card, StatusChip, DayCell …), toast, Logo
+src/index.css        Tailwind v4 + "Kladde" tokens: data-mode × data-accent on <html> (E-032), checked by src/theme.test.js
+e2e/                 Playwright: browser smoke + editor/preview · Electron end-to-end · packaged check (E-031); fixtures/ = fictional demo record
 docs/                knowledge base (see above)
 ```
 

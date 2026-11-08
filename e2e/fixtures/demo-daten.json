@@ -1,0 +1,5698 @@
+{
+  "version": 12,
+  "settings": {
+    "trainingStart": "2025-09-01",
+    "trainingEnd": "2028-08-31",
+    "appearance": {
+      "mode": "dark",
+      "accent": "blue"
+    },
+    "layout": {
+      "sidebarCollapsed": false,
+      "previewVisible": true,
+      "notesVisible": true
+    },
+    "startView": "overview",
+    "snippets": [
+      "Bearbeitung von Support-Tickets im Bereich Arbeitsplatzausstattung"
+    ],
+    "webuntis": {
+      "enabled": false,
+      "host": "",
+      "school": ""
+    },
+    "autoCreateWeek": false,
+    "updateCheck": false,
+    "setupDone": true
+  },
+  "periods": [
+    {
+      "id": "period-demo-1",
+      "type": "schoolBreak",
+      "label": "Herbstferien",
+      "from": "2025-10-20",
+      "to": "2025-10-31"
+    },
+    {
+      "id": "period-demo-2",
+      "type": "vacation",
+      "label": "Weihnachten",
+      "from": "2025-12-22",
+      "to": "2026-01-02"
+    },
+    {
+      "id": "period-demo-3",
+      "type": "schoolBreak",
+      "label": "Osterferien",
+      "from": "2026-04-07",
+      "to": "2026-04-17"
+    },
+    {
+      "id": "period-demo-5",
+      "type": "vacation",
+      "label": "Sommerurlaub",
+      "from": "2026-07-20",
+      "to": "2026-07-31"
+    },
+    {
+      "id": "period-demo-4",
+      "type": "schoolBreak",
+      "label": "Sommerferien",
+      "from": "2026-07-06",
+      "to": "2026-08-14"
+    },
+    {
+      "id": "period-demo-6",
+      "type": "schoolBreak",
+      "label": "Herbstferien",
+      "from": "2026-10-12",
+      "to": "2026-10-24"
+    }
+  ],
+  "profiles": [
+    {
+      "id": "profile-demo-3",
+      "name": "Schulhalbjahr 2026/27 · 1",
+      "state": "SH",
+      "validFrom": "2026-08-01",
+      "validTo": "2027-01-31",
+      "defaultBulletCount": 1,
+      "weekdays": {
+        "mon": {
+          "type": "school",
+          "subjects": [
+            "LF06",
+            "LF07",
+            "Englisch",
+            "WiPo"
+          ]
+        },
+        "tue": {
+          "type": "work",
+          "subjects": []
+        },
+        "wed": {
+          "type": "work",
+          "subjects": []
+        },
+        "thu": {
+          "type": "school",
+          "subjects": [
+            "LF08",
+            "LF09"
+          ]
+        },
+        "fri": {
+          "type": "work",
+          "subjects": []
+        },
+        "sat": {
+          "type": "off",
+          "subjects": []
+        }
+      },
+      "webuntisSubjects": {}
+    },
+    {
+      "id": "profile-demo-2",
+      "name": "Schulhalbjahr 2025/26 · 2",
+      "state": "SH",
+      "validFrom": "2026-02-02",
+      "validTo": "2026-07-31",
+      "defaultBulletCount": 1,
+      "weekdays": {
+        "mon": {
+          "type": "school",
+          "subjects": [
+            "LF02",
+            "LF03",
+            "Englisch",
+            "WiPo"
+          ]
+        },
+        "tue": {
+          "type": "school",
+          "subjects": [
+            "LF04",
+            "LF05"
+          ]
+        },
+        "wed": {
+          "type": "work",
+          "subjects": []
+        },
+        "thu": {
+          "type": "work",
+          "subjects": []
+        },
+        "fri": {
+          "type": "work",
+          "subjects": []
+        },
+        "sat": {
+          "type": "off",
+          "subjects": []
+        }
+      },
+      "webuntisSubjects": {}
+    },
+    {
+      "id": "profile-demo-1",
+      "name": "Schulhalbjahr 2025/26 · 1",
+      "state": "SH",
+      "validFrom": "2025-08-01",
+      "validTo": "2026-02-01",
+      "defaultBulletCount": 1,
+      "weekdays": {
+        "mon": {
+          "type": "school",
+          "subjects": [
+            "LF01",
+            "LF02",
+            "LF03",
+            "WiPo"
+          ]
+        },
+        "tue": {
+          "type": "work",
+          "subjects": []
+        },
+        "wed": {
+          "type": "work",
+          "subjects": []
+        },
+        "thu": {
+          "type": "work",
+          "subjects": []
+        },
+        "fri": {
+          "type": "work",
+          "subjects": []
+        },
+        "sat": {
+          "type": "off",
+          "subjects": []
+        }
+      },
+      "webuntisSubjects": {}
+    }
+  ],
+  "weeks": [
+    {
+      "id": "2025-09-01",
+      "status": "done",
+      "instructions": "",
+      "days": [
+        {
+          "date": "2025-09-01",
+          "type": "school",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": [
+            {
+              "label": "LF01",
+              "bullets": [
+                "Das Unternehmen und die eigene Rolle im Betrieb"
+              ]
+            },
+            {
+              "label": "LF02",
+              "bullets": [
+                "Arbeitsplätze nach Kundenwunsch ausstatten"
+              ]
+            },
+            {
+              "label": "LF03",
+              "bullets": [
+                "Clients in Netzwerke einbinden"
+              ]
+            },
+            {
+              "label": "WiPo",
+              "bullets": [
+                "Sozialversicherungen"
+              ]
+            }
+          ]
+        },
+        {
+          "date": "2025-09-02",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Überprüfung der USV-Anlage und Dokumentation der Akkulaufzeit",
+            "Konfiguration von VLANs an einem Etagenswitch unter Anleitung",
+            "Einrichtung eines Notebooks für einen neuen Mitarbeiter inklusive Softwareverteilung"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2025-09-03",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Datenlöschung und Entsorgung von Altgeräten nach interner Vorgabe",
+            "Vorbereitung von Leihgeräten für eine interne Schulung"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2025-09-04",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Einrichtung eines Notebooks für einen neuen Mitarbeiter inklusive Softwareverteilung",
+            "Aktualisierung der Firmware an den WLAN-Access-Points"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2025-09-05",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Austausch von Tonerkartuschen und Wartung der Etagendrucker",
+            "Mitarbeit bei der Migration von Postfächern auf den neuen Mailserver"
+          ],
+          "subjects": []
+        }
+      ]
+    },
+    {
+      "id": "2025-09-08",
+      "status": "done",
+      "instructions": "",
+      "days": [
+        {
+          "date": "2025-09-08",
+          "type": "school",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": [
+            {
+              "label": "LF01",
+              "bullets": [
+                "Organisationsformen und Leitbild"
+              ]
+            },
+            {
+              "label": "LF02",
+              "bullets": [
+                "Hardwarekomponenten eines PCs"
+              ]
+            },
+            {
+              "label": "LF03",
+              "bullets": [
+                "IPv4-Adressierung und Subnetting"
+              ]
+            },
+            {
+              "label": "WiPo",
+              "bullets": [
+                "Tarifverträge und Mitbestimmung"
+              ]
+            }
+          ]
+        },
+        {
+          "date": "2025-09-09",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Fehleranalyse bei langsamen Netzlaufwerken und Bereinigung von Benutzerprofilen",
+            "Konfiguration von VLANs an einem Etagenswitch unter Anleitung"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2025-09-10",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Inventarisierung von Hardware und Abgleich mit der Bestandsliste",
+            "Datenlöschung und Entsorgung von Altgeräten nach interner Vorgabe",
+            "Aufbau einer virtuellen Testumgebung mit Hyper-V"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2025-09-11",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Installation von Windows-Updates auf den Testsystemen",
+            "Einrichtung eines Besprechungsraums mit Konferenzkamera und Lautsprecher",
+            "Patch-Arbeiten am Netzwerkschrank und Beschriftung der Ports"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2025-09-12",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Installation von Windows-Updates auf den Testsystemen",
+            "Inventarisierung von Hardware und Abgleich mit der Bestandsliste"
+          ],
+          "subjects": []
+        }
+      ]
+    },
+    {
+      "id": "2025-09-15",
+      "status": "done",
+      "instructions": "",
+      "days": [
+        {
+          "date": "2025-09-15",
+          "type": "school",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": [
+            {
+              "label": "LF01",
+              "bullets": [
+                "Kommunikationsregeln im Team"
+              ]
+            },
+            {
+              "label": "LF02",
+              "bullets": [
+                "Ergonomie am Bildschirmarbeitsplatz"
+              ]
+            },
+            {
+              "label": "LF03",
+              "bullets": [
+                "DHCP und DNS im lokalen Netz"
+              ]
+            },
+            {
+              "label": "WiPo",
+              "bullets": [
+                "Der Ausbildungsvertrag"
+              ]
+            }
+          ]
+        },
+        {
+          "date": "2025-09-16",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Austausch eines defekten Netzteils an einem Etagenswitch",
+            "Vorbereitung von Leihgeräten für eine interne Schulung",
+            "Überprüfung der USV-Anlage und Dokumentation der Akkulaufzeit"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2025-09-17",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Anpassung von Gruppenrichtlinien für die Bildschirmsperre",
+            "Überprüfung der nächtlichen Datensicherung und Auswertung der Protokolle"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2025-09-18",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Bearbeitung von Support-Anfragen zu Druckerproblemen in der Verwaltung",
+            "Konfiguration von VLANs an einem Etagenswitch unter Anleitung"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2025-09-19",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Mitarbeit bei der Migration von Postfächern auf den neuen Mailserver",
+            "Installation von Windows-Updates auf den Testsystemen"
+          ],
+          "subjects": []
+        }
+      ]
+    },
+    {
+      "id": "2025-09-22",
+      "status": "done",
+      "instructions": "",
+      "days": [
+        {
+          "date": "2025-09-22",
+          "type": "school",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": [
+            {
+              "label": "LF01",
+              "bullets": [
+                "Das Unternehmen und die eigene Rolle im Betrieb"
+              ]
+            },
+            {
+              "label": "LF02",
+              "bullets": [
+                "Arbeitsplätze nach Kundenwunsch ausstatten"
+              ]
+            },
+            {
+              "label": "LF03",
+              "bullets": [
+                "Clients in Netzwerke einbinden"
+              ]
+            },
+            {
+              "label": "WiPo",
+              "bullets": [
+                "Sozialversicherungen"
+              ]
+            }
+          ]
+        },
+        {
+          "date": "2025-09-23",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Vorbereitung von Leihgeräten für eine interne Schulung",
+            "Datenlöschung und Entsorgung von Altgeräten nach interner Vorgabe"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2025-09-24",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Austausch von Tonerkartuschen und Wartung der Etagendrucker",
+            "Dokumentation der Netzwerkverkabelung im zweiten Obergeschoss"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2025-09-25",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Inventarisierung von Hardware und Abgleich mit der Bestandsliste",
+            "Aufbau einer virtuellen Testumgebung mit Hyper-V",
+            "Anpassung von Gruppenrichtlinien für die Bildschirmsperre"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2025-09-26",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Einrichtung eines Besprechungsraums mit Konferenzkamera und Lautsprecher",
+            "Konfiguration von VLANs an einem Etagenswitch unter Anleitung"
+          ],
+          "subjects": []
+        }
+      ]
+    },
+    {
+      "id": "2025-09-29",
+      "status": "done",
+      "instructions": "",
+      "days": [
+        {
+          "date": "2025-09-29",
+          "type": "school",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": [
+            {
+              "label": "LF01",
+              "bullets": [
+                "Organisationsformen und Leitbild"
+              ]
+            },
+            {
+              "label": "LF02",
+              "bullets": [
+                "Hardwarekomponenten eines PCs"
+              ]
+            },
+            {
+              "label": "LF03",
+              "bullets": [
+                "IPv4-Adressierung und Subnetting"
+              ]
+            },
+            {
+              "label": "WiPo",
+              "bullets": [
+                "Tarifverträge und Mitbestimmung"
+              ]
+            }
+          ]
+        },
+        {
+          "date": "2025-09-30",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Patch-Arbeiten am Netzwerkschrank und Beschriftung der Ports",
+            "Bearbeitung von Support-Anfragen zu Druckerproblemen in der Verwaltung",
+            "Inventarisierung von Hardware und Abgleich mit der Bestandsliste"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2025-10-01",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Installation von Windows-Updates auf den Testsystemen",
+            "Patch-Arbeiten am Netzwerkschrank und Beschriftung der Ports",
+            "Aufbau einer virtuellen Testumgebung mit Hyper-V"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2025-10-02",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Bearbeitung von Support-Anfragen zu Druckerproblemen in der Verwaltung",
+            "Fehleranalyse bei langsamen Netzlaufwerken und Bereinigung von Benutzerprofilen"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2025-10-03",
+          "type": "work",
+          "status": "holiday",
+          "holidayName": "Tag der Deutschen Einheit",
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": []
+        }
+      ]
+    },
+    {
+      "id": "2025-10-06",
+      "status": "done",
+      "instructions": "",
+      "days": [
+        {
+          "date": "2025-10-06",
+          "type": "school",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": [
+            {
+              "label": "LF01",
+              "bullets": [
+                "Kommunikationsregeln im Team"
+              ]
+            },
+            {
+              "label": "LF02",
+              "bullets": [
+                "Ergonomie am Bildschirmarbeitsplatz"
+              ]
+            },
+            {
+              "label": "LF03",
+              "bullets": [
+                "DHCP und DNS im lokalen Netz"
+              ]
+            },
+            {
+              "label": "WiPo",
+              "bullets": [
+                "Der Ausbildungsvertrag"
+              ]
+            }
+          ]
+        },
+        {
+          "date": "2025-10-07",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Einrichtung von Monitoren und Dockingstationen an zwei Arbeitsplätzen",
+            "Überprüfung der nächtlichen Datensicherung und Auswertung der Protokolle"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2025-10-08",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Austausch eines defekten Netzteils an einem Etagenswitch",
+            "Konfiguration von VLANs an einem Etagenswitch unter Anleitung"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2025-10-09",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Einrichtung von Monitoren und Dockingstationen an zwei Arbeitsplätzen",
+            "Anpassung von Gruppenrichtlinien für die Bildschirmsperre",
+            "Mitarbeit bei der Migration von Postfächern auf den neuen Mailserver"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2025-10-10",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Austausch eines defekten Netzteils an einem Etagenswitch",
+            "Einrichtung von Monitoren und Dockingstationen an zwei Arbeitsplätzen"
+          ],
+          "subjects": []
+        }
+      ]
+    },
+    {
+      "id": "2025-10-13",
+      "status": "done",
+      "instructions": "Schulung zum Umgang mit dem neuen Ticketsystem",
+      "days": [
+        {
+          "date": "2025-10-13",
+          "type": "school",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": [
+            {
+              "label": "LF01",
+              "bullets": [
+                "Das Unternehmen und die eigene Rolle im Betrieb"
+              ]
+            },
+            {
+              "label": "LF02",
+              "bullets": [
+                "Arbeitsplätze nach Kundenwunsch ausstatten"
+              ]
+            },
+            {
+              "label": "LF03",
+              "bullets": [
+                "Clients in Netzwerke einbinden"
+              ]
+            },
+            {
+              "label": "WiPo",
+              "bullets": [
+                "Sozialversicherungen"
+              ]
+            }
+          ]
+        },
+        {
+          "date": "2025-10-14",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Austausch von Tonerkartuschen und Wartung der Etagendrucker",
+            "Mitarbeit bei der Migration von Postfächern auf den neuen Mailserver"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2025-10-15",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Bearbeitung von Support-Anfragen zu Druckerproblemen in der Verwaltung",
+            "Fehleranalyse bei langsamen Netzlaufwerken und Bereinigung von Benutzerprofilen",
+            "Austausch von Tonerkartuschen und Wartung der Etagendrucker"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2025-10-16",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Einrichtung eines Besprechungsraums mit Konferenzkamera und Lautsprecher",
+            "Erneuerung abgelaufener Zertifikate auf internen Webdiensten",
+            "Einrichtung eines Notebooks für einen neuen Mitarbeiter inklusive Softwareverteilung"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2025-10-17",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Inventarisierung von Hardware und Abgleich mit der Bestandsliste",
+            "Einrichtung eines Notebooks für einen neuen Mitarbeiter inklusive Softwareverteilung"
+          ],
+          "subjects": []
+        }
+      ]
+    },
+    {
+      "id": "2025-10-20",
+      "status": "done",
+      "instructions": "",
+      "days": [
+        {
+          "date": "2025-10-20",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Erstellung einer Anleitung zur Einrichtung der Zwei-Faktor-Anmeldung",
+            "Aktualisierung der Firmware an den WLAN-Access-Points"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2025-10-21",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Austausch eines defekten Netzteils an einem Etagenswitch",
+            "Aktualisierung der Firmware an den WLAN-Access-Points"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2025-10-22",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Konfiguration von VLANs an einem Etagenswitch unter Anleitung",
+            "Austausch von Tonerkartuschen und Wartung der Etagendrucker",
+            "Überprüfung der nächtlichen Datensicherung und Auswertung der Protokolle"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2025-10-23",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Fehleranalyse bei langsamen Netzlaufwerken und Bereinigung von Benutzerprofilen",
+            "Austausch von Tonerkartuschen und Wartung der Etagendrucker"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2025-10-24",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Mitarbeit bei der Migration von Postfächern auf den neuen Mailserver",
+            "Einweisung von Kollegen in die neuen Kategorien des Ticketsystems",
+            "Datenlöschung und Entsorgung von Altgeräten nach interner Vorgabe"
+          ],
+          "subjects": []
+        }
+      ]
+    },
+    {
+      "id": "2025-10-27",
+      "status": "done",
+      "instructions": "",
+      "days": [
+        {
+          "date": "2025-10-27",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Installation von Windows-Updates auf den Testsystemen",
+            "Einrichtung eines Besprechungsraums mit Konferenzkamera und Lautsprecher",
+            "Anpassung von Gruppenrichtlinien für die Bildschirmsperre"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2025-10-28",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Überprüfung der nächtlichen Datensicherung und Auswertung der Protokolle",
+            "Überprüfung der USV-Anlage und Dokumentation der Akkulaufzeit",
+            "Fehleranalyse bei langsamen Netzlaufwerken und Bereinigung von Benutzerprofilen"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2025-10-29",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Datenlöschung und Entsorgung von Altgeräten nach interner Vorgabe",
+            "Austausch eines defekten Netzteils an einem Etagenswitch"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2025-10-30",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Mitarbeit bei der Migration von Postfächern auf den neuen Mailserver",
+            "Erneuerung abgelaufener Zertifikate auf internen Webdiensten",
+            "Patch-Arbeiten am Netzwerkschrank und Beschriftung der Ports"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2025-10-31",
+          "type": "work",
+          "status": "holiday",
+          "holidayName": "Reformationstag",
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": []
+        }
+      ]
+    },
+    {
+      "id": "2025-11-03",
+      "status": "done",
+      "instructions": "",
+      "days": [
+        {
+          "date": "2025-11-03",
+          "type": "school",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": [
+            {
+              "label": "LF01",
+              "bullets": [
+                "Organisationsformen und Leitbild"
+              ]
+            },
+            {
+              "label": "LF02",
+              "bullets": [
+                "Hardwarekomponenten eines PCs"
+              ]
+            },
+            {
+              "label": "LF03",
+              "bullets": [
+                "IPv4-Adressierung und Subnetting"
+              ]
+            },
+            {
+              "label": "WiPo",
+              "bullets": [
+                "Tarifverträge und Mitbestimmung"
+              ]
+            }
+          ]
+        },
+        {
+          "date": "2025-11-04",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Fehleranalyse bei langsamen Netzlaufwerken und Bereinigung von Benutzerprofilen",
+            "Einrichtung von Monitoren und Dockingstationen an zwei Arbeitsplätzen",
+            "Austausch von Tonerkartuschen und Wartung der Etagendrucker"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2025-11-05",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Überprüfung der USV-Anlage und Dokumentation der Akkulaufzeit",
+            "Vorbereitung von Leihgeräten für eine interne Schulung"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2025-11-06",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Vorbereitung von Leihgeräten für eine interne Schulung",
+            "Fehleranalyse bei langsamen Netzlaufwerken und Bereinigung von Benutzerprofilen",
+            "Installation von Windows-Updates auf den Testsystemen"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2025-11-07",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Patch-Arbeiten am Netzwerkschrank und Beschriftung der Ports",
+            "Aktualisierung der Firmware an den WLAN-Access-Points"
+          ],
+          "subjects": []
+        }
+      ]
+    },
+    {
+      "id": "2025-11-10",
+      "status": "done",
+      "instructions": "",
+      "days": [
+        {
+          "date": "2025-11-10",
+          "type": "school",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": [
+            {
+              "label": "LF01",
+              "bullets": [
+                "Kommunikationsregeln im Team"
+              ]
+            },
+            {
+              "label": "LF02",
+              "bullets": [
+                "Ergonomie am Bildschirmarbeitsplatz"
+              ]
+            },
+            {
+              "label": "LF03",
+              "bullets": [
+                "DHCP und DNS im lokalen Netz"
+              ]
+            },
+            {
+              "label": "WiPo",
+              "bullets": [
+                "Der Ausbildungsvertrag"
+              ]
+            }
+          ]
+        },
+        {
+          "date": "2025-11-11",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Erstellung einer Anleitung zur Einrichtung der Zwei-Faktor-Anmeldung",
+            "Datenlöschung und Entsorgung von Altgeräten nach interner Vorgabe",
+            "Aufbau einer virtuellen Testumgebung mit Hyper-V"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2025-11-12",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Einweisung von Kollegen in die neuen Kategorien des Ticketsystems",
+            "Überprüfung der USV-Anlage und Dokumentation der Akkulaufzeit",
+            "Konfiguration von VLANs an einem Etagenswitch unter Anleitung"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2025-11-13",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Austausch eines defekten Netzteils an einem Etagenswitch",
+            "Austausch von Tonerkartuschen und Wartung der Etagendrucker"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2025-11-14",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Einrichtung eines Notebooks für einen neuen Mitarbeiter inklusive Softwareverteilung",
+            "Austausch von Tonerkartuschen und Wartung der Etagendrucker"
+          ],
+          "subjects": []
+        }
+      ]
+    },
+    {
+      "id": "2025-11-17",
+      "status": "done",
+      "instructions": "",
+      "days": [
+        {
+          "date": "2025-11-17",
+          "type": "school",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": [
+            {
+              "label": "LF01",
+              "bullets": [
+                "Das Unternehmen und die eigene Rolle im Betrieb"
+              ]
+            },
+            {
+              "label": "LF02",
+              "bullets": [
+                "Arbeitsplätze nach Kundenwunsch ausstatten"
+              ]
+            },
+            {
+              "label": "LF03",
+              "bullets": [
+                "Clients in Netzwerke einbinden"
+              ]
+            },
+            {
+              "label": "WiPo",
+              "bullets": [
+                "Sozialversicherungen"
+              ]
+            }
+          ]
+        },
+        {
+          "date": "2025-11-18",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Dokumentation der Netzwerkverkabelung im zweiten Obergeschoss",
+            "Einrichtung eines Besprechungsraums mit Konferenzkamera und Lautsprecher"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2025-11-19",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Erstellung einer Anleitung zur Einrichtung der Zwei-Faktor-Anmeldung",
+            "Patch-Arbeiten am Netzwerkschrank und Beschriftung der Ports",
+            "Austausch eines defekten Netzteils an einem Etagenswitch"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2025-11-20",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Einrichtung eines Besprechungsraums mit Konferenzkamera und Lautsprecher",
+            "Installation von Windows-Updates auf den Testsystemen"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2025-11-21",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Austausch von Tonerkartuschen und Wartung der Etagendrucker",
+            "Überprüfung der USV-Anlage und Dokumentation der Akkulaufzeit"
+          ],
+          "subjects": []
+        }
+      ]
+    },
+    {
+      "id": "2025-11-24",
+      "status": "done",
+      "instructions": "",
+      "days": [
+        {
+          "date": "2025-11-24",
+          "type": "school",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": [
+            {
+              "label": "LF01",
+              "bullets": [
+                "Organisationsformen und Leitbild"
+              ]
+            },
+            {
+              "label": "LF02",
+              "bullets": [
+                "Hardwarekomponenten eines PCs"
+              ]
+            },
+            {
+              "label": "LF03",
+              "bullets": [
+                "IPv4-Adressierung und Subnetting"
+              ]
+            },
+            {
+              "label": "WiPo",
+              "bullets": [
+                "Tarifverträge und Mitbestimmung"
+              ]
+            }
+          ]
+        },
+        {
+          "date": "2025-11-25",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Pflege von Benutzerkonten und Gruppen im Active Directory",
+            "Einrichtung eines Besprechungsraums mit Konferenzkamera und Lautsprecher",
+            "Überprüfung der nächtlichen Datensicherung und Auswertung der Protokolle"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2025-11-26",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Dokumentation der Netzwerkverkabelung im zweiten Obergeschoss",
+            "Pflege von Benutzerkonten und Gruppen im Active Directory"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2025-11-27",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Inventarisierung von Hardware und Abgleich mit der Bestandsliste",
+            "Erneuerung abgelaufener Zertifikate auf internen Webdiensten",
+            "Fehleranalyse bei langsamen Netzlaufwerken und Bereinigung von Benutzerprofilen"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2025-11-28",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Dokumentation der Netzwerkverkabelung im zweiten Obergeschoss",
+            "Inventarisierung von Hardware und Abgleich mit der Bestandsliste"
+          ],
+          "subjects": []
+        }
+      ]
+    },
+    {
+      "id": "2025-12-01",
+      "status": "done",
+      "instructions": "Einführung in die Richtlinie zur Passwortvergabe",
+      "days": [
+        {
+          "date": "2025-12-01",
+          "type": "school",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": [
+            {
+              "label": "LF01",
+              "bullets": [
+                "Kommunikationsregeln im Team"
+              ]
+            },
+            {
+              "label": "LF02",
+              "bullets": [
+                "Ergonomie am Bildschirmarbeitsplatz"
+              ]
+            },
+            {
+              "label": "LF03",
+              "bullets": [
+                "DHCP und DNS im lokalen Netz"
+              ]
+            },
+            {
+              "label": "WiPo",
+              "bullets": [
+                "Der Ausbildungsvertrag"
+              ]
+            }
+          ]
+        },
+        {
+          "date": "2025-12-02",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Aufbau einer virtuellen Testumgebung mit Hyper-V",
+            "Anpassung von Gruppenrichtlinien für die Bildschirmsperre",
+            "Einrichtung von Monitoren und Dockingstationen an zwei Arbeitsplätzen"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2025-12-03",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Anpassung von Gruppenrichtlinien für die Bildschirmsperre",
+            "Mitarbeit bei der Migration von Postfächern auf den neuen Mailserver",
+            "Installation von Windows-Updates auf den Testsystemen"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2025-12-04",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Aufbau einer virtuellen Testumgebung mit Hyper-V",
+            "Bearbeitung von Support-Anfragen zu Druckerproblemen in der Verwaltung",
+            "Pflege von Benutzerkonten und Gruppen im Active Directory"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2025-12-05",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Dokumentation der Netzwerkverkabelung im zweiten Obergeschoss",
+            "Inventarisierung von Hardware und Abgleich mit der Bestandsliste"
+          ],
+          "subjects": []
+        }
+      ]
+    },
+    {
+      "id": "2025-12-08",
+      "status": "done",
+      "instructions": "",
+      "days": [
+        {
+          "date": "2025-12-08",
+          "type": "school",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": [
+            {
+              "label": "LF01",
+              "bullets": [
+                "Das Unternehmen und die eigene Rolle im Betrieb"
+              ]
+            },
+            {
+              "label": "LF02",
+              "bullets": [
+                "Arbeitsplätze nach Kundenwunsch ausstatten"
+              ]
+            },
+            {
+              "label": "LF03",
+              "bullets": [
+                "Clients in Netzwerke einbinden"
+              ]
+            },
+            {
+              "label": "WiPo",
+              "bullets": [
+                "Sozialversicherungen"
+              ]
+            }
+          ]
+        },
+        {
+          "date": "2025-12-09",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Konfiguration von VLANs an einem Etagenswitch unter Anleitung",
+            "Aktualisierung der Firmware an den WLAN-Access-Points",
+            "Bearbeitung von Support-Anfragen zu Druckerproblemen in der Verwaltung"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2025-12-10",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Erstellung einer Anleitung zur Einrichtung der Zwei-Faktor-Anmeldung",
+            "Austausch eines defekten Netzteils an einem Etagenswitch",
+            "Konfiguration von VLANs an einem Etagenswitch unter Anleitung"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2025-12-11",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Mitarbeit bei der Migration von Postfächern auf den neuen Mailserver",
+            "Patch-Arbeiten am Netzwerkschrank und Beschriftung der Ports",
+            "Einrichtung eines Notebooks für einen neuen Mitarbeiter inklusive Softwareverteilung"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2025-12-12",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Einrichtung von Monitoren und Dockingstationen an zwei Arbeitsplätzen",
+            "Datenlöschung und Entsorgung von Altgeräten nach interner Vorgabe"
+          ],
+          "subjects": []
+        }
+      ]
+    },
+    {
+      "id": "2025-12-15",
+      "status": "done",
+      "instructions": "",
+      "days": [
+        {
+          "date": "2025-12-15",
+          "type": "school",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": [
+            {
+              "label": "LF01",
+              "bullets": [
+                "Organisationsformen und Leitbild"
+              ]
+            },
+            {
+              "label": "LF02",
+              "bullets": [
+                "Hardwarekomponenten eines PCs"
+              ]
+            },
+            {
+              "label": "LF03",
+              "bullets": [
+                "IPv4-Adressierung und Subnetting"
+              ]
+            },
+            {
+              "label": "WiPo",
+              "bullets": [
+                "Tarifverträge und Mitbestimmung"
+              ]
+            }
+          ]
+        },
+        {
+          "date": "2025-12-16",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Aktualisierung der Firmware an den WLAN-Access-Points",
+            "Überprüfung der USV-Anlage und Dokumentation der Akkulaufzeit"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2025-12-17",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Vorbereitung von Leihgeräten für eine interne Schulung",
+            "Erstellung einer Anleitung zur Einrichtung der Zwei-Faktor-Anmeldung"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2025-12-18",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Einrichtung eines Besprechungsraums mit Konferenzkamera und Lautsprecher",
+            "Einweisung von Kollegen in die neuen Kategorien des Ticketsystems"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2025-12-19",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Vorbereitung von Leihgeräten für eine interne Schulung",
+            "Aufbau einer virtuellen Testumgebung mit Hyper-V"
+          ],
+          "subjects": []
+        }
+      ]
+    },
+    {
+      "id": "2025-12-22",
+      "status": "done",
+      "instructions": "",
+      "days": [
+        {
+          "date": "2025-12-22",
+          "type": "school",
+          "status": "vacation",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": [
+            {
+              "label": "LF01",
+              "bullets": [
+                ""
+              ]
+            },
+            {
+              "label": "LF02",
+              "bullets": [
+                ""
+              ]
+            },
+            {
+              "label": "LF03",
+              "bullets": [
+                ""
+              ]
+            },
+            {
+              "label": "WiPo",
+              "bullets": [
+                ""
+              ]
+            }
+          ]
+        },
+        {
+          "date": "2025-12-23",
+          "type": "work",
+          "status": "vacation",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2025-12-24",
+          "type": "work",
+          "status": "vacation",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2025-12-25",
+          "type": "work",
+          "status": "holiday",
+          "holidayName": "1. Weihnachtstag",
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2025-12-26",
+          "type": "work",
+          "status": "holiday",
+          "holidayName": "2. Weihnachtstag",
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": []
+        }
+      ]
+    },
+    {
+      "id": "2025-12-29",
+      "status": "done",
+      "instructions": "",
+      "days": [
+        {
+          "date": "2025-12-29",
+          "type": "school",
+          "status": "vacation",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": [
+            {
+              "label": "LF01",
+              "bullets": [
+                ""
+              ]
+            },
+            {
+              "label": "LF02",
+              "bullets": [
+                ""
+              ]
+            },
+            {
+              "label": "LF03",
+              "bullets": [
+                ""
+              ]
+            },
+            {
+              "label": "WiPo",
+              "bullets": [
+                ""
+              ]
+            }
+          ]
+        },
+        {
+          "date": "2025-12-30",
+          "type": "work",
+          "status": "vacation",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2025-12-31",
+          "type": "work",
+          "status": "vacation",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-01-01",
+          "type": "work",
+          "status": "holiday",
+          "holidayName": "Neujahr",
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-01-02",
+          "type": "work",
+          "status": "vacation",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": []
+        }
+      ]
+    },
+    {
+      "id": "2026-01-05",
+      "status": "done",
+      "instructions": "",
+      "days": [
+        {
+          "date": "2026-01-05",
+          "type": "school",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": [
+            {
+              "label": "LF01",
+              "bullets": [
+                "Kommunikationsregeln im Team"
+              ]
+            },
+            {
+              "label": "LF02",
+              "bullets": [
+                "Ergonomie am Bildschirmarbeitsplatz"
+              ]
+            },
+            {
+              "label": "LF03",
+              "bullets": [
+                "DHCP und DNS im lokalen Netz"
+              ]
+            },
+            {
+              "label": "WiPo",
+              "bullets": [
+                "Der Ausbildungsvertrag"
+              ]
+            }
+          ]
+        },
+        {
+          "date": "2026-01-06",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Überprüfung der USV-Anlage und Dokumentation der Akkulaufzeit",
+            "Dokumentation der Netzwerkverkabelung im zweiten Obergeschoss",
+            "Mitarbeit bei der Migration von Postfächern auf den neuen Mailserver"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-01-07",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Datenlöschung und Entsorgung von Altgeräten nach interner Vorgabe",
+            "Einrichtung eines Notebooks für einen neuen Mitarbeiter inklusive Softwareverteilung",
+            "Bearbeitung von Support-Anfragen zu Druckerproblemen in der Verwaltung"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-01-08",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Erstellung einer Anleitung zur Einrichtung der Zwei-Faktor-Anmeldung",
+            "Erneuerung abgelaufener Zertifikate auf internen Webdiensten"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-01-09",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Vorbereitung von Leihgeräten für eine interne Schulung",
+            "Dokumentation der Netzwerkverkabelung im zweiten Obergeschoss",
+            "Inventarisierung von Hardware und Abgleich mit der Bestandsliste"
+          ],
+          "subjects": []
+        }
+      ]
+    },
+    {
+      "id": "2026-01-12",
+      "status": "done",
+      "instructions": "",
+      "days": [
+        {
+          "date": "2026-01-12",
+          "type": "school",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": [
+            {
+              "label": "LF01",
+              "bullets": [
+                "Das Unternehmen und die eigene Rolle im Betrieb"
+              ]
+            },
+            {
+              "label": "LF02",
+              "bullets": [
+                "Arbeitsplätze nach Kundenwunsch ausstatten"
+              ]
+            },
+            {
+              "label": "LF03",
+              "bullets": [
+                "Clients in Netzwerke einbinden"
+              ]
+            },
+            {
+              "label": "WiPo",
+              "bullets": [
+                "Sozialversicherungen"
+              ]
+            }
+          ]
+        },
+        {
+          "date": "2026-01-13",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Einweisung von Kollegen in die neuen Kategorien des Ticketsystems",
+            "Anpassung von Gruppenrichtlinien für die Bildschirmsperre",
+            "Überprüfung der USV-Anlage und Dokumentation der Akkulaufzeit"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-01-14",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Überprüfung der USV-Anlage und Dokumentation der Akkulaufzeit",
+            "Patch-Arbeiten am Netzwerkschrank und Beschriftung der Ports",
+            "Einrichtung eines Notebooks für einen neuen Mitarbeiter inklusive Softwareverteilung"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-01-15",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Konfiguration von VLANs an einem Etagenswitch unter Anleitung",
+            "Anpassung von Gruppenrichtlinien für die Bildschirmsperre"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-01-16",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Bearbeitung von Support-Anfragen zu Druckerproblemen in der Verwaltung",
+            "Aktualisierung der Firmware an den WLAN-Access-Points"
+          ],
+          "subjects": []
+        }
+      ]
+    },
+    {
+      "id": "2026-01-19",
+      "status": "done",
+      "instructions": "Jährliche Datenschutzunterweisung",
+      "days": [
+        {
+          "date": "2026-01-19",
+          "type": "school",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": [
+            {
+              "label": "LF01",
+              "bullets": [
+                "Organisationsformen und Leitbild"
+              ]
+            },
+            {
+              "label": "LF02",
+              "bullets": [
+                "Hardwarekomponenten eines PCs"
+              ]
+            },
+            {
+              "label": "LF03",
+              "bullets": [
+                "IPv4-Adressierung und Subnetting"
+              ]
+            },
+            {
+              "label": "WiPo",
+              "bullets": [
+                "Tarifverträge und Mitbestimmung"
+              ]
+            }
+          ]
+        },
+        {
+          "date": "2026-01-20",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Konfiguration von VLANs an einem Etagenswitch unter Anleitung",
+            "Installation von Windows-Updates auf den Testsystemen"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-01-21",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Bearbeitung von Support-Anfragen zu Druckerproblemen in der Verwaltung",
+            "Einrichtung eines Besprechungsraums mit Konferenzkamera und Lautsprecher",
+            "Dokumentation der Netzwerkverkabelung im zweiten Obergeschoss"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-01-22",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Austausch eines defekten Netzteils an einem Etagenswitch",
+            "Mitarbeit bei der Migration von Postfächern auf den neuen Mailserver"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-01-23",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Erstellung einer Anleitung zur Einrichtung der Zwei-Faktor-Anmeldung",
+            "Überprüfung der USV-Anlage und Dokumentation der Akkulaufzeit"
+          ],
+          "subjects": []
+        }
+      ]
+    },
+    {
+      "id": "2026-01-26",
+      "status": "done",
+      "instructions": "",
+      "days": [
+        {
+          "date": "2026-01-26",
+          "type": "school",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": [
+            {
+              "label": "LF01",
+              "bullets": [
+                "Kommunikationsregeln im Team"
+              ]
+            },
+            {
+              "label": "LF02",
+              "bullets": [
+                "Ergonomie am Bildschirmarbeitsplatz"
+              ]
+            },
+            {
+              "label": "LF03",
+              "bullets": [
+                "DHCP und DNS im lokalen Netz"
+              ]
+            },
+            {
+              "label": "WiPo",
+              "bullets": [
+                "Der Ausbildungsvertrag"
+              ]
+            }
+          ]
+        },
+        {
+          "date": "2026-01-27",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Austausch von Tonerkartuschen und Wartung der Etagendrucker",
+            "Aufbau einer virtuellen Testumgebung mit Hyper-V"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-01-28",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Einrichtung eines Besprechungsraums mit Konferenzkamera und Lautsprecher",
+            "Anpassung von Gruppenrichtlinien für die Bildschirmsperre"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-01-29",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Bearbeitung von Support-Anfragen zu Druckerproblemen in der Verwaltung",
+            "Austausch von Tonerkartuschen und Wartung der Etagendrucker",
+            "Fehleranalyse bei langsamen Netzlaufwerken und Bereinigung von Benutzerprofilen"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-01-30",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Patch-Arbeiten am Netzwerkschrank und Beschriftung der Ports",
+            "Austausch eines defekten Netzteils an einem Etagenswitch"
+          ],
+          "subjects": []
+        }
+      ]
+    },
+    {
+      "id": "2026-02-02",
+      "status": "done",
+      "instructions": "",
+      "days": [
+        {
+          "date": "2026-02-02",
+          "type": "school",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": [
+            {
+              "label": "LF02",
+              "bullets": [
+                "Arbeitsplätze nach Kundenwunsch ausstatten"
+              ]
+            },
+            {
+              "label": "LF03",
+              "bullets": [
+                "Clients in Netzwerke einbinden"
+              ]
+            },
+            {
+              "label": "Englisch",
+              "bullets": [
+                "Technical documentation"
+              ]
+            },
+            {
+              "label": "WiPo",
+              "bullets": [
+                "Sozialversicherungen"
+              ]
+            }
+          ]
+        },
+        {
+          "date": "2026-02-03",
+          "type": "school",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": [
+            {
+              "label": "LF04",
+              "bullets": [
+                "Schutzbedarfsanalyse im eigenen Arbeitsbereich"
+              ]
+            },
+            {
+              "label": "LF05",
+              "bullets": [
+                "Datenbankmodell eines Lagers entwerfen"
+              ]
+            }
+          ]
+        },
+        {
+          "date": "2026-02-04",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Pflege von Benutzerkonten und Gruppen im Active Directory",
+            "Austausch von Tonerkartuschen und Wartung der Etagendrucker"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-02-05",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Vorbereitung von Leihgeräten für eine interne Schulung",
+            "Anpassung von Gruppenrichtlinien für die Bildschirmsperre",
+            "Austausch von Tonerkartuschen und Wartung der Etagendrucker"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-02-06",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Patch-Arbeiten am Netzwerkschrank und Beschriftung der Ports",
+            "Datenlöschung und Entsorgung von Altgeräten nach interner Vorgabe"
+          ],
+          "subjects": []
+        }
+      ]
+    },
+    {
+      "id": "2026-02-09",
+      "status": "done",
+      "instructions": "",
+      "days": [
+        {
+          "date": "2026-02-09",
+          "type": "school",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": [
+            {
+              "label": "LF02",
+              "bullets": [
+                "Hardwarekomponenten eines PCs"
+              ]
+            },
+            {
+              "label": "LF03",
+              "bullets": [
+                "IPv4-Adressierung und Subnetting"
+              ]
+            },
+            {
+              "label": "Englisch",
+              "bullets": [
+                "Phone calls in IT support"
+              ]
+            },
+            {
+              "label": "WiPo",
+              "bullets": [
+                "Tarifverträge und Mitbestimmung"
+              ]
+            }
+          ]
+        },
+        {
+          "date": "2026-02-10",
+          "type": "school",
+          "status": "sick",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": [
+            {
+              "label": "LF04",
+              "bullets": [
+                ""
+              ]
+            },
+            {
+              "label": "LF05",
+              "bullets": [
+                ""
+              ]
+            }
+          ]
+        },
+        {
+          "date": "2026-02-11",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Austausch von Tonerkartuschen und Wartung der Etagendrucker",
+            "Einrichtung von Monitoren und Dockingstationen an zwei Arbeitsplätzen",
+            "Vorbereitung von Leihgeräten für eine interne Schulung"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-02-12",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Fehleranalyse bei langsamen Netzlaufwerken und Bereinigung von Benutzerprofilen",
+            "Austausch eines defekten Netzteils an einem Etagenswitch",
+            "Erneuerung abgelaufener Zertifikate auf internen Webdiensten"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-02-13",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Einrichtung von Monitoren und Dockingstationen an zwei Arbeitsplätzen",
+            "Erneuerung abgelaufener Zertifikate auf internen Webdiensten"
+          ],
+          "subjects": []
+        }
+      ]
+    },
+    {
+      "id": "2026-02-16",
+      "status": "done",
+      "instructions": "",
+      "days": [
+        {
+          "date": "2026-02-16",
+          "type": "school",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": [
+            {
+              "label": "LF02",
+              "bullets": [
+                "Ergonomie am Bildschirmarbeitsplatz"
+              ]
+            },
+            {
+              "label": "LF03",
+              "bullets": [
+                "DHCP und DNS im lokalen Netz"
+              ]
+            },
+            {
+              "label": "Englisch",
+              "bullets": [
+                "Describing network diagrams"
+              ]
+            },
+            {
+              "label": "WiPo",
+              "bullets": [
+                "Der Ausbildungsvertrag"
+              ]
+            }
+          ]
+        },
+        {
+          "date": "2026-02-17",
+          "type": "school",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": [
+            {
+              "label": "LF04",
+              "bullets": [
+                "Grundwerte der Informationssicherheit"
+              ]
+            },
+            {
+              "label": "LF05",
+              "bullets": [
+                "SQL-Abfragen mit Filtern und Joins"
+              ]
+            }
+          ]
+        },
+        {
+          "date": "2026-02-18",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Aktualisierung der Firmware an den WLAN-Access-Points",
+            "Austausch von Tonerkartuschen und Wartung der Etagendrucker"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-02-19",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Überprüfung der nächtlichen Datensicherung und Auswertung der Protokolle",
+            "Aktualisierung der Firmware an den WLAN-Access-Points",
+            "Erstellung einer Anleitung zur Einrichtung der Zwei-Faktor-Anmeldung"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-02-20",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Einrichtung eines Notebooks für einen neuen Mitarbeiter inklusive Softwareverteilung",
+            "Vorbereitung von Leihgeräten für eine interne Schulung",
+            "Konfiguration von VLANs an einem Etagenswitch unter Anleitung"
+          ],
+          "subjects": []
+        }
+      ]
+    },
+    {
+      "id": "2026-02-23",
+      "status": "done",
+      "instructions": "",
+      "days": [
+        {
+          "date": "2026-02-23",
+          "type": "school",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": [
+            {
+              "label": "LF02",
+              "bullets": [
+                "Arbeitsplätze nach Kundenwunsch ausstatten"
+              ]
+            },
+            {
+              "label": "LF03",
+              "bullets": [
+                "Clients in Netzwerke einbinden"
+              ]
+            },
+            {
+              "label": "Englisch",
+              "bullets": [
+                "Technical documentation"
+              ]
+            },
+            {
+              "label": "WiPo",
+              "bullets": [
+                "Sozialversicherungen"
+              ]
+            }
+          ]
+        },
+        {
+          "date": "2026-02-24",
+          "type": "school",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": [
+            {
+              "label": "LF04",
+              "bullets": [
+                "Passwortrichtlinien"
+              ]
+            },
+            {
+              "label": "LF05",
+              "bullets": [
+                "Normalisierung bis zur dritten Normalform"
+              ]
+            }
+          ]
+        },
+        {
+          "date": "2026-02-25",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Erneuerung abgelaufener Zertifikate auf internen Webdiensten",
+            "Datenlöschung und Entsorgung von Altgeräten nach interner Vorgabe"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-02-26",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Konfiguration von VLANs an einem Etagenswitch unter Anleitung",
+            "Bearbeitung von Support-Anfragen zu Druckerproblemen in der Verwaltung",
+            "Austausch eines defekten Netzteils an einem Etagenswitch"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-02-27",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Bearbeitung von Support-Anfragen zu Druckerproblemen in der Verwaltung",
+            "Einweisung von Kollegen in die neuen Kategorien des Ticketsystems"
+          ],
+          "subjects": []
+        }
+      ]
+    },
+    {
+      "id": "2026-03-02",
+      "status": "done",
+      "instructions": "",
+      "days": [
+        {
+          "date": "2026-03-02",
+          "type": "school",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": [
+            {
+              "label": "LF02",
+              "bullets": [
+                "Hardwarekomponenten eines PCs"
+              ]
+            },
+            {
+              "label": "LF03",
+              "bullets": [
+                "IPv4-Adressierung und Subnetting"
+              ]
+            },
+            {
+              "label": "Englisch",
+              "bullets": [
+                "Phone calls in IT support"
+              ]
+            },
+            {
+              "label": "WiPo",
+              "bullets": [
+                "Tarifverträge und Mitbestimmung"
+              ]
+            }
+          ]
+        },
+        {
+          "date": "2026-03-03",
+          "type": "school",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": [
+            {
+              "label": "LF04",
+              "bullets": [
+                "Schutzbedarfsanalyse im eigenen Arbeitsbereich"
+              ]
+            },
+            {
+              "label": "LF05",
+              "bullets": [
+                "Datenbankmodell eines Lagers entwerfen"
+              ]
+            }
+          ]
+        },
+        {
+          "date": "2026-03-04",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Vorbereitung von Leihgeräten für eine interne Schulung",
+            "Inventarisierung von Hardware und Abgleich mit der Bestandsliste"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-03-05",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Mitarbeit bei der Migration von Postfächern auf den neuen Mailserver",
+            "Pflege von Benutzerkonten und Gruppen im Active Directory"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-03-06",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Bearbeitung von Support-Anfragen zu Druckerproblemen in der Verwaltung",
+            "Mitarbeit bei der Migration von Postfächern auf den neuen Mailserver",
+            "Aktualisierung der Firmware an den WLAN-Access-Points"
+          ],
+          "subjects": []
+        }
+      ]
+    },
+    {
+      "id": "2026-03-09",
+      "status": "done",
+      "instructions": "Unterweisung zum Arbeitsschutz und zur Ersten Hilfe",
+      "days": [
+        {
+          "date": "2026-03-09",
+          "type": "school",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": [
+            {
+              "label": "LF02",
+              "bullets": [
+                "Ergonomie am Bildschirmarbeitsplatz"
+              ]
+            },
+            {
+              "label": "LF03",
+              "bullets": [
+                "DHCP und DNS im lokalen Netz"
+              ]
+            },
+            {
+              "label": "Englisch",
+              "bullets": [
+                "Describing network diagrams"
+              ]
+            },
+            {
+              "label": "WiPo",
+              "bullets": [
+                "Der Ausbildungsvertrag"
+              ]
+            }
+          ]
+        },
+        {
+          "date": "2026-03-10",
+          "type": "school",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": [
+            {
+              "label": "LF04",
+              "bullets": [
+                "Grundwerte der Informationssicherheit"
+              ]
+            },
+            {
+              "label": "LF05",
+              "bullets": [
+                "SQL-Abfragen mit Filtern und Joins"
+              ]
+            }
+          ]
+        },
+        {
+          "date": "2026-03-11",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Datenlöschung und Entsorgung von Altgeräten nach interner Vorgabe",
+            "Dokumentation der Netzwerkverkabelung im zweiten Obergeschoss",
+            "Einweisung von Kollegen in die neuen Kategorien des Ticketsystems"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-03-12",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Bearbeitung von Support-Anfragen zu Druckerproblemen in der Verwaltung",
+            "Mitarbeit bei der Migration von Postfächern auf den neuen Mailserver",
+            "Einrichtung eines Notebooks für einen neuen Mitarbeiter inklusive Softwareverteilung"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-03-13",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Erstellung einer Anleitung zur Einrichtung der Zwei-Faktor-Anmeldung",
+            "Anpassung von Gruppenrichtlinien für die Bildschirmsperre",
+            "Vorbereitung von Leihgeräten für eine interne Schulung"
+          ],
+          "subjects": []
+        }
+      ]
+    },
+    {
+      "id": "2026-03-23",
+      "status": "done",
+      "instructions": "",
+      "days": [
+        {
+          "date": "2026-03-23",
+          "type": "school",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": [
+            {
+              "label": "LF02",
+              "bullets": [
+                "Arbeitsplätze nach Kundenwunsch ausstatten"
+              ]
+            },
+            {
+              "label": "LF03",
+              "bullets": [
+                "Clients in Netzwerke einbinden"
+              ]
+            },
+            {
+              "label": "Englisch",
+              "bullets": [
+                "Technical documentation"
+              ]
+            },
+            {
+              "label": "WiPo",
+              "bullets": [
+                "Sozialversicherungen"
+              ]
+            }
+          ]
+        },
+        {
+          "date": "2026-03-24",
+          "type": "school",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": [
+            {
+              "label": "LF04",
+              "bullets": [
+                "Passwortrichtlinien"
+              ]
+            },
+            {
+              "label": "LF05",
+              "bullets": [
+                "Normalisierung bis zur dritten Normalform"
+              ]
+            }
+          ]
+        },
+        {
+          "date": "2026-03-25",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Austausch eines defekten Netzteils an einem Etagenswitch",
+            "Einrichtung eines Notebooks für einen neuen Mitarbeiter inklusive Softwareverteilung"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-03-26",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Einrichtung eines Besprechungsraums mit Konferenzkamera und Lautsprecher",
+            "Einrichtung von Monitoren und Dockingstationen an zwei Arbeitsplätzen",
+            "Erstellung einer Anleitung zur Einrichtung der Zwei-Faktor-Anmeldung"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-03-27",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Bearbeitung von Support-Anfragen zu Druckerproblemen in der Verwaltung",
+            "Anpassung von Gruppenrichtlinien für die Bildschirmsperre",
+            "Aufbau einer virtuellen Testumgebung mit Hyper-V"
+          ],
+          "subjects": []
+        }
+      ]
+    },
+    {
+      "id": "2026-03-30",
+      "status": "done",
+      "instructions": "",
+      "days": [
+        {
+          "date": "2026-03-30",
+          "type": "school",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": [
+            {
+              "label": "LF02",
+              "bullets": [
+                "Hardwarekomponenten eines PCs"
+              ]
+            },
+            {
+              "label": "LF03",
+              "bullets": [
+                "IPv4-Adressierung und Subnetting"
+              ]
+            },
+            {
+              "label": "Englisch",
+              "bullets": [
+                "Phone calls in IT support"
+              ]
+            },
+            {
+              "label": "WiPo",
+              "bullets": [
+                "Tarifverträge und Mitbestimmung"
+              ]
+            }
+          ]
+        },
+        {
+          "date": "2026-03-31",
+          "type": "school",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": [
+            {
+              "label": "LF04",
+              "bullets": [
+                "Schutzbedarfsanalyse im eigenen Arbeitsbereich"
+              ]
+            },
+            {
+              "label": "LF05",
+              "bullets": [
+                "Datenbankmodell eines Lagers entwerfen"
+              ]
+            }
+          ]
+        },
+        {
+          "date": "2026-04-01",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Überprüfung der nächtlichen Datensicherung und Auswertung der Protokolle",
+            "Dokumentation der Netzwerkverkabelung im zweiten Obergeschoss",
+            "Pflege von Benutzerkonten und Gruppen im Active Directory"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-04-02",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Installation von Windows-Updates auf den Testsystemen",
+            "Einrichtung eines Besprechungsraums mit Konferenzkamera und Lautsprecher"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-04-03",
+          "type": "work",
+          "status": "holiday",
+          "holidayName": "Karfreitag",
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": []
+        }
+      ]
+    },
+    {
+      "id": "2026-04-06",
+      "status": "done",
+      "instructions": "",
+      "days": [
+        {
+          "date": "2026-04-06",
+          "type": "school",
+          "status": "holiday",
+          "holidayName": "Ostermontag",
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": [
+            {
+              "label": "LF02",
+              "bullets": [
+                ""
+              ]
+            },
+            {
+              "label": "LF03",
+              "bullets": [
+                ""
+              ]
+            },
+            {
+              "label": "Englisch",
+              "bullets": [
+                ""
+              ]
+            },
+            {
+              "label": "WiPo",
+              "bullets": [
+                ""
+              ]
+            }
+          ]
+        },
+        {
+          "date": "2026-04-07",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Überprüfung der nächtlichen Datensicherung und Auswertung der Protokolle",
+            "Mitarbeit bei der Migration von Postfächern auf den neuen Mailserver",
+            "Vorbereitung von Leihgeräten für eine interne Schulung"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-04-08",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Einrichtung eines Besprechungsraums mit Konferenzkamera und Lautsprecher",
+            "Überprüfung der nächtlichen Datensicherung und Auswertung der Protokolle",
+            "Austausch von Tonerkartuschen und Wartung der Etagendrucker"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-04-09",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Einrichtung von Monitoren und Dockingstationen an zwei Arbeitsplätzen",
+            "Einrichtung eines Notebooks für einen neuen Mitarbeiter inklusive Softwareverteilung",
+            "Einweisung von Kollegen in die neuen Kategorien des Ticketsystems"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-04-10",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Einrichtung eines Besprechungsraums mit Konferenzkamera und Lautsprecher",
+            "Erneuerung abgelaufener Zertifikate auf internen Webdiensten",
+            "Austausch von Tonerkartuschen und Wartung der Etagendrucker"
+          ],
+          "subjects": []
+        }
+      ]
+    },
+    {
+      "id": "2026-04-13",
+      "status": "done",
+      "instructions": "",
+      "days": [
+        {
+          "date": "2026-04-13",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Überprüfung der USV-Anlage und Dokumentation der Akkulaufzeit",
+            "Erstellung einer Anleitung zur Einrichtung der Zwei-Faktor-Anmeldung",
+            "Einweisung von Kollegen in die neuen Kategorien des Ticketsystems"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-04-14",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Mitarbeit bei der Migration von Postfächern auf den neuen Mailserver",
+            "Erstellung einer Anleitung zur Einrichtung der Zwei-Faktor-Anmeldung",
+            "Austausch von Tonerkartuschen und Wartung der Etagendrucker"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-04-15",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Bearbeitung von Support-Anfragen zu Druckerproblemen in der Verwaltung",
+            "Erneuerung abgelaufener Zertifikate auf internen Webdiensten"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-04-16",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Erstellung einer Anleitung zur Einrichtung der Zwei-Faktor-Anmeldung",
+            "Einweisung von Kollegen in die neuen Kategorien des Ticketsystems",
+            "Austausch von Tonerkartuschen und Wartung der Etagendrucker"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-04-17",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Inventarisierung von Hardware und Abgleich mit der Bestandsliste",
+            "Überprüfung der USV-Anlage und Dokumentation der Akkulaufzeit"
+          ],
+          "subjects": []
+        }
+      ]
+    },
+    {
+      "id": "2026-04-20",
+      "status": "done",
+      "instructions": "",
+      "days": [
+        {
+          "date": "2026-04-20",
+          "type": "school",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": [
+            {
+              "label": "LF02",
+              "bullets": [
+                "Ergonomie am Bildschirmarbeitsplatz"
+              ]
+            },
+            {
+              "label": "LF03",
+              "bullets": [
+                "DHCP und DNS im lokalen Netz"
+              ]
+            },
+            {
+              "label": "Englisch",
+              "bullets": [
+                "Describing network diagrams"
+              ]
+            },
+            {
+              "label": "WiPo",
+              "bullets": [
+                "Der Ausbildungsvertrag"
+              ]
+            }
+          ]
+        },
+        {
+          "date": "2026-04-21",
+          "type": "school",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": [
+            {
+              "label": "LF04",
+              "bullets": [
+                "Grundwerte der Informationssicherheit"
+              ]
+            },
+            {
+              "label": "LF05",
+              "bullets": [
+                "SQL-Abfragen mit Filtern und Joins"
+              ]
+            }
+          ]
+        },
+        {
+          "date": "2026-04-22",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Einweisung von Kollegen in die neuen Kategorien des Ticketsystems",
+            "Vorbereitung von Leihgeräten für eine interne Schulung"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-04-23",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Datenlöschung und Entsorgung von Altgeräten nach interner Vorgabe",
+            "Vorbereitung von Leihgeräten für eine interne Schulung"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-04-24",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Mitarbeit bei der Migration von Postfächern auf den neuen Mailserver",
+            "Einrichtung eines Besprechungsraums mit Konferenzkamera und Lautsprecher"
+          ],
+          "subjects": []
+        }
+      ]
+    },
+    {
+      "id": "2026-04-27",
+      "status": "done",
+      "instructions": "Unterweisung zum Arbeitsschutz und zur Ersten Hilfe",
+      "days": [
+        {
+          "date": "2026-04-27",
+          "type": "school",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": [
+            {
+              "label": "LF02",
+              "bullets": [
+                "Arbeitsplätze nach Kundenwunsch ausstatten"
+              ]
+            },
+            {
+              "label": "LF03",
+              "bullets": [
+                "Clients in Netzwerke einbinden"
+              ]
+            },
+            {
+              "label": "Englisch",
+              "bullets": [
+                "Technical documentation"
+              ]
+            },
+            {
+              "label": "WiPo",
+              "bullets": [
+                "Sozialversicherungen"
+              ]
+            }
+          ]
+        },
+        {
+          "date": "2026-04-28",
+          "type": "school",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": [
+            {
+              "label": "LF04",
+              "bullets": [
+                "Passwortrichtlinien"
+              ]
+            },
+            {
+              "label": "LF05",
+              "bullets": [
+                "Normalisierung bis zur dritten Normalform"
+              ]
+            }
+          ]
+        },
+        {
+          "date": "2026-04-29",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Dokumentation der Netzwerkverkabelung im zweiten Obergeschoss",
+            "Erstellung einer Anleitung zur Einrichtung der Zwei-Faktor-Anmeldung"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-04-30",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Aufbau einer virtuellen Testumgebung mit Hyper-V",
+            "Inventarisierung von Hardware und Abgleich mit der Bestandsliste"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-05-01",
+          "type": "work",
+          "status": "holiday",
+          "holidayName": "Tag der Arbeit",
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": []
+        }
+      ]
+    },
+    {
+      "id": "2026-05-04",
+      "status": "done",
+      "instructions": "",
+      "days": [
+        {
+          "date": "2026-05-04",
+          "type": "school",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": [
+            {
+              "label": "LF02",
+              "bullets": [
+                "Hardwarekomponenten eines PCs"
+              ]
+            },
+            {
+              "label": "LF03",
+              "bullets": [
+                "IPv4-Adressierung und Subnetting"
+              ]
+            },
+            {
+              "label": "Englisch",
+              "bullets": [
+                "Phone calls in IT support"
+              ]
+            },
+            {
+              "label": "WiPo",
+              "bullets": [
+                "Tarifverträge und Mitbestimmung"
+              ]
+            }
+          ]
+        },
+        {
+          "date": "2026-05-05",
+          "type": "school",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": [
+            {
+              "label": "LF04",
+              "bullets": [
+                "Schutzbedarfsanalyse im eigenen Arbeitsbereich"
+              ]
+            },
+            {
+              "label": "LF05",
+              "bullets": [
+                "Datenbankmodell eines Lagers entwerfen"
+              ]
+            }
+          ]
+        },
+        {
+          "date": "2026-05-06",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Erneuerung abgelaufener Zertifikate auf internen Webdiensten",
+            "Überprüfung der USV-Anlage und Dokumentation der Akkulaufzeit",
+            "Austausch eines defekten Netzteils an einem Etagenswitch"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-05-07",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Einweisung von Kollegen in die neuen Kategorien des Ticketsystems",
+            "Bearbeitung von Support-Anfragen zu Druckerproblemen in der Verwaltung",
+            "Erneuerung abgelaufener Zertifikate auf internen Webdiensten"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-05-08",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Fehleranalyse bei langsamen Netzlaufwerken und Bereinigung von Benutzerprofilen",
+            "Installation von Windows-Updates auf den Testsystemen",
+            "Datenlöschung und Entsorgung von Altgeräten nach interner Vorgabe"
+          ],
+          "subjects": []
+        }
+      ]
+    },
+    {
+      "id": "2026-05-11",
+      "status": "done",
+      "instructions": "",
+      "days": [
+        {
+          "date": "2026-05-11",
+          "type": "school",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": [
+            {
+              "label": "LF02",
+              "bullets": [
+                "Ergonomie am Bildschirmarbeitsplatz"
+              ]
+            },
+            {
+              "label": "LF03",
+              "bullets": [
+                "DHCP und DNS im lokalen Netz"
+              ]
+            },
+            {
+              "label": "Englisch",
+              "bullets": [
+                "Describing network diagrams"
+              ]
+            },
+            {
+              "label": "WiPo",
+              "bullets": [
+                "Der Ausbildungsvertrag"
+              ]
+            }
+          ]
+        },
+        {
+          "date": "2026-05-12",
+          "type": "school",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": [
+            {
+              "label": "LF04",
+              "bullets": [
+                "Grundwerte der Informationssicherheit"
+              ]
+            },
+            {
+              "label": "LF05",
+              "bullets": [
+                "SQL-Abfragen mit Filtern und Joins"
+              ]
+            }
+          ]
+        },
+        {
+          "date": "2026-05-13",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Erneuerung abgelaufener Zertifikate auf internen Webdiensten",
+            "Austausch eines defekten Netzteils an einem Etagenswitch",
+            "Überprüfung der nächtlichen Datensicherung und Auswertung der Protokolle"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-05-14",
+          "type": "work",
+          "status": "holiday",
+          "holidayName": "Christi Himmelfahrt",
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-05-15",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Einrichtung eines Besprechungsraums mit Konferenzkamera und Lautsprecher",
+            "Erstellung einer Anleitung zur Einrichtung der Zwei-Faktor-Anmeldung",
+            "Inventarisierung von Hardware und Abgleich mit der Bestandsliste"
+          ],
+          "subjects": []
+        }
+      ]
+    },
+    {
+      "id": "2026-05-18",
+      "status": "done",
+      "instructions": "",
+      "days": [
+        {
+          "date": "2026-05-18",
+          "type": "school",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": [
+            {
+              "label": "LF02",
+              "bullets": [
+                "Arbeitsplätze nach Kundenwunsch ausstatten"
+              ]
+            },
+            {
+              "label": "LF03",
+              "bullets": [
+                "Clients in Netzwerke einbinden"
+              ]
+            },
+            {
+              "label": "Englisch",
+              "bullets": [
+                "Technical documentation"
+              ]
+            },
+            {
+              "label": "WiPo",
+              "bullets": [
+                "Sozialversicherungen"
+              ]
+            }
+          ]
+        },
+        {
+          "date": "2026-05-19",
+          "type": "school",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": [
+            {
+              "label": "LF04",
+              "bullets": [
+                "Passwortrichtlinien"
+              ]
+            },
+            {
+              "label": "LF05",
+              "bullets": [
+                "Normalisierung bis zur dritten Normalform"
+              ]
+            }
+          ]
+        },
+        {
+          "date": "2026-05-20",
+          "type": "work",
+          "status": "sick",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-05-21",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Inventarisierung von Hardware und Abgleich mit der Bestandsliste",
+            "Austausch eines defekten Netzteils an einem Etagenswitch"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-05-22",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Austausch eines defekten Netzteils an einem Etagenswitch",
+            "Überprüfung der USV-Anlage und Dokumentation der Akkulaufzeit"
+          ],
+          "subjects": []
+        }
+      ]
+    },
+    {
+      "id": "2026-05-25",
+      "status": "done",
+      "instructions": "",
+      "days": [
+        {
+          "date": "2026-05-25",
+          "type": "school",
+          "status": "holiday",
+          "holidayName": "Pfingstmontag",
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": [
+            {
+              "label": "LF02",
+              "bullets": [
+                ""
+              ]
+            },
+            {
+              "label": "LF03",
+              "bullets": [
+                ""
+              ]
+            },
+            {
+              "label": "Englisch",
+              "bullets": [
+                ""
+              ]
+            },
+            {
+              "label": "WiPo",
+              "bullets": [
+                ""
+              ]
+            }
+          ]
+        },
+        {
+          "date": "2026-05-26",
+          "type": "school",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": [
+            {
+              "label": "LF04",
+              "bullets": [
+                "Schutzbedarfsanalyse im eigenen Arbeitsbereich"
+              ]
+            },
+            {
+              "label": "LF05",
+              "bullets": [
+                "Datenbankmodell eines Lagers entwerfen"
+              ]
+            }
+          ]
+        },
+        {
+          "date": "2026-05-27",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Fehleranalyse bei langsamen Netzlaufwerken und Bereinigung von Benutzerprofilen",
+            "Dokumentation der Netzwerkverkabelung im zweiten Obergeschoss",
+            "Konfiguration von VLANs an einem Etagenswitch unter Anleitung"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-05-28",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Patch-Arbeiten am Netzwerkschrank und Beschriftung der Ports",
+            "Mitarbeit bei der Migration von Postfächern auf den neuen Mailserver",
+            "Inventarisierung von Hardware und Abgleich mit der Bestandsliste"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-05-29",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Datenlöschung und Entsorgung von Altgeräten nach interner Vorgabe",
+            "Konfiguration von VLANs an einem Etagenswitch unter Anleitung",
+            "Patch-Arbeiten am Netzwerkschrank und Beschriftung der Ports"
+          ],
+          "subjects": []
+        }
+      ]
+    },
+    {
+      "id": "2026-06-01",
+      "status": "done",
+      "instructions": "",
+      "days": [
+        {
+          "date": "2026-06-01",
+          "type": "school",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": [
+            {
+              "label": "LF02",
+              "bullets": [
+                "Hardwarekomponenten eines PCs"
+              ]
+            },
+            {
+              "label": "LF03",
+              "bullets": [
+                "IPv4-Adressierung und Subnetting"
+              ]
+            },
+            {
+              "label": "Englisch",
+              "bullets": [
+                "Phone calls in IT support"
+              ]
+            },
+            {
+              "label": "WiPo",
+              "bullets": [
+                "Tarifverträge und Mitbestimmung"
+              ]
+            }
+          ]
+        },
+        {
+          "date": "2026-06-02",
+          "type": "school",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": [
+            {
+              "label": "LF04",
+              "bullets": [
+                "Grundwerte der Informationssicherheit"
+              ]
+            },
+            {
+              "label": "LF05",
+              "bullets": [
+                "SQL-Abfragen mit Filtern und Joins"
+              ]
+            }
+          ]
+        },
+        {
+          "date": "2026-06-03",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Erneuerung abgelaufener Zertifikate auf internen Webdiensten",
+            "Inventarisierung von Hardware und Abgleich mit der Bestandsliste"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-06-04",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Bearbeitung von Support-Anfragen zu Druckerproblemen in der Verwaltung",
+            "Einrichtung von Monitoren und Dockingstationen an zwei Arbeitsplätzen"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-06-05",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Einweisung von Kollegen in die neuen Kategorien des Ticketsystems",
+            "Überprüfung der USV-Anlage und Dokumentation der Akkulaufzeit"
+          ],
+          "subjects": []
+        }
+      ]
+    },
+    {
+      "id": "2026-06-22",
+      "status": "done",
+      "instructions": "",
+      "days": [
+        {
+          "date": "2026-06-22",
+          "type": "school",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": [
+            {
+              "label": "LF02",
+              "bullets": [
+                "Ergonomie am Bildschirmarbeitsplatz"
+              ]
+            },
+            {
+              "label": "LF03",
+              "bullets": [
+                "DHCP und DNS im lokalen Netz"
+              ]
+            },
+            {
+              "label": "Englisch",
+              "bullets": [
+                "Describing network diagrams"
+              ]
+            },
+            {
+              "label": "WiPo",
+              "bullets": [
+                "Der Ausbildungsvertrag"
+              ]
+            }
+          ]
+        },
+        {
+          "date": "2026-06-23",
+          "type": "school",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": [
+            {
+              "label": "LF04",
+              "bullets": [
+                "Passwortrichtlinien"
+              ]
+            },
+            {
+              "label": "LF05",
+              "bullets": [
+                "Normalisierung bis zur dritten Normalform"
+              ]
+            }
+          ]
+        },
+        {
+          "date": "2026-06-24",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Einweisung von Kollegen in die neuen Kategorien des Ticketsystems",
+            "Einrichtung eines Besprechungsraums mit Konferenzkamera und Lautsprecher"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-06-25",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Bearbeitung von Support-Anfragen zu Druckerproblemen in der Verwaltung",
+            "Austausch von Tonerkartuschen und Wartung der Etagendrucker",
+            "Installation von Windows-Updates auf den Testsystemen"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-06-26",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Aufbau einer virtuellen Testumgebung mit Hyper-V",
+            "Anpassung von Gruppenrichtlinien für die Bildschirmsperre"
+          ],
+          "subjects": []
+        }
+      ]
+    },
+    {
+      "id": "2026-06-29",
+      "status": "done",
+      "instructions": "",
+      "days": [
+        {
+          "date": "2026-06-29",
+          "type": "school",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": [
+            {
+              "label": "LF02",
+              "bullets": [
+                "Arbeitsplätze nach Kundenwunsch ausstatten"
+              ]
+            },
+            {
+              "label": "LF03",
+              "bullets": [
+                "Clients in Netzwerke einbinden"
+              ]
+            },
+            {
+              "label": "Englisch",
+              "bullets": [
+                "Technical documentation"
+              ]
+            },
+            {
+              "label": "WiPo",
+              "bullets": [
+                "Sozialversicherungen"
+              ]
+            }
+          ]
+        },
+        {
+          "date": "2026-06-30",
+          "type": "school",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": [
+            {
+              "label": "LF04",
+              "bullets": [
+                "Schutzbedarfsanalyse im eigenen Arbeitsbereich"
+              ]
+            },
+            {
+              "label": "LF05",
+              "bullets": [
+                "Datenbankmodell eines Lagers entwerfen"
+              ]
+            }
+          ]
+        },
+        {
+          "date": "2026-07-01",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Einrichtung eines Besprechungsraums mit Konferenzkamera und Lautsprecher",
+            "Überprüfung der USV-Anlage und Dokumentation der Akkulaufzeit"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-07-02",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Inventarisierung von Hardware und Abgleich mit der Bestandsliste",
+            "Datenlöschung und Entsorgung von Altgeräten nach interner Vorgabe"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-07-03",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Austausch von Tonerkartuschen und Wartung der Etagendrucker",
+            "Einrichtung von Monitoren und Dockingstationen an zwei Arbeitsplätzen",
+            "Patch-Arbeiten am Netzwerkschrank und Beschriftung der Ports"
+          ],
+          "subjects": []
+        }
+      ]
+    },
+    {
+      "id": "2026-07-06",
+      "status": "done",
+      "instructions": "",
+      "days": [
+        {
+          "date": "2026-07-06",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Aktualisierung der Firmware an den WLAN-Access-Points",
+            "Vorbereitung von Leihgeräten für eine interne Schulung",
+            "Konfiguration von VLANs an einem Etagenswitch unter Anleitung"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-07-07",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Einweisung von Kollegen in die neuen Kategorien des Ticketsystems",
+            "Erstellung einer Anleitung zur Einrichtung der Zwei-Faktor-Anmeldung"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-07-08",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Mitarbeit bei der Migration von Postfächern auf den neuen Mailserver",
+            "Überprüfung der nächtlichen Datensicherung und Auswertung der Protokolle"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-07-09",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Einweisung von Kollegen in die neuen Kategorien des Ticketsystems",
+            "Patch-Arbeiten am Netzwerkschrank und Beschriftung der Ports",
+            "Erneuerung abgelaufener Zertifikate auf internen Webdiensten"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-07-10",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Einrichtung von Monitoren und Dockingstationen an zwei Arbeitsplätzen",
+            "Inventarisierung von Hardware und Abgleich mit der Bestandsliste",
+            "Patch-Arbeiten am Netzwerkschrank und Beschriftung der Ports"
+          ],
+          "subjects": []
+        }
+      ]
+    },
+    {
+      "id": "2026-07-13",
+      "status": "done",
+      "instructions": "",
+      "days": [
+        {
+          "date": "2026-07-13",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Aufbau einer virtuellen Testumgebung mit Hyper-V",
+            "Einrichtung eines Notebooks für einen neuen Mitarbeiter inklusive Softwareverteilung"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-07-14",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Konfiguration von VLANs an einem Etagenswitch unter Anleitung",
+            "Überprüfung der USV-Anlage und Dokumentation der Akkulaufzeit"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-07-15",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Einrichtung eines Besprechungsraums mit Konferenzkamera und Lautsprecher",
+            "Anpassung von Gruppenrichtlinien für die Bildschirmsperre",
+            "Überprüfung der USV-Anlage und Dokumentation der Akkulaufzeit"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-07-16",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Erstellung einer Anleitung zur Einrichtung der Zwei-Faktor-Anmeldung",
+            "Bearbeitung von Support-Anfragen zu Druckerproblemen in der Verwaltung",
+            "Fehleranalyse bei langsamen Netzlaufwerken und Bereinigung von Benutzerprofilen"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-07-17",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Austausch eines defekten Netzteils an einem Etagenswitch",
+            "Konfiguration von VLANs an einem Etagenswitch unter Anleitung",
+            "Vorbereitung von Leihgeräten für eine interne Schulung"
+          ],
+          "subjects": []
+        }
+      ]
+    },
+    {
+      "id": "2026-07-20",
+      "status": "done",
+      "instructions": "",
+      "days": [
+        {
+          "date": "2026-07-20",
+          "type": "school",
+          "status": "vacation",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": [
+            {
+              "label": "LF02",
+              "bullets": [
+                ""
+              ]
+            },
+            {
+              "label": "LF03",
+              "bullets": [
+                ""
+              ]
+            },
+            {
+              "label": "Englisch",
+              "bullets": [
+                ""
+              ]
+            },
+            {
+              "label": "WiPo",
+              "bullets": [
+                ""
+              ]
+            }
+          ]
+        },
+        {
+          "date": "2026-07-21",
+          "type": "school",
+          "status": "vacation",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": [
+            {
+              "label": "LF04",
+              "bullets": [
+                ""
+              ]
+            },
+            {
+              "label": "LF05",
+              "bullets": [
+                ""
+              ]
+            }
+          ]
+        },
+        {
+          "date": "2026-07-22",
+          "type": "work",
+          "status": "vacation",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-07-23",
+          "type": "work",
+          "status": "vacation",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-07-24",
+          "type": "work",
+          "status": "vacation",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": []
+        }
+      ]
+    },
+    {
+      "id": "2026-07-27",
+      "status": "done",
+      "instructions": "",
+      "days": [
+        {
+          "date": "2026-07-27",
+          "type": "school",
+          "status": "vacation",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": [
+            {
+              "label": "LF02",
+              "bullets": [
+                ""
+              ]
+            },
+            {
+              "label": "LF03",
+              "bullets": [
+                ""
+              ]
+            },
+            {
+              "label": "Englisch",
+              "bullets": [
+                ""
+              ]
+            },
+            {
+              "label": "WiPo",
+              "bullets": [
+                ""
+              ]
+            }
+          ]
+        },
+        {
+          "date": "2026-07-28",
+          "type": "school",
+          "status": "vacation",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": [
+            {
+              "label": "LF04",
+              "bullets": [
+                ""
+              ]
+            },
+            {
+              "label": "LF05",
+              "bullets": [
+                ""
+              ]
+            }
+          ]
+        },
+        {
+          "date": "2026-07-29",
+          "type": "work",
+          "status": "vacation",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-07-30",
+          "type": "work",
+          "status": "vacation",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-07-31",
+          "type": "work",
+          "status": "vacation",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": []
+        }
+      ]
+    },
+    {
+      "id": "2026-08-03",
+      "status": "done",
+      "instructions": "Jährliche Datenschutzunterweisung",
+      "days": [
+        {
+          "date": "2026-08-03",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Konfiguration von VLANs an einem Etagenswitch unter Anleitung",
+            "Vorbereitung von Leihgeräten für eine interne Schulung"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-08-04",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Austausch von Tonerkartuschen und Wartung der Etagendrucker",
+            "Erstellung einer Anleitung zur Einrichtung der Zwei-Faktor-Anmeldung",
+            "Patch-Arbeiten am Netzwerkschrank und Beschriftung der Ports"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-08-05",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Einweisung von Kollegen in die neuen Kategorien des Ticketsystems",
+            "Aktualisierung der Firmware an den WLAN-Access-Points"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-08-06",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Dokumentation der Netzwerkverkabelung im zweiten Obergeschoss",
+            "Konfiguration von VLANs an einem Etagenswitch unter Anleitung"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-08-07",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Erneuerung abgelaufener Zertifikate auf internen Webdiensten",
+            "Bearbeitung von Support-Anfragen zu Druckerproblemen in der Verwaltung",
+            "Einrichtung von Monitoren und Dockingstationen an zwei Arbeitsplätzen"
+          ],
+          "subjects": []
+        }
+      ]
+    },
+    {
+      "id": "2026-08-10",
+      "status": "done",
+      "instructions": "",
+      "days": [
+        {
+          "date": "2026-08-10",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Einweisung von Kollegen in die neuen Kategorien des Ticketsystems",
+            "Pflege von Benutzerkonten und Gruppen im Active Directory"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-08-11",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Erneuerung abgelaufener Zertifikate auf internen Webdiensten",
+            "Dokumentation der Netzwerkverkabelung im zweiten Obergeschoss"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-08-12",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Fehleranalyse bei langsamen Netzlaufwerken und Bereinigung von Benutzerprofilen",
+            "Überprüfung der USV-Anlage und Dokumentation der Akkulaufzeit"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-08-13",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Bearbeitung von Support-Anfragen zu Druckerproblemen in der Verwaltung",
+            "Mitarbeit bei der Migration von Postfächern auf den neuen Mailserver",
+            "Konfiguration von VLANs an einem Etagenswitch unter Anleitung"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-08-14",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Anpassung von Gruppenrichtlinien für die Bildschirmsperre",
+            "Überprüfung der nächtlichen Datensicherung und Auswertung der Protokolle"
+          ],
+          "subjects": []
+        }
+      ]
+    },
+    {
+      "id": "2026-08-17",
+      "status": "done",
+      "instructions": "",
+      "days": [
+        {
+          "date": "2026-08-17",
+          "type": "school",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": [
+            {
+              "label": "LF06",
+              "bullets": [
+                "Serviceanfragen bearbeiten"
+              ]
+            },
+            {
+              "label": "LF07",
+              "bullets": [
+                "Cyber-physische Systeme ergänzen"
+              ]
+            },
+            {
+              "label": "Englisch",
+              "bullets": [
+                "Phone calls in IT support"
+              ]
+            },
+            {
+              "label": "WiPo",
+              "bullets": [
+                "Tarifverträge und Mitbestimmung"
+              ]
+            }
+          ]
+        },
+        {
+          "date": "2026-08-18",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Konfiguration von VLANs an einem Etagenswitch unter Anleitung",
+            "Pflege von Benutzerkonten und Gruppen im Active Directory"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-08-19",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Dokumentation der Netzwerkverkabelung im zweiten Obergeschoss",
+            "Einweisung von Kollegen in die neuen Kategorien des Ticketsystems"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-08-20",
+          "type": "school",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": [
+            {
+              "label": "LF08",
+              "bullets": [
+                "Daten systemübergreifend bereitstellen"
+              ]
+            },
+            {
+              "label": "LF09",
+              "bullets": [
+                "Netzwerke und Dienste bereitstellen"
+              ]
+            }
+          ]
+        },
+        {
+          "date": "2026-08-21",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Vorbereitung von Leihgeräten für eine interne Schulung",
+            "Installation von Windows-Updates auf den Testsystemen"
+          ],
+          "subjects": []
+        }
+      ]
+    },
+    {
+      "id": "2026-08-24",
+      "status": "done",
+      "instructions": "",
+      "days": [
+        {
+          "date": "2026-08-24",
+          "type": "school",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": [
+            {
+              "label": "LF06",
+              "bullets": [
+                "Ticketpriorisierung nach SLA"
+              ]
+            },
+            {
+              "label": "LF07",
+              "bullets": [
+                "Sensoren und Aktoren"
+              ]
+            },
+            {
+              "label": "Englisch",
+              "bullets": [
+                "Describing network diagrams"
+              ]
+            },
+            {
+              "label": "WiPo",
+              "bullets": [
+                "Der Ausbildungsvertrag"
+              ]
+            }
+          ]
+        },
+        {
+          "date": "2026-08-25",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Anpassung von Gruppenrichtlinien für die Bildschirmsperre",
+            "Pflege von Benutzerkonten und Gruppen im Active Directory"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-08-26",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Bearbeitung von Support-Anfragen zu Druckerproblemen in der Verwaltung",
+            "Einrichtung eines Notebooks für einen neuen Mitarbeiter inklusive Softwareverteilung"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-08-27",
+          "type": "school",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": [
+            {
+              "label": "LF08",
+              "bullets": [
+                "Schnittstellen und Datenformate"
+              ]
+            },
+            {
+              "label": "LF09",
+              "bullets": [
+                "Routing zwischen Subnetzen"
+              ]
+            }
+          ]
+        },
+        {
+          "date": "2026-08-28",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Aufbau einer virtuellen Testumgebung mit Hyper-V",
+            "Mitarbeit bei der Migration von Postfächern auf den neuen Mailserver",
+            "Konfiguration von VLANs an einem Etagenswitch unter Anleitung"
+          ],
+          "subjects": []
+        }
+      ]
+    },
+    {
+      "id": "2026-08-31",
+      "status": "done",
+      "instructions": "",
+      "days": [
+        {
+          "date": "2026-08-31",
+          "type": "school",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": [
+            {
+              "label": "LF06",
+              "bullets": [
+                "Gesprächsführung im Support"
+              ]
+            },
+            {
+              "label": "LF07",
+              "bullets": [
+                "Protokolle im Internet der Dinge"
+              ]
+            },
+            {
+              "label": "Englisch",
+              "bullets": [
+                "Technical documentation"
+              ]
+            },
+            {
+              "label": "WiPo",
+              "bullets": [
+                "Sozialversicherungen"
+              ]
+            }
+          ]
+        },
+        {
+          "date": "2026-09-01",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Bearbeitung von Support-Anfragen zu Druckerproblemen in der Verwaltung",
+            "Patch-Arbeiten am Netzwerkschrank und Beschriftung der Ports"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-09-02",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Inventarisierung von Hardware und Abgleich mit der Bestandsliste",
+            "Mitarbeit bei der Migration von Postfächern auf den neuen Mailserver"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-09-03",
+          "type": "school",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": [
+            {
+              "label": "LF08",
+              "bullets": [
+                "JSON und XML im Vergleich"
+              ]
+            },
+            {
+              "label": "LF09",
+              "bullets": [
+                "Virtualisierung von Servern"
+              ]
+            }
+          ]
+        },
+        {
+          "date": "2026-09-04",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Aktualisierung der Firmware an den WLAN-Access-Points",
+            "Installation von Windows-Updates auf den Testsystemen",
+            "Erstellung einer Anleitung zur Einrichtung der Zwei-Faktor-Anmeldung"
+          ],
+          "subjects": []
+        }
+      ]
+    },
+    {
+      "id": "2026-09-07",
+      "status": "done",
+      "instructions": "",
+      "days": [
+        {
+          "date": "2026-09-07",
+          "type": "school",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": [
+            {
+              "label": "LF06",
+              "bullets": [
+                "Serviceanfragen bearbeiten"
+              ]
+            },
+            {
+              "label": "LF07",
+              "bullets": [
+                "Cyber-physische Systeme ergänzen"
+              ]
+            },
+            {
+              "label": "Englisch",
+              "bullets": [
+                "Phone calls in IT support"
+              ]
+            },
+            {
+              "label": "WiPo",
+              "bullets": [
+                "Tarifverträge und Mitbestimmung"
+              ]
+            }
+          ]
+        },
+        {
+          "date": "2026-09-08",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Einrichtung eines Notebooks für einen neuen Mitarbeiter inklusive Softwareverteilung",
+            "Dokumentation der Netzwerkverkabelung im zweiten Obergeschoss",
+            "Bearbeitung von Support-Anfragen zu Druckerproblemen in der Verwaltung"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-09-09",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Pflege von Benutzerkonten und Gruppen im Active Directory",
+            "Aufbau einer virtuellen Testumgebung mit Hyper-V",
+            "Erneuerung abgelaufener Zertifikate auf internen Webdiensten"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-09-10",
+          "type": "school",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": [
+            {
+              "label": "LF08",
+              "bullets": [
+                "Daten systemübergreifend bereitstellen"
+              ]
+            },
+            {
+              "label": "LF09",
+              "bullets": [
+                "Netzwerke und Dienste bereitstellen"
+              ]
+            }
+          ]
+        },
+        {
+          "date": "2026-09-11",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Einrichtung eines Besprechungsraums mit Konferenzkamera und Lautsprecher",
+            "Austausch eines defekten Netzteils an einem Etagenswitch",
+            "Einrichtung von Monitoren und Dockingstationen an zwei Arbeitsplätzen"
+          ],
+          "subjects": []
+        }
+      ]
+    },
+    {
+      "id": "2026-09-14",
+      "status": "done",
+      "instructions": "",
+      "days": [
+        {
+          "date": "2026-09-14",
+          "type": "school",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": [
+            {
+              "label": "LF06",
+              "bullets": [
+                "Ticketpriorisierung nach SLA"
+              ]
+            },
+            {
+              "label": "LF07",
+              "bullets": [
+                "Sensoren und Aktoren"
+              ]
+            },
+            {
+              "label": "Englisch",
+              "bullets": [
+                "Describing network diagrams"
+              ]
+            },
+            {
+              "label": "WiPo",
+              "bullets": [
+                "Der Ausbildungsvertrag"
+              ]
+            }
+          ]
+        },
+        {
+          "date": "2026-09-15",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Vorbereitung von Leihgeräten für eine interne Schulung",
+            "Anpassung von Gruppenrichtlinien für die Bildschirmsperre",
+            "Einrichtung eines Besprechungsraums mit Konferenzkamera und Lautsprecher"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-09-16",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Anpassung von Gruppenrichtlinien für die Bildschirmsperre",
+            "Dokumentation der Netzwerkverkabelung im zweiten Obergeschoss",
+            "Inventarisierung von Hardware und Abgleich mit der Bestandsliste"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-09-17",
+          "type": "school",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": [
+            {
+              "label": "LF08",
+              "bullets": [
+                "Schnittstellen und Datenformate"
+              ]
+            },
+            {
+              "label": "LF09",
+              "bullets": [
+                "Routing zwischen Subnetzen"
+              ]
+            }
+          ]
+        },
+        {
+          "date": "2026-09-18",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Fehleranalyse bei langsamen Netzlaufwerken und Bereinigung von Benutzerprofilen",
+            "Anpassung von Gruppenrichtlinien für die Bildschirmsperre",
+            "Bearbeitung von Support-Anfragen zu Druckerproblemen in der Verwaltung"
+          ],
+          "subjects": []
+        }
+      ]
+    },
+    {
+      "id": "2026-09-21",
+      "status": "draft",
+      "instructions": "Einführung in die Richtlinie zur Passwortvergabe",
+      "days": [
+        {
+          "date": "2026-09-21",
+          "type": "school",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": [
+            {
+              "label": "LF06",
+              "bullets": [
+                "Gesprächsführung im Support"
+              ]
+            },
+            {
+              "label": "LF07",
+              "bullets": [
+                "Protokolle im Internet der Dinge"
+              ]
+            },
+            {
+              "label": "Englisch",
+              "bullets": [
+                "Technical documentation"
+              ]
+            },
+            {
+              "label": "WiPo",
+              "bullets": [
+                "Sozialversicherungen"
+              ]
+            }
+          ]
+        },
+        {
+          "date": "2026-09-22",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Patch-Arbeiten am Netzwerkschrank und Beschriftung der Ports",
+            "Inventarisierung von Hardware und Abgleich mit der Bestandsliste",
+            "Einrichtung eines Besprechungsraums mit Konferenzkamera und Lautsprecher"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-09-23",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Patch-Arbeiten am Netzwerkschrank und Beschriftung der Ports",
+            "Anpassung von Gruppenrichtlinien für die Bildschirmsperre"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-09-24",
+          "type": "school",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": [
+            {
+              "label": "LF08",
+              "bullets": [
+                ""
+              ]
+            },
+            {
+              "label": "LF09",
+              "bullets": [
+                ""
+              ]
+            }
+          ]
+        },
+        {
+          "date": "2026-09-25",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": []
+        }
+      ]
+    },
+    {
+      "id": "2026-09-28",
+      "status": "done",
+      "instructions": "",
+      "days": [
+        {
+          "date": "2026-09-28",
+          "type": "school",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": [
+            {
+              "label": "LF06",
+              "bullets": [
+                "Serviceanfragen bearbeiten"
+              ]
+            },
+            {
+              "label": "LF07",
+              "bullets": [
+                "Cyber-physische Systeme ergänzen"
+              ]
+            },
+            {
+              "label": "Englisch",
+              "bullets": [
+                "Phone calls in IT support"
+              ]
+            },
+            {
+              "label": "WiPo",
+              "bullets": [
+                "Tarifverträge und Mitbestimmung"
+              ]
+            }
+          ]
+        },
+        {
+          "date": "2026-09-29",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Einweisung von Kollegen in die neuen Kategorien des Ticketsystems",
+            "Mitarbeit bei der Migration von Postfächern auf den neuen Mailserver"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-09-30",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Einweisung von Kollegen in die neuen Kategorien des Ticketsystems",
+            "Dokumentation der Netzwerkverkabelung im zweiten Obergeschoss",
+            "Einrichtung eines Besprechungsraums mit Konferenzkamera und Lautsprecher"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-10-01",
+          "type": "school",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": [
+            {
+              "label": "LF08",
+              "bullets": [
+                "JSON und XML im Vergleich"
+              ]
+            },
+            {
+              "label": "LF09",
+              "bullets": [
+                "Virtualisierung von Servern"
+              ]
+            }
+          ]
+        },
+        {
+          "date": "2026-10-02",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Dokumentation der Netzwerkverkabelung im zweiten Obergeschoss",
+            "Einrichtung von Monitoren und Dockingstationen an zwei Arbeitsplätzen"
+          ],
+          "subjects": []
+        }
+      ]
+    },
+    {
+      "id": "2026-10-05",
+      "status": "done",
+      "instructions": "",
+      "days": [
+        {
+          "date": "2026-10-05",
+          "type": "school",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": [
+            {
+              "label": "LF06",
+              "bullets": [
+                "Ticketpriorisierung nach SLA"
+              ]
+            },
+            {
+              "label": "LF07",
+              "bullets": [
+                "Sensoren und Aktoren"
+              ]
+            },
+            {
+              "label": "Englisch",
+              "bullets": [
+                "Describing network diagrams"
+              ]
+            },
+            {
+              "label": "WiPo",
+              "bullets": [
+                "Der Ausbildungsvertrag"
+              ]
+            }
+          ]
+        },
+        {
+          "date": "2026-10-06",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Erstellung einer Anleitung zur Einrichtung der Zwei-Faktor-Anmeldung",
+            "Einrichtung von Monitoren und Dockingstationen an zwei Arbeitsplätzen"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-10-07",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Aktualisierung der Firmware an den WLAN-Access-Points",
+            "Vorbereitung von Leihgeräten für eine interne Schulung",
+            "Dokumentation der Netzwerkverkabelung im zweiten Obergeschoss"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-10-08",
+          "type": "school",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": [
+            {
+              "label": "LF08",
+              "bullets": [
+                "Daten systemübergreifend bereitstellen"
+              ]
+            },
+            {
+              "label": "LF09",
+              "bullets": [
+                "Netzwerke und Dienste bereitstellen"
+              ]
+            }
+          ]
+        },
+        {
+          "date": "2026-10-09",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Bearbeitung von Support-Anfragen zu Druckerproblemen in der Verwaltung",
+            "Einweisung von Kollegen in die neuen Kategorien des Ticketsystems"
+          ],
+          "subjects": []
+        }
+      ]
+    },
+    {
+      "id": "2026-10-12",
+      "status": "draft",
+      "instructions": "",
+      "days": [
+        {
+          "date": "2026-10-12",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Installation von Windows-Updates auf den Testsystemen",
+            "Konfiguration von VLANs an einem Etagenswitch unter Anleitung",
+            "Einrichtung eines Notebooks für einen neuen Mitarbeiter inklusive Softwareverteilung"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-10-13",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Austausch eines defekten Netzteils an einem Etagenswitch",
+            "Einweisung von Kollegen in die neuen Kategorien des Ticketsystems",
+            "Pflege von Benutzerkonten und Gruppen im Active Directory"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-10-14",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Bearbeitung von Support-Anfragen zu Druckerproblemen in der Verwaltung",
+            "Aktualisierung der Firmware an den WLAN-Access-Points"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-10-15",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-10-16",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": []
+        }
+      ]
+    },
+    {
+      "id": "2026-10-26",
+      "status": "draft",
+      "instructions": "",
+      "days": [
+        {
+          "date": "2026-10-26",
+          "type": "school",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": [
+            {
+              "label": "LF06",
+              "bullets": [
+                "Gesprächsführung im Support"
+              ]
+            },
+            {
+              "label": "LF07",
+              "bullets": [
+                "Protokolle im Internet der Dinge"
+              ]
+            },
+            {
+              "label": "Englisch",
+              "bullets": [
+                "Technical documentation"
+              ]
+            },
+            {
+              "label": "WiPo",
+              "bullets": [
+                "Sozialversicherungen"
+              ]
+            }
+          ]
+        },
+        {
+          "date": "2026-10-27",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Pflege von Benutzerkonten und Gruppen im Active Directory",
+            "Mitarbeit bei der Migration von Postfächern auf den neuen Mailserver"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-10-28",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Datenlöschung und Entsorgung von Altgeräten nach interner Vorgabe",
+            "Bearbeitung von Support-Anfragen zu Druckerproblemen in der Verwaltung"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-10-29",
+          "type": "school",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "USV im Serverraum geprüft, Akkulaufzeit notiert",
+          "bullets": [
+            ""
+          ],
+          "subjects": [
+            {
+              "label": "LF08",
+              "bullets": [
+                ""
+              ]
+            },
+            {
+              "label": "LF09",
+              "bullets": [
+                ""
+              ]
+            }
+          ]
+        },
+        {
+          "date": "2026-10-30",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": []
+        }
+      ]
+    },
+    {
+      "id": "2026-11-02",
+      "status": "draft",
+      "instructions": "",
+      "days": [
+        {
+          "date": "2026-11-02",
+          "type": "school",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": [
+            {
+              "label": "LF06",
+              "bullets": [
+                "Serviceanfragen bearbeiten"
+              ]
+            },
+            {
+              "label": "LF07",
+              "bullets": [
+                "Cyber-physische Systeme ergänzen"
+              ]
+            },
+            {
+              "label": "Englisch",
+              "bullets": [
+                "Phone calls in IT support"
+              ]
+            },
+            {
+              "label": "WiPo",
+              "bullets": [
+                "Tarifverträge und Mitbestimmung"
+              ]
+            }
+          ]
+        },
+        {
+          "date": "2026-11-03",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            "Installation von Windows-Updates auf den Testsystemen",
+            "Konfiguration von VLANs an einem Etagenswitch unter Anleitung",
+            "Bearbeitung von Support-Anfragen zu Druckerproblemen in der Verwaltung"
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-11-04",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "Drucker im zweiten OG getauscht, Treiber über die Softwareverteilung ausgerollt\nTicketsystem: alte Kategorien zusammengelegt",
+          "bullets": [
+            ""
+          ],
+          "subjects": []
+        },
+        {
+          "date": "2026-11-05",
+          "type": "school",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": [
+            {
+              "label": "LF08",
+              "bullets": [
+                ""
+              ]
+            },
+            {
+              "label": "LF09",
+              "bullets": [
+                ""
+              ]
+            }
+          ]
+        },
+        {
+          "date": "2026-11-06",
+          "type": "work",
+          "status": "normal",
+          "holidayName": null,
+          "notes": "",
+          "bullets": [
+            ""
+          ],
+          "subjects": []
+        }
+      ]
+    }
+  ]
+}

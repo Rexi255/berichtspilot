@@ -12,7 +12,7 @@ import {
   SignInIcon,
 } from '@phosphor-icons/react'
 import { useStore, api } from '../store.jsx'
-import { Button, IconButton, Select, Panel, cx } from '../ui/basics.jsx'
+import { Button, Card, IconButton, Notice, Select, cx } from '../ui/basics.jsx'
 import { weekdayName, formatDE } from '../lib/dates.js'
 import {
   schoolDaysFromWebuntis,
@@ -42,9 +42,9 @@ const STATUS_TEXT = { holiday: 'Feiertag', sick: 'Krank', vacation: 'Urlaub' }
 // Why a day stays untouched (fillWeekFromWebuntis() `skipped`)
 const skipText = (change, day) =>
   ({
-    schoolBreak: 'Ferien laut WebUntis — nicht geändert',
-    status: `${STATUS_TEXT[day?.status] ?? 'Sonderstatus'} — nicht geändert`,
-    notSchoolDay: 'Betriebstag im Bericht — nicht geändert',
+    schoolBreak: 'Ferien laut WebUntis, bleibt unverändert',
+    status: `${STATUS_TEXT[day?.status] ?? 'Sonderstatus'}, bleibt unverändert`,
+    notSchoolDay: 'Betriebstag im Bericht, bleibt unverändert',
   })[change.skipped]
 
 const subjectCount = (n) => (n === 1 ? '1 Fach' : `${n} Fächer`)
@@ -120,25 +120,25 @@ export default function WebuntisPanel({ monday, week, profile, onApply, onClose 
   }
 
   return (
-    <Panel data-daycard className="shrink-0 border-accent/20">
-      <div className="flex items-center gap-2 border-b border-white/[0.05] px-4 py-2.5">
-        <CloudArrowDownIcon size={16} className="text-accent" />
-        <span className="mr-auto text-[14px] font-semibold">Aus WebUntis füllen</span>
+    <Card className="shrink-0">
+      <div className="flex items-center gap-2 border-b border-line py-2 pl-4 pr-2">
+        <CloudArrowDownIcon size={16} className="text-ink-2" />
+        <h2 className="mr-auto text-title font-medium text-ink">Aus WebUntis füllen</h2>
         <IconButton label="Neu laden" onClick={fetchWeek} disabled={load.state === 'loading' || loggingIn}>
-          <ArrowClockwiseIcon size={14} />
+          <ArrowClockwiseIcon size={16} />
         </IconButton>
-        <IconButton label="Schließen" onClick={onClose}>
-          <XIcon size={14} />
+        <IconButton label="Schließen" side="bottom-end" onClick={onClose}>
+          <XIcon size={16} />
         </IconButton>
       </div>
 
       {load.state === 'loading' ? (
-        <p className="flex items-center gap-2 px-4 py-4 text-[12.5px] text-ink-3">
+        <p className="flex items-center gap-2 px-4 py-4 text-body text-ink-2">
           <CircleNotchIcon size={14} className="animate-spin" /> Stundenplan und Lehrstoff werden geladen …
         </p>
       ) : load.state === 'error' ? (
         <div className="flex flex-col items-start gap-2.5 px-4 py-4">
-          <p className="text-[12.5px] text-sick">{load.error}</p>
+          <p className="text-body text-missing">{load.error}</p>
           {load.code === 'auth' ? (
             <Button size="sm" variant="primary" onClick={login} disabled={loggingIn}>
               {loggingIn ? (
@@ -163,24 +163,24 @@ export default function WebuntisPanel({ monday, week, profile, onApply, onClose 
       ) : (
         <div className="flex flex-col gap-3 px-4 py-4">
           {unmapped.length > 0 && (
-            <div className="rounded-lg border border-draft/25 bg-draft/[0.06] px-3 py-2.5">
-              <p className="text-[12px] leading-snug text-ink-2">
+            <Notice>
+              <p>
                 {profile
-                  ? 'Unbekannte Fächer aus WebUntis — einmal zuordnen, die App merkt es sich im Profil:'
-                  : 'Kein Profil für diese Woche — Fächer aus WebUntis können nicht zugeordnet werden.'}
+                  ? 'Unbekannte Fächer aus WebUntis: einmal zuordnen, die App merkt es sich im Profil.'
+                  : 'Kein Profil für diese Woche, Fächer aus WebUntis können nicht zugeordnet werden.'}
               </p>
               {profile && (
                 <div className="mt-2 flex flex-col gap-1.5">
                   {unmapped.map((s) => (
                     <div key={subjectKey(s.short)} className="flex items-center gap-2">
-                      <span className="w-40 truncate text-[12.5px]" title={s.long || s.short}>
+                      <span className="w-40 truncate text-body" title={s.long || s.short}>
                         <span className="font-medium text-ink">{s.short}</span>
-                        {s.long && s.long !== s.short && <span className="text-ink-3"> · {s.long}</span>}
+                        {s.long && s.long !== s.short && <span className="text-ink-2"> · {s.long}</span>}
                       </span>
                       <Select
                         value=""
                         onChange={(e) => assign(s.short, e.target.value)}
-                        className="h-7 w-48 text-[12.5px]"
+                        className="h-7 w-48"
                         aria-label={`Zuordnung für ${s.short}`}
                       >
                         <option value="" disabled>
@@ -191,17 +191,17 @@ export default function WebuntisPanel({ monday, week, profile, onApply, onClose 
                             {l}
                           </option>
                         ))}
-                        <option value={IGNORE}>— ignorieren —</option>
+                        <option value={IGNORE}>ignorieren</option>
                       </Select>
                     </div>
                   ))}
                 </div>
               )}
-            </div>
+            </Notice>
           )}
 
           {changes.length === 0 ? (
-            <p className="text-[12.5px] text-ink-3">WebUntis liefert für diese Woche keinen Unterricht.</p>
+            <p className="text-body text-ink-2">WebUntis liefert für diese Woche keinen Unterricht.</p>
           ) : (
             changes.map((change) => {
               const day = week.days.find((d) => d.date === change.date)
@@ -212,16 +212,16 @@ export default function WebuntisPanel({ monday, week, profile, onApply, onClose 
               ].filter(Boolean)
               return (
                 <div key={change.date} className="flex flex-col gap-1.5">
-                  <div className="flex flex-wrap items-baseline gap-x-2 text-[12.5px]">
+                  <div className="flex flex-wrap items-baseline gap-x-2 text-body">
                     <span className="font-medium text-ink">
                       {weekdayName(change.date)}, {formatDE(change.date)}
                     </span>
-                    {change.skipped && <span className="text-[11.5px] text-ink-3">{skipText(change, day)}</span>}
+                    {change.skipped && <span className="text-meta text-ink-2">{skipText(change, day)}</span>}
                   </div>
 
                   {change.skipped
                     ? change.subjects.length > 0 && (
-                        <p className="text-[11.5px] text-ink-3">
+                        <p className="text-meta text-ink-2">
                           Unterricht laut WebUntis: {change.subjects.map((s) => s.label).join(', ')}
                         </p>
                       )
@@ -234,9 +234,9 @@ export default function WebuntisPanel({ monday, week, profile, onApply, onClose 
                           <label
                             key={key}
                             className={cx(
-                              'flex gap-2.5 rounded-lg border px-3 py-2 transition-colors duration-150',
+                              'flex gap-2.5 rounded-control border border-line px-3 py-2 transition-colors duration-150',
                               pickable ? 'cursor-pointer' : 'cursor-default',
-                              on ? 'border-accent/20 bg-accent/[0.04]' : 'border-white/[0.06] opacity-60'
+                              on ? 'bg-surface-2' : 'opacity-60'
                             )}
                           >
                             <input
@@ -247,18 +247,18 @@ export default function WebuntisPanel({ monday, week, profile, onApply, onClose 
                               className="mt-0.5 h-3.5 w-3.5 shrink-0 accent-[var(--color-accent)]"
                             />
                             <div className="min-w-0">
-                              <div className="text-[12.5px] font-medium text-ink">
+                              <div className="text-body font-medium text-ink">
                                 {s.label}
                                 {renamed.length > 0 && (
-                                  <span className="ml-1.5 font-normal text-ink-3">(WebUntis: {renamed.join(', ')})</span>
+                                  <span className="ml-1.5 font-normal text-ink-2">(WebUntis: {renamed.join(', ')})</span>
                                 )}
-                                <span className="ml-2 text-[11px] font-normal text-ink-3">{RESULT_TEXT[s.result]}</span>
+                                <span className="ml-2 text-meta font-normal text-ink-2">{RESULT_TEXT[s.result]}</span>
                               </div>
                               {s.topics.length > 0 && (
-                                <ul className="mt-1 flex flex-col gap-0.5 text-[12px] text-ink-2">
+                                <ul className="mt-1 flex flex-col gap-0.5 text-body text-ink">
                                   {s.topics.map((t, i) => (
                                     <li key={i}>
-                                      <span className="text-ink-3">- </span>
+                                      <span className="text-ink-2">- </span>
                                       {t}
                                     </li>
                                   ))}
@@ -269,14 +269,14 @@ export default function WebuntisPanel({ monday, week, profile, onApply, onClose 
                         )
                       })}
 
-                  {extras.length > 0 && <p className="text-[11.5px] text-ink-3">{extras.join(' · ')}</p>}
+                  {extras.length > 0 && <p className="text-meta text-ink-2">{extras.join(', ')}</p>}
                 </div>
               )
             })
           )}
 
-          <p className="text-[11.5px] text-ink-3">
-            Nur leere Fächer werden gefüllt, fehlende angehängt — vorhandener Text bleibt unverändert. Falsche
+          <p className="text-meta text-ink-2">
+            Nur leere Fächer werden gefüllt, fehlende angehängt, vorhandener Text bleibt unverändert. Falsche
             Stunden im Stundenplan einfach abwählen.
           </p>
           <Button
@@ -285,10 +285,10 @@ export default function WebuntisPanel({ monday, week, profile, onApply, onClose 
             disabled={picked === 0}
             className="w-fit"
           >
-            <CheckIcon size={15} weight="bold" /> {subjectCount(picked)} übernehmen
+            <CheckIcon size={16} /> {subjectCount(picked)} übernehmen
           </Button>
         </div>
       )}
-    </Panel>
+    </Card>
   )
 }

@@ -6,6 +6,87 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [2.1.0] - 2026-11-08
+
+The design release: a completely new interface ("Kladde") with a light mode,
+accent colors, a new overview with the year band, a week editor with one tab
+per day and an exact preview. From 2.0.x the app updates itself (sidebar card
+or Settings → Updates); `daten.json` is migrated automatically. **Note:** after
+the update, older versions (2.0.x) can no longer open the data file — a
+backup of the previous state stays in the folder `sicherungen`.
+
+### Changed
+
+- **Light mode and accent colors instead of six dark themes** (Settings →
+  Aussehen): dark or light, plus Logo-Blau, Koralle, Flieder or Grün. Your
+  previous theme becomes the closest accent. New fonts: Instrument Sans for
+  the interface, Bricolage Grotesque for headings, JetBrains Mono for the
+  text preview.
+- **New sidebar:** Übersicht (with the number of weeks still missing),
+  Woche, Profile, Einstellungen. It collapses to a narrow icon bar with the
+  button at the bottom or Strg+B and remembers that. A switch for dark/light
+  sits next to it. "Lokal · kein Konto" shows where your data lives and
+  turns red as "Nicht gespeichert" if saving ever fails. The number of
+  missing weeks updates on Monday even while the app stays open.
+- **New overview:** three figures (finished weeks of those due so far, with
+  a bar; drafts; weeks without a report), a bar with the missing weeks to
+  open them in one click, the **year band** (one column per week of the
+  apprenticeship, one cell per day: written, open, holiday/sick/vacation
+  with F/K/U, still ahead) and the latest 8 weeks grouped by month, each
+  with its five days. The search understands week numbers ("KW 42"), dates
+  ("15.10.") and text (Strg+F). The filter Alle/Entwürfe/Fertig and the
+  "Wochen in Serie" tile are gone; creating a week now starts with
+  "KW xx bearbeiten".
+- **New week editor:** one tab per day (Alt+1–5, or the arrow keys) with
+  its date, its day cell and whether it is written; the selected day opens
+  in one card. One switch sets the day to Betrieb, Schule, Feiertag, Krank or
+  Urlaub; for a holiday, sick or vacation day the card shows the exact line
+  the output will contain and whether it counts as a work or a school day.
+  School days list each subject with its topic. The header shows the week's
+  status (click to switch Entwurf/Fertig) and how many days are written;
+  jumping to a date opens from the date range, deleting the week moved to
+  the ⋯ menu ("Wirklich löschen?" asks once more, then undo for 6 seconds).
+  Alt+←/→ changes the week even while a day tab has the focus.
+- **Exact preview:** the three blocks show exactly the text that gets
+  copied, without wrapping or trimming (long lines scroll sideways); each
+  block shows its number of lines and has its own copy button. "Leerzeichen
+  anzeigen" marks spaces with · and line ends with ↵ — only on screen, the
+  copied text stays the same. Strg+P hides the preview; a slim bar with the
+  three copy buttons stays at the bottom, and Strg+1/2/3 keep working.
+- **Privacy check before copying:** if a block contains what looks like
+  customer data (the word "Kunde", e-mail or IP addresses, ticket or phone
+  numbers), the block shows a warning and its button reads "Trotzdem
+  kopieren"; Strg+1/2/3 then needs a second press.
+- **Notes next to the bullets:** the notes area is one switch for all days
+  (button in the editor header or Strg+Umschalt+N); the notes themselves
+  stay per day.
+- **AI for one day:** in the notes area, "KI-Prompt kopieren" copies a
+  prompt with only this day's notes for any chat AI; "Auftrag ansehen" shows
+  that prompt (with the example bullets from earlier weeks) before you copy
+  it. "Antwort einfügen" shows its bullets for a check before "Übernehmen"
+  (with undo); an open "Mit KI formulieren" panel for the whole week stays
+  open with its pasted answer. The answer may leave out the date line. Like the whole-week flow ("Mit KI
+  formulieren", still there), the button reads "Trotzdem kopieren" when the
+  notes look like customer data.
+- **Profiles, settings and the setup wizard** in the new look: profiles as
+  one list of half-years with their weekdays as rows; settings with
+  switches for the notes area and the preview; the wizard with a quiet
+  progress bar.
+- **Export and import** moved from the sidebar to Settings → Daten.
+- **Keyboard and screen readers:** every icon button has a name and a
+  tooltip with its shortcut, the day tabs work with the arrow keys, and the
+  preview text can be reached with Tab to scroll long lines.
+- The app starts in the colors you chose last, without a dark flash while
+  the data loads.
+- **Keyboard shortcuts:** Strg+1/2/3 now copies output block 1/2/3 (was
+  Strg+Umschalt+1/2/3); the views moved to Strg+Umschalt+1–4 (was Strg+1–4).
+
+- **"Mit KI formulieren" also warns about the word "Kunde":** besides e-mail
+  and IP addresses, MAC, ticket and phone numbers, the check before copying a
+  prompt now flags "Kunde", "Kunden", "Endkunde" and customer numbers in your
+  notes and in the example bullets it sends along. Words like "Kundenwunsch"
+  stay quiet, and so do "Urkunde", "Sekunden", "erkunden" and "bekunden".
+
 ## [2.0.4] - 2026-11-07
 
 The maintenance release: Electron 45.2 with its security fixes and updated

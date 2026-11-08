@@ -4,7 +4,7 @@
 // window buttons keep working and saving goes on.
 import { Component } from 'react'
 import { WarningIcon, ArrowClockwiseIcon, CopyIcon } from '@phosphor-icons/react'
-import { Button } from './basics.jsx'
+import { Button, Card } from './basics.jsx'
 import { showToast } from './toast.jsx'
 
 function Fallback({ error, title, hint, onReload }) {
@@ -19,23 +19,25 @@ function Fallback({ error, title, hint, onReload }) {
   }
 
   return (
-    <div className="grid h-full place-items-center px-8 text-center" role="alert">
-      <div className="max-w-md">
-        <span className="mx-auto grid h-11 w-11 place-items-center rounded-full bg-sick/10 text-sick">
-          <WarningIcon size={22} />
-        </span>
-        <div className="mt-3 text-[15px] font-semibold text-ink">{title}</div>
-        <p className="mt-2 text-[13px] leading-relaxed text-ink-2">{hint}</p>
-        <p className="mt-2 break-words font-mono text-[11.5px] text-ink-3">{String(error?.message || error)}</p>
-        <div className="mt-4 flex justify-center gap-2">
-          <Button size="sm" variant="primary" onClick={onReload}>
-            <ArrowClockwiseIcon size={14} /> Neu laden
+    <div className="grid h-full place-items-center px-6" role="alert">
+      <Card className="w-full max-w-md p-5">
+        <div className="flex items-center gap-2">
+          <WarningIcon size={18} className="shrink-0 text-missing" />
+          <h2 className="text-title font-medium text-ink">{title}</h2>
+        </div>
+        <p className="mt-2 text-body text-ink-2">{hint}</p>
+        <p className="selectable mt-3 break-words rounded-control border border-line bg-canvas px-3 py-2 font-mono text-meta text-ink-2">
+          {String(error?.message || error)}
+        </p>
+        <div className="mt-4 flex gap-2">
+          <Button variant="primary" onClick={onReload}>
+            <ArrowClockwiseIcon size={16} /> Neu laden
           </Button>
-          <Button size="sm" onClick={copyDetails}>
-            <CopyIcon size={14} /> Fehlerdetails kopieren
+          <Button onClick={copyDetails}>
+            <CopyIcon size={16} /> Fehlerdetails kopieren
           </Button>
         </div>
-      </div>
+      </Card>
     </div>
   )
 }
