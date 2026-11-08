@@ -2,7 +2,7 @@
   "name": "berichtspilot",
   "productName": "Berichtspilot",
   "desktopName": "berichtspilot.desktop",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "Ausbildungsnachweis-Generator für das digitale IHK-Berichtsheft",
   "author": "Rexi255",
   "license": "MIT",

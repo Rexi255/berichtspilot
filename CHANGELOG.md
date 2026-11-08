@@ -6,6 +6,14 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [2.2.0] - 2026-11-08
+
+All days of a week on one page, and a way to skip the weeks before you
+started with Berichtspilot. From 2.0.x and 2.1.x the app updates itself;
+`daten.json` is migrated automatically. **Note:** after the update, older
+versions (2.1.x and earlier) can no longer open the data file — a backup of
+the previous state stays in the folder `sicherungen`.
+
 ### Added
 
 - **Ignore earlier weeks** (Settings → Frühere Wochen, also in the setup
