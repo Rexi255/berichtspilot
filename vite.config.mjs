@@ -11,7 +11,7 @@ const productionCsp = {
   name: 'production-csp',
   apply: 'build',
   transformIndexHtml(html) {
-    if (!html.includes(DEV_CONNECT_SOURCES)) throw new Error('index.html: dev connect-src not found — update vite.config.js')
+    if (!html.includes(DEV_CONNECT_SOURCES)) throw new Error('index.html: dev connect-src not found — update vite.config.mjs')
     return html.replace(DEV_CONNECT_SOURCES, '')
   },
 }
