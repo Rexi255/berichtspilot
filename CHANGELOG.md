@@ -6,13 +6,22 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [2.1.0] - 2026-11-08
+
+The design release: a completely new interface ("Kladde") with a light mode,
+accent colors, a new overview with the year band, a week editor with one tab
+per day and an exact preview. From 2.0.x the app updates itself (sidebar card
+or Settings → Updates); `daten.json` is migrated automatically. **Note:** after
+the update, older versions (2.0.x) can no longer open the data file — a
+backup of the previous state stays in the folder `sicherungen`.
+
 ### Changed
 
 - **Light mode and accent colors instead of six dark themes** (Settings →
   Aussehen): dark or light, plus Logo-Blau, Koralle, Flieder or Grün. Your
   previous theme becomes the closest accent. New fonts: Instrument Sans for
   the interface, Bricolage Grotesque for headings, JetBrains Mono for the
-  text preview. The rest of the new design follows in the next steps.
+  text preview.
 - **New sidebar:** Übersicht (with the number of weeks still missing),
   Woche, Profile, Einstellungen. It collapses to a narrow icon bar with the
   button at the bottom or Strg+B and remembers that. A switch for dark/light

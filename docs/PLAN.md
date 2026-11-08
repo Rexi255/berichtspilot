@@ -75,7 +75,11 @@ before tagging matters.
 **v2.0.4 is out** (2026-11-07, release published 20:03 UTC): the dependency
 update 8.7 (Electron 45.2). `main` = v2.0.4 (merge of PR #27, 3ba9eec).
 
-**Now: release v2.1.0 (step 11.10) — waiting for the user's go.** The UI
+**Release v2.1.0 (step 11.10) is running** (user's go + permission for the
+merge and the tag, 2026-11-08): version bump + CHANGELOG `## [2.1.0]` →
+dry run → PR `development` → `main` → tag `v2.1.0`. If this paragraph is
+still here, check `gh run list`, `gh pr list` and the tags and continue the
+procedure where it stopped. Background: the UI
 overhaul (phase 11, `docs/DESIGN.md`, E-032/E-033) is complete on
 `development` (11.1–11.9, 2026-11-07/08). On 2026-11-08 the user ran
 `/code-review` and `/security-review` over `main...development`: the security
@@ -117,9 +121,9 @@ install script; it downloads its binary on the first start.
 
 ## Open questions (for the user)
 
-0. **Release v2.1.0 now, or test the dev build first?** (asked
-   2026-11-08, answer pending). Phase 11 is complete on `development`; the
-   release (step 11.10) starts only on the user's go.
+0. ~~**Release v2.1.0 now, or test the dev build first?**~~ Answered
+   2026-11-08: release now, the user gave Claude permission to merge into
+   `main` and push the tag.
 
 1. **Step 9.3b — the account part is left for the user (no decision
    needed):** two-factor authentication is on (user, 2026-10-20); still
