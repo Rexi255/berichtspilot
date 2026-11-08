@@ -77,7 +77,11 @@ update 8.7 (Electron 45.2). `main` = v2.0.4 (merge of PR #27, 3ba9eec).
 
 **Now: release v2.1.0 (step 11.10) — waiting for the user's go.** The UI
 overhaul (phase 11, `docs/DESIGN.md`, E-032/E-033) is complete on
-`development` (11.1–11.9, 2026-11-07/08). Before tagging: ask the user whether
+`development` (11.1–11.9, 2026-11-07/08). On 2026-11-08 the user ran
+`/code-review` and `/security-review` over `main...development`: the security
+review found nothing; the 10 code-review findings are fixed in 11.9b (two-step
+delete, AI per day keeps the week panel, visible per-day prompt, "Urkunde" no
+longer flagged, badge follows the running week …). Before tagging: ask the user whether
 they want to try the dev build first (`npm start` from a scratch folder, or
 `npm run build:win` + the unpacked app with `--user-data-dir`), then follow the
 release procedure above with version 2.1.0 (schema v12: older versions can't
@@ -468,6 +472,15 @@ checkpoint is a styleguide in code, no HTML prototype.
       UI copy without dashes as pauses or exclamation marks, also in store
       messages, profile warnings and two Electron dialogs; README texts +
       three screenshots from the demo record)
+- [x] 11.9b Fixes from `/code-review` + `/security-review` of `main...development`
+      (2026-11-08; security: no findings. Code: delete week/profile in two
+      steps (`Menu` items take `confirm`), applying one day's AI answer keeps
+      the week panel, Alt+←/→ on a day tab changes only the week, "Auftrag
+      ansehen" in the notes area (hard rule 6), customer pattern skips
+      Urkunde/Sekunden/erkunden/bekunden, `useCurrentMonday()` for sidebar
+      badge + overview, help "Alt+1 … 6", style examples computed once,
+      comment + test on validateData after migrateData, accent options from
+      `ACCENTS`/`ACCENT_NAMES`; 3 new e2e tests)
 - [ ] 11.10 Release v2.1.0 — **only on the user's go** (procedure under
       "Next step")
 
@@ -585,3 +598,4 @@ checkpoint is a styleguide in code, no HTML prototype.
 | 2026-11-07 | 11.7c: AI per day, week AI + WebUntis panels restyled | b8b30ec |
 | 2026-11-08 | 11.8: profiles, settings, setup wizard | b93c62e |
 | 2026-11-08 | 11.9: clean-up, a11y (axe-core) + copy pass, README; CI green (run 42482075316) | ad7bfce |
+| 2026-11-08 | 11.9b: fixes from code + security review (10 findings, 3 new e2e tests) | d034dfa |
