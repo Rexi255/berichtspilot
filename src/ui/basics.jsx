@@ -236,6 +236,7 @@ export const DAY_STATE_LABELS = {
   holiday: 'Feiertag',
   sick: 'Krank',
   vacation: 'Urlaub',
+  ignored: 'ignoriert',
   none: 'kein Tag',
 }
 
@@ -246,6 +247,8 @@ const CELL_STATES = {
   holiday: 'border-transparent bg-surface-2 text-holiday',
   sick: 'border-transparent bg-surface-2 text-sick',
   vacation: 'border-transparent bg-surface-2 text-vacation',
+  // before Berichtspilot (settings.ignoredUntil): a flat, faint fill, no letter
+  ignored: 'border-transparent bg-line/45',
   none: 'border-transparent',
 }
 const STATUS_LETTERS = { holiday: 'F', sick: 'K', vacation: 'U' }

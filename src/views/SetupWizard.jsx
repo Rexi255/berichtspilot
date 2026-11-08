@@ -13,6 +13,7 @@ import { SubjectEditor } from './Profiles.jsx'
 import { WEEKDAY_KEYS, WEEKDAY_LABELS, formatDE, toISO } from '../lib/dates.js'
 import { STATES } from '../lib/holidays.js'
 import { SETUP_STEPS, setupDraft, setupErrors, trainingEndAfter } from '../lib/setup.js'
+import { ignoredRange, ignoredRangeLabel } from '../lib/overview.js'
 import { parseWebuntisAddress } from '../lib/webuntis.js'
 
 // The steps after the welcome screen, each one a segment of the progress bar
@@ -103,6 +104,38 @@ function TrainingStep({ answers, set }) {
           ))}
         </Select>
       </Field>
+      <IgnoreEarlier answers={answers} set={set} />
+    </div>
+  )
+}
+
+// Started mid-training: the weeks before Berichtspilot need no report
+function IgnoreEarlier({ answers, set }) {
+  const range = answers.ignoreEarlier
+    ? ignoredRange({ settings: { trainingStart: answers.trainingStart, ignoredUntil: answers.ignoredUntil }, weeks: [] })
+    : null
+  return (
+    <div className="flex flex-col gap-3 border-t border-line pt-4">
+      <div>
+        <Switch
+          checked={answers.ignoreEarlier}
+          onChange={(ignoreEarlier) => set({ ignoreEarlier })}
+          label="Ich steige mitten in der Ausbildung ein"
+        />
+        <p className="mt-1 text-meta text-ink-2">
+          Frühere Berichte musst du nicht nachtragen: Wochen vom Ausbildungsbeginn bis zum gewählten Datum zählen
+          nicht als fehlend.
+        </p>
+      </div>
+      {answers.ignoreEarlier && (
+        <Field
+          label="Frühere Wochen ignorieren bis einschließlich"
+          hint={range ? `Ignoriert: ${ignoredRangeLabel(range)}` : 'Die Woche mit diesem Datum zählt noch dazu.'}
+          className="max-w-xs"
+        >
+          <Input type="date" value={answers.ignoredUntil} onChange={(e) => set({ ignoredUntil: e.target.value })} />
+        </Field>
+      )}
     </div>
   )
 }
@@ -263,6 +296,9 @@ function SummaryStep({ answers }) {
           {answers.trainingStart || answers.trainingEnd
             ? `${dateOrOpen(answers.trainingStart)} bis ${dateOrOpen(answers.trainingEnd)}`
             : 'nicht angegeben'}
+        </SummaryRow>
+        <SummaryRow label="Frühere Wochen">
+          {answers.ignoreEarlier ? `ignoriert bis ${dateOrOpen(answers.ignoredUntil)}` : 'keine ignoriert'}
         </SummaryRow>
         <SummaryRow label="Bundesland">{stateName(answers.state)}</SummaryRow>
         <SummaryRow label="Halbjahr">

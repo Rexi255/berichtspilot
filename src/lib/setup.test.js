@@ -1,6 +1,6 @@
 // Setup wizard logic: suggestions, pre-filled answers, step checks, applying.
 import { describe, it, expect } from 'vitest'
-import { suggestHalfYear, trainingEndAfter, setupDraft, setupErrors, applySetup, SETUP_STEPS } from './setup.js'
+import { suggestHalfYear, trainingEndAfter, suggestIgnoredUntil, setupDraft, setupErrors, applySetup, SETUP_STEPS } from './setup.js'
 import { seedData, migrateData, validateData } from './model.js'
 
 const TODAY = '2026-10-10'
@@ -48,6 +48,14 @@ describe('trainingEndAfter', () => {
   })
 })
 
+describe('suggestIgnoredUntil', () => {
+  it('is the Sunday before the running week', () => {
+    expect(suggestIgnoredUntil('2026-10-10')).toBe('2026-10-04') // Saturday → Sunday a week back
+    expect(suggestIgnoredUntil('2026-11-09')).toBe('2026-11-08') // Monday → yesterday
+    expect(suggestIgnoredUntil('2026-03-30')).toBe('2026-03-29') // across the DST switch
+  })
+})
+
 describe('setupDraft', () => {
   it('a fresh install gets suggestions, not the seed sample profiles', () => {
     const draft = setupDraft(seedData(), TODAY)
@@ -63,6 +71,9 @@ describe('setupDraft', () => {
       webuntisAddress: '',
       autoCreateWeek: true,
       updateCheck: true,
+      // switched off, but with a suggestion ready for the switch
+      ignoreEarlier: false,
+      ignoredUntil: '2026-10-04',
     })
   })
 
@@ -75,6 +86,7 @@ describe('setupDraft', () => {
       trainingEnd: '2028-07-31',
       webuntis: { enabled: true, host: 'beispiel-bbs.webuntis.com', school: 'Beispiel BBS' },
       updateCheck: false,
+      ignoredUntil: '2026-09-30',
     }
     data.profiles[0] = { ...data.profiles[0], validFrom: '2026-08-01', validTo: '2027-01-31', state: 'HH' }
     const draft = setupDraft(data, TODAY)
@@ -87,6 +99,8 @@ describe('setupDraft', () => {
       webuntisEnabled: true,
       webuntisAddress: 'https://beispiel-bbs.webuntis.com/WebUntis/?school=Beispiel%20BBS',
       updateCheck: false,
+      ignoreEarlier: true,
+      ignoredUntil: '2026-09-30',
     })
   })
 })
@@ -102,6 +116,15 @@ describe('setupErrors', () => {
     expect(setupErrors('training', { ...answers(), trainingStart: '2025-08-01', trainingEnd: '2025-08-01' })).toHaveLength(1)
     expect(setupErrors('training', { ...answers(), trainingStart: 'x' })).toHaveLength(1)
     expect(setupErrors('training', { ...answers(), trainingStart: '2025-08-01' })).toEqual([])
+  })
+
+  it('training: the ignored stretch needs a date on or after the training start', () => {
+    const a = { ...answers(), trainingStart: '2025-08-01', ignoreEarlier: true }
+    expect(setupErrors('training', { ...a, ignoredUntil: '' })).toHaveLength(1)
+    expect(setupErrors('training', { ...a, ignoredUntil: '2025-07-31' })).toHaveLength(1)
+    expect(setupErrors('training', { ...a, ignoredUntil: '2026-09-27' })).toEqual([])
+    // switched off, a stale date doesn't block
+    expect(setupErrors('training', { ...a, ignoreEarlier: false, ignoredUntil: '' })).toEqual([])
   })
 
   it('half-year: name, range and at least one active day', () => {
@@ -180,6 +203,14 @@ describe('applySetup', () => {
     expect(result.profiles[0].name).toBe('Schulhalbjahr 2026/27 · 1')
     const withWeeks = { ...seedData(), weeks: [{ id: '2026-09-07', status: 'done', instructions: '', days: [] }] }
     expect(applySetup(withWeeks, filled(withWeeks)).profiles).toHaveLength(3)
+  })
+
+  it('writes the ignored stretch only while its switch is on', () => {
+    expect(applySetup(seedData(), { ...filled(), ignoreEarlier: true, ignoredUntil: '2026-09-27' }).settings.ignoredUntil)
+      .toBe('2026-09-27')
+    const data = seedData()
+    data.settings.ignoredUntil = '2026-09-27'
+    expect(applySetup(data, { ...filled(data), ignoreEarlier: false }).settings.ignoredUntil).toBe('')
   })
 
   it('WebUntis off keeps a stored address but switches it off', () => {

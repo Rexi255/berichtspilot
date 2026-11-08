@@ -13,7 +13,7 @@ export default [
 
   // Renderer: React in a browser context (Vite)
   {
-    files: ['src/**/*.{js,jsx}', 'vite.config.js'],
+    files: ['src/**/*.{js,jsx}', 'vite.config.mjs'],
     languageOptions: {
       ecmaVersion: 'latest',
       sourceType: 'module',

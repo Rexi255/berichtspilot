@@ -86,13 +86,25 @@ merged as merge commit a4c47c5 (same tree as 8b906a0) → annotated tag
 `latest*.yml` = 2.1.0, `sha512` + size match the installer and AppImage.
 `development` fast-forwarded to `main`.
 
-**Next:** ask the user whether their installed app updated to 2.1.0 and
-works (sidebar card or Settings → Updates; the data migrates to v12, an
-`update` snapshot lands in `sicherungen/` first). Then pick from
-"Later / to-do" with the user — candidates: the `vite.config.mjs` rename,
-the Linux `desktopName`. Voice dictation stays parked. (Dependabot alert #10,
-`minimatch`, is fixed on `development` via an `overrides` entry — E-034; the
-alert closes once that reaches `main` with the next release.)
+**The user's app updated to 2.1.0 and works** (user, 2026-11-08). The same
+day: the `minimatch` fix (E-034) reached `main` by PR #29 (merge commit
+49a8d55, `development` fast-forwarded), so Dependabot alert #10 closes there;
+then two small to-dos: `vite.config.js` → `vite.config.mjs` (Vite's CJS
+warning is gone) and Linux `desktopName` + `linux.syncDesktopName` (E-035).
+
+**UI changes after 2.1.0 (2026-11-08, step 12.1 below, done):** the
+"Lokal · kein Konto" chip is gone (a red chip only while saving fails); the
+week editor shows all days on one page under sticky day tiles; "Frühere
+Wochen ignorieren" (`settings.ignoredUntil`, **schema v13**, E-036) in
+Settings and the setup wizard.
+
+**Next:** ask the user whether more UI changes come first; then release
+**v2.2.0** — not 2.1.1: a new feature and a schema bump (2.1.x can't open a
+v13 file; the CHANGELOG says so). Procedure below. In that release's dry run, check
+the Linux build log: electron-builder must no longer warn "desktopName is not
+set", and the AppImage's `.desktop` should say `StartupWMClass=berichtspilot`
+(a Linux `dir` build on Windows writes no `.desktop` file, so this is
+unchecked so far).
 For any further UI work: check every visible change yourself with the
 `ui-shots` skill (Playwright, demo record) and read the screenshots — the user
 asked for that explicitly.
@@ -491,6 +503,13 @@ checkpoint is a styleguide in code, no HTML prototype.
 - [x] 11.10 Release v2.1.0 (2026-11-08, PR #28 → a4c47c5, tag `v2.1.0`;
       packaged check fix 8b906a0)
 
+### Phase 12 — Feedback on v2.1 (user, 2026-11-08)
+- [x] 12.1 Sidebar without "Lokal · kein Konto" (red save-error chip only);
+      week editor: all days on one page, sticky tiles, a tile/Alt+1–5
+      scrolls to its day (`src/views/editor/useDayScroll.js`); ignore
+      earlier weeks (`settings.ignoredUntil`, schema v13, E-036) in Settings
+      → "Frühere Wochen" and the wizard's training step (2026-11-08)
+
 ### Later / to-do
 - [ ] Warning list for customer data: a local list of customer names / host
       names that the "Mit KI formulieren" check warns about (the regex
@@ -500,7 +519,7 @@ checkpoint is a styleguide in code, no HTML prototype.
 - [x] Dependabot alert #10 (`minimatch` < 11.0.1 via electron-builder):
       ranged `overrides` entry (E-034); drop it once electron-builder ships
       minimatch ≥ 11.0.1 itself
-- [ ] Rename `vite.config.js` → `vite.config.mjs`: Vite 8 warns that the
+- [x] Rename `vite.config.js` → `vite.config.mjs`: Vite 8 warns that the
       config is ESM loaded as CommonJS (`configLoader: 'native'` will become
       the default in a future major)
 - [ ] Release hardening, further (E-029/E-030 "considered"): `npm ci
@@ -508,7 +527,7 @@ checkpoint is a styleguide in code, no HTML prototype.
       scripts the build needs first); serve the renderer from a custom
       `app://` protocol, then turn the `grantFileProtocolExtraPrivileges` fuse
       off; build provenance attestations
-- [ ] Linux: set `desktopName` + `linux.syncDesktopName: true` in the
+- [x] Linux: set `desktopName` + `linux.syncDesktopName: true` in the
       electron-builder config so desktops link the running window to the
       AppImage's `.desktop` entry (hint printed by electron-builder 26.17)
 - [ ] Ideas from the old README roadmap: "copy all 3 blocks",
@@ -610,3 +629,4 @@ checkpoint is a styleguide in code, no HTML prototype.
 | 2026-11-08 | 11.9: clean-up, a11y (axe-core) + copy pass, README; CI green (run 42482075316) | ad7bfce |
 | 2026-11-08 | 11.9b: fixes from code + security review (10 findings, 3 new e2e tests) | d034dfa |
 | 2026-11-08 | Dependabot alert #10: `minimatch` override (E-034) | see git log |
+| 2026-11-08 | 12.1: sidebar chip gone, all days on one page, ignore earlier weeks (schema v13, E-036) | see git log |

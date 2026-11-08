@@ -16,7 +16,7 @@ import {
 } from './dates.js'
 
 describe('test environment', () => {
-  it('runs in German local time, DST included (vite.config.js test.env)', () => {
+  it('runs in German local time, DST included (vite.config.mjs test.env)', () => {
     expect(new Date(2026, 0, 15).getTimezoneOffset()).toBe(-60)
     expect(new Date(2026, 2, 30).getTimezoneOffset()).toBe(-120)
   })

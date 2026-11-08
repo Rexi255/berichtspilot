@@ -66,6 +66,41 @@ function lastTrainingMonday(data) {
   return data.settings?.trainingEnd ? mondayOf(parseISO(data.settings.trainingEnd)) : null
 }
 
+/**
+ * Is the week starting `monday` inside the ignored stretch — the weeks before
+ * the user started with Berichtspilot (settings.ignoredUntil, inclusive; the
+ * week that contains the date counts as ignored)? Only weeks WITHOUT a report
+ * are left out: a report written there anyway counts as usual.
+ */
+export function isIgnoredWeek(data, monday) {
+  const until = data.settings?.ignoredUntil
+  return Boolean(until) && monday <= until
+}
+
+/**
+ * The ignored stretch for the settings and the wizard: { from, to, count }
+ * (Mondays, from = the record's first Monday) or null when nothing is ignored.
+ */
+export function ignoredRange(data) {
+  const until = data.settings?.ignoredUntil
+  const start = firstMonday(data)
+  if (!until || !start) return null
+  const to = mondayOf(parseISO(until))
+  if (to < start) return null
+  return { from: start, to, count: mondaysBetween(start, to).length }
+}
+
+/** "KW 36/2025 bis KW 44/2026, 61 Wochen" — the stretch in words (settings, wizard) */
+export function ignoredRangeLabel(range) {
+  if (!range) return ''
+  const kw = (monday) => {
+    const { week, year } = isoWeek(monday)
+    return `KW ${week}/${year}`
+  }
+  const span = range.count === 1 ? kw(range.from) : `${kw(range.from)} bis ${kw(range.to)}`
+  return `${span}, ${range.count === 1 ? '1 Woche' : `${range.count} Wochen`}`
+}
+
 function mondaysBetween(from, to) {
   const list = []
   for (let m = from; m <= to; m = addDays(m, 7)) list.push(m)
@@ -75,7 +110,7 @@ function mondaysBetween(from, to) {
 /**
  * Mondays without a report between the start and the week BEFORE the current
  * one (the running week and later ones never count as missing), capped at
- * the training end. Ascending.
+ * the training end, without the ignored weeks. Ascending.
  */
 export function missingWeeks(data, currentMonday) {
   const start = firstMonday(data)
@@ -84,13 +119,14 @@ export function missingWeeks(data, currentMonday) {
   const last = lastTrainingMonday(data)
   if (last && last < end) end = last
   const ids = new Set(data.weeks.map((w) => w.id))
-  return mondaysBetween(start, end).filter((m) => !ids.has(m))
+  return mondaysBetween(start, end).filter((m) => !ids.has(m) && !isIgnoredWeek(data, m))
 }
 
 /**
  * Weeks due so far: start → the week before the current one, plus the
- * current week once it exists; capped at the training end. Every due week is
- * done, a draft or missing — so the three numbers add up (user, 2026-11-07).
+ * current week once it exists; capped at the training end; ignored weeks only
+ * when they have a report. Every due week is done, a draft or missing — so
+ * the three numbers add up (user, 2026-11-07).
  */
 export function dueWeeks(data, currentMonday) {
   const start = firstMonday(data)
@@ -99,7 +135,7 @@ export function dueWeeks(data, currentMonday) {
   let end = ids.has(currentMonday) ? currentMonday : addDays(currentMonday, -7)
   const last = lastTrainingMonday(data)
   if (last && last < end) end = last
-  return mondaysBetween(start, end)
+  return mondaysBetween(start, end).filter((m) => ids.has(m) || !isIgnoredWeek(data, m))
 }
 
 /** Figures of the overview: { due, done, drafts, missing: [mondays] } */
@@ -129,7 +165,8 @@ function weekMonth(monday) {
  * The year band: one column per week from the start to the training end
  * (without an end: `futureWeeks` after today), five day cells each (Mon–Fri).
  * Cells: dayState() of the day, 'open' for missing weeks and the empty days
- * up to today of a not yet created current week, 'future' after that, 'none'
+ * up to today of a not yet created current week, 'future' after that,
+ * 'ignored' for the days of an ignored week without a report, 'none'
  * outside the training period or for days the week doesn't have.
  * Returns { columns: [{ monday, week, year, current, status, cells }],
  * months: [{ column, label }] }.
@@ -156,12 +193,14 @@ export function yearBand(data, todayISO, { futureWeeks = 12 } = {}) {
         return day ? dayState(day, todayISO) : 'none'
       }
       if (missing.has(monday)) return 'open'
+      if (isIgnoredWeek(data, monday)) return 'ignored'
       return monday === currentMonday && date <= todayISO ? 'open' : 'future'
     })
     const { week: number, year } = isoWeek(monday)
     let status = 'future'
     if (week) status = week.status === 'done' ? 'done' : 'draft'
     else if (missing.has(monday)) status = 'missing'
+    else if (isIgnoredWeek(data, monday)) status = 'ignored'
     return { monday, week: number, year, current: monday === currentMonday, status, cells }
   })
 

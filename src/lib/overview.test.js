@@ -8,6 +8,9 @@ import {
   missingWeeks,
   dueWeeks,
   overviewStats,
+  isIgnoredWeek,
+  ignoredRange,
+  ignoredRangeLabel,
   yearBand,
   parseQuery,
   matchWeek,
@@ -90,6 +93,56 @@ describe('due and missing weeks', () => {
     expect(stats).toMatchObject({ due: 62, done: 54, drafts: 4 })
     expect(stats.missing).toEqual(['2026-03-16', '2026-06-08', '2026-06-15', '2026-10-19'])
     expect(stats.done + stats.drafts + stats.missing.length).toBe(stats.due)
+  })
+})
+
+describe('ignored weeks (started mid-training)', () => {
+  // training from 2026-09-07; Berichtspilot used from KW 43 (2026-10-19) on
+  const data = () =>
+    record([week('2026-09-14', [day('2026-09-14', { bullets: ['Altbericht'] })], 'done'), week('2026-10-19', [])], {
+      trainingStart: '2026-09-07',
+      ignoredUntil: '2026-10-14', // a Wednesday: its whole week is ignored
+    })
+
+  it('ignores the whole week that contains the date, and every week before', () => {
+    expect(isIgnoredWeek(data(), '2026-10-12')).toBe(true)
+    expect(isIgnoredWeek(data(), '2026-09-07')).toBe(true)
+    expect(isIgnoredWeek(data(), '2026-10-19')).toBe(false)
+    expect(isIgnoredWeek(record([]), '2026-10-12')).toBe(false)
+  })
+
+  it('leaves ignored weeks out of the missing ones; reports in the stretch still count', () => {
+    expect(missingWeeks(data(), '2026-11-09')).toEqual(['2026-10-26', '2026-11-02'])
+    expect(dueWeeks(data(), '2026-11-09')).toEqual(['2026-09-14', '2026-10-19', '2026-10-26', '2026-11-02'])
+    const stats = overviewStats(data(), '2026-11-09')
+    expect(stats).toMatchObject({ due: 4, done: 1, drafts: 1 })
+    expect(stats.done + stats.drafts + stats.missing.length).toBe(stats.due)
+  })
+
+  it('shows ignored weeks in the year band as ignored', () => {
+    const band = yearBand(data(), '2026-11-04')
+    expect(band.columns.find((c) => c.monday === '2026-09-21')).toMatchObject({ status: 'ignored', cells: Array(5).fill('ignored') })
+    expect(band.columns.find((c) => c.monday === '2026-09-14').status).toBe('done')
+    expect(band.columns.find((c) => c.monday === '2026-10-26').status).toBe('missing')
+  })
+
+  it('describes the stretch for the settings: from the first Monday, in weeks', () => {
+    expect(ignoredRange(data())).toEqual({ from: '2026-09-07', to: '2026-10-12', count: 6 })
+    expect(ignoredRange(record([], { trainingStart: '2026-09-07' }))).toBeNull()
+    // a date before the training start ignores nothing
+    expect(ignoredRange(record([], { trainingStart: '2026-09-07', ignoredUntil: '2026-08-31' }))).toBeNull()
+  })
+
+  it('names the stretch in weeks', () => {
+    expect(ignoredRangeLabel(ignoredRange(data()))).toBe('KW 37/2026 bis KW 42/2026, 6 Wochen')
+    expect(ignoredRangeLabel({ from: '2025-12-29', to: '2025-12-29', count: 1 })).toBe('KW 1/2026, 1 Woche')
+    expect(ignoredRangeLabel(null)).toBe('')
+  })
+
+  it('weekRows lists no ignored week as missing', () => {
+    const { groups } = weekRows(data(), '2026-11-04', { limit: 0 })
+    const rows = groups.flatMap((g) => g.rows)
+    expect(rows.filter((r) => r.status === 'missing').map((r) => r.monday)).toEqual(['2026-10-26'])
   })
 })
 

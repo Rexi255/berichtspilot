@@ -233,7 +233,7 @@ app (no app window, no IPC, daten.json untouched):
 - The renderer ignores files dragged onto the window (`src/main.jsx`).
 - CSP in `index.html`: `default-src 'self'`, no external scripts/hosts. The
   dev server entries (`ws://` / `http://localhost:5173`) are removed from the
-  built `dist/index.html` by a Vite plugin (`vite.config.js`); the build fails if
+  built `dist/index.html` by a Vite plugin (`vite.config.mjs`); the build fails if
   they can't be found.
 - Dev flags (`--screenshot`, `--view`, `--scroll`) work in unpacked runs only.
 - **Packaged app (E-029):** Electron fuses in `build.electronFuses` — no

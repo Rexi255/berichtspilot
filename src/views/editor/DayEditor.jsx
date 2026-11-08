@@ -1,4 +1,4 @@
-// The editor card of the selected day (E-032): title, the 5-way type switch
+// The editor card of one day (E-032; the week editor stacks all of them): title, the 5-way type switch
 // (Betrieb · Schule · Feiertag · Krank · Urlaub — dayChoice/withChoice in
 // model.js) and the body: bullets for a work day, subjects with their topics
 // for a school day, a note on what the output shows for a status day. The
@@ -133,9 +133,9 @@ export default function DayEditor({ day, state, onChange, suggestions, notesVisi
     )
 
   return (
-    <Card data-daycard id="day-panel" role="tabpanel" aria-labelledby={`daytab-${day.date}`} className="@container">
+    <Card as="section" data-daycard={day.date} aria-labelledby={`day-${day.date}`} className="@container">
       <div className="flex flex-wrap items-center gap-3 border-b border-line px-4 py-3">
-        <h2 className="mr-auto text-title font-medium text-ink">
+        <h2 id={`day-${day.date}`} className="mr-auto text-title font-medium text-ink">
           {weekdayName(day.date)}, {formatDE(day.date)}
         </h2>
         <Segment

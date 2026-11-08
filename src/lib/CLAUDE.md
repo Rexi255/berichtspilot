@@ -8,7 +8,7 @@
   Those expected strings are the spec — change the code, never the test.
   Output strings stay German (weekday names, "den", "Feiertag: …", "Krankheitstag").
 - Dates: only via the helpers in `dates.js` (`parseISO`, `toISO`, `addDays`,
-  `daysBetween` …). Tests run in `Europe/Berlin` (`test.env` in `vite.config.js`)
+  `daysBetween` …). Tests run in `Europe/Berlin` (`test.env` in `vite.config.mjs`)
   so DST bugs show up; date tests around the clock change (end of March / end
   of October) are welcome.
 - Holidays: back new/changed holidays with state + source in a comment and test at

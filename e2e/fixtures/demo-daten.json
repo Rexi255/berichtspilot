@@ -1,8 +1,9 @@
 {
-  "version": 12,
+  "version": 13,
   "settings": {
     "trainingStart": "2025-09-01",
     "trainingEnd": "2028-08-31",
+    "ignoredUntil": "",
     "appearance": {
       "mode": "dark",
       "accent": "blue"

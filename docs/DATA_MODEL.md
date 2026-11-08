@@ -1,6 +1,6 @@
 # Data model — `daten.json`
 
-Current schema version: **12** (`DATA_VERSION` in `src/lib/model.js`).
+Current schema version: **13** (`DATA_VERSION` in `src/lib/model.js`).
 One JSON file holds the configuration **and** every training week. It is also the
 export/backup format. The file name stays German (`daten.json`) for compatibility
 with existing installations (DECISIONS E-014); all field names are English.
@@ -9,10 +9,13 @@ with existing installations (DECISIONS E-014); all field names are English.
 
 ```jsonc
 {
-  "version": 12,
+  "version": 13,
   "settings": {
     "trainingStart": "2025-08-01",   // optional; progress line + gap detection
     "trainingEnd": "2028-07-31",
+    "ignoredUntil": "",              // schema v13 (E-036): started mid-training — weeks
+                                     // from the start up to this date (inclusive, whole
+                                     // week) need no report; "" = nothing ignored
     "appearance": {                  // schema v12 (E-032/E-033): display preferences
       "mode": "dark",                // dark | light
       "accent": "blue"               // blue (Logo-Blau) | coral | lilac | green
@@ -109,6 +112,7 @@ with existing installations (DECISIONS E-014); all field names are English.
 | 9 → 10 | `settings.setupDone = true` (existing files are set up; existing value kept); `validateData()` rejects a non-boolean value |
 | 10 → 11 | `profiles[].defaultBulletCount` 2 (the old default) → 1; any other value kept (E-021) |
 | 11 → 12 | `settings.theme` → `settings.appearance` (`mode: 'dark'`; accent: northern-lights/graphite → blue, polar-night → lilac, rose/amber → coral, forest → green, unknown → blue) and `settings.layout` with its defaults; `theme` is dropped, an existing `appearance`/`layout` wins (E-033) |
+| 12 → 13 | `settings.ignoredUntil = ''` (existing value kept); a value that isn't a `YYYY-MM-DD` string becomes `''`; `validateData()` rejects one (E-036) |
 
 Defensive defaults after migration: `settings` that is not an object becomes `{}`;
 `settings.webuntis` that is not an object, or whose `enabled` isn't `true`, becomes

@@ -14,7 +14,7 @@ same commit.
 - **Moments:** the places where the screen may be rich.
   1. The **year band** in the overview: the whole apprenticeship as a grid of days.
   2. The **preview column**: exactly the text that gets pasted, whitespace visible on request.
-- **Signature:** the **day cell** (see below). Used in the year band, the week list rows and the day tabs only.
+- **Signature:** the **day cell** (see below). Used in the year band, the week list rows and the day tiles only.
 - **Read:** a dense desktop tool for one person. Keyboard first, equally good with the mouse. Little chrome,
   content first.
 
@@ -53,7 +53,7 @@ The light accents were darkened from the first draft until they reach 4.5:1 on t
 
 **The accent is used only for:**
 - primary actions
-- the active navigation (icon, tab underline)
+- the active navigation (icon, day tile underline)
 - written day cells
 - the status "Fertig"
 
@@ -117,7 +117,12 @@ All fonts ship with the app through `@fontsource-variable/*` (the CSP allows no 
   shadow.
 - **Spacing:** 4 px grid; controls and rows 32 px (small 28); card padding 16; page edge 24; gaps 8 inside a
   group, 16–24 between groups.
-- **Sidebar:** 232 px, collapsed 68 px (icons only, tooltips).
+- **Sidebar:** 232 px, collapsed 68 px (icons only, tooltips). At the bottom only the update hint and the switches; a red
+  "Nicht gespeichert" chip appears only while a save fails (the old "Lokal · kein Konto" chip is gone,
+  user 2026-11-08).
+- **Week editor:** the day tiles stay at the top (sticky); below them every day's card on one page to
+  scroll through (user, 2026-11-08). A tile or Alt+1–5 scrolls to its day; the underline follows the
+  day at the top. A week opens at today when it contains today.
 
 ## The day cell (signature)
 
@@ -129,12 +134,13 @@ One box per weekday, always the same language:
 | offen (open: a normal day without content, or a missing week) | 1 px dashed line |
 | Feiertag / Krank / Urlaub | `surface-2` fill + letter F / K / U in the status color |
 | Zukunft (future) | very faint line |
+| ignoriert (before Berichtspilot, `settings.ignoredUntil`, E-036) | flat faint `line` fill, no letter — year band only |
 | frei (no such day in the week) | nothing |
 
 Sizes:
 - year band: 12 × 16, gap 3
 - week list: weekday abbreviation + type letter B / S / F / K / U
-- day tab: the cell next to the date
+- day tile: the cell next to the date
 
 Logic: `dayState()` in `src/lib/overview.js`.
 
@@ -180,7 +186,7 @@ One source: `src/lib/shortcuts.js`. Settings → Tastaturkürzel and every handl
 | Strg+1 / 2 / 3 | copy block 1 / 2 / 3 (editor, also with the preview hidden). With a privacy warning, a second press within 4 s copies ("Trotzdem kopieren") |
 | Strg+P | show/hide the preview (saved) |
 | Strg+Umschalt+N | show/hide the notes area (global, saved) |
-| Alt+1–5 (6) | select a day (Alt+6 only with a Saturday) |
+| Alt+1–5 (6) | jump to a day (Alt+6 only with a Saturday) |
 | Alt+← / → | previous / next week |
 | Strg+N | create the week if missing |
 | Strg+F | search in the overview |
@@ -220,8 +226,9 @@ Dev only: `--view=styleguide` (unpackaged) renders every component in the curren
 - Every icon-only button has a German `aria-label`; its tooltip repeats it for sighted users and is
   rendered only while shown (it never widens a scroll area).
 - The preview `<pre>` is focusable (long lines scroll sideways), named "Vorschau <Block>".
-- Day tabs are a real tab list (`role="tab"`, plain arrow keys, Alt+1–5); Alt+←/→ on a tab changes the
-  week only. The sidebar marks the current view
+- The day tiles are a `nav` of buttons ("Tage der Woche"); the tile of the day at the top of the list
+  carries `aria-current="location"`. Each day card is a `section` named by its heading. Alt+←/→ on a
+  tile changes the week only. The sidebar marks the current view
   with `aria-current`.
 - axe-core (WCAG 2 A/AA + best practice) reported no violations in any view, both modes (2026-11-08).
 

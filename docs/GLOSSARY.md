@@ -11,6 +11,7 @@ names consistently. Add new terms here before using them.
 | IHK | IHK | German Chamber of Commerce; runs the training-record portal |
 | Azubi / Ausbildung | apprentice / `training` | |
 | Ausbildungsbeginn / -ende | `trainingStart` / `trainingEnd` | |
+| Frühere Wochen ignorieren | `ignoredUntil`, ignored week (`isIgnoredWeek`) | started mid-training: weeks from the training start up to this date need no report (E-036) |
 | Berichtswoche / Woche | `week` | Monday-based week; id = Monday ISO date |
 | Kalenderwoche (KW) | ISO week, `isoWeek` | |
 | Tag | `day` | |
@@ -68,7 +69,7 @@ names consistently. Add new terms here before using them.
 | Leerzeichen anzeigen | show whitespace (`previewLines()`) | `·` for spaces, `↵` for line ends via CSS, the text itself unchanged |
 | Datenschutz-Prüfung | privacy check (`findSensitive()`) | warns before copying a block or an AI prompt with likely customer data |
 | Trotzdem kopieren | copy anyway | the copy button's label while a privacy warning is shown |
-| Tages-Tab | day tab | editor tab per day (Alt+1–5) |
+| Tageskachel | day tile (`DayTabs`) | sticky tile per day above the day cards; jumps to its day (Alt+1–5) |
 | Typ-Umschalter | day choice (`dayChoice()` / `withChoice()`) | 5-way switch Betrieb · Schule · Feiertag · Krank · Urlaub over `type` + `status` |
 | Modus (Dunkel/Hell) | `settings.appearance.mode` | `dark` · `light`, schema v12 |
 | Akzentfarbe | `settings.appearance.accent` | `blue` (Logo-Blau) · `coral` (Koralle) · `lilac` (Flieder) · `green` (Grün), schema v12 |

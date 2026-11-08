@@ -6,6 +6,36 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [2.2.0] - 2026-11-08
+
+All days of a week on one page, and a way to skip the weeks before you
+started with Berichtspilot. From 2.0.x and 2.1.x the app updates itself;
+`daten.json` is migrated automatically. **Note:** after the update, older
+versions (2.1.x and earlier) can no longer open the data file — a backup of
+the previous state stays in the folder `sicherungen`.
+
+### Added
+
+- **Ignore earlier weeks** (Settings → Frühere Wochen, also in the setup
+  wizard): if you start using Berichtspilot in the middle of your training,
+  the weeks from the training start up to a date of your choice no longer
+  count as missing. Reports you already have from that time stay and count
+  as usual. **Note:** after this update, older versions (2.1.x) can no
+  longer open the data file.
+
+### Changed
+
+- **Week editor: all days on one page.** The day tiles stay at the top, all
+  days are listed below them to scroll through. A click on a tile (or
+  Alt+1–5) scrolls to that day; the current week opens at today.
+- **Sidebar:** the "Lokal · kein Konto" box is gone. A red "Nicht
+  gespeichert" warning still appears there if saving ever fails.
+
+### Fixed
+
+- **Linux:** the desktop now links the running window to the AppImage's
+  menu entry (icon and name in the taskbar/dock instead of a generic window).
+
 ## [2.1.0] - 2026-11-08
 
 The design release: a completely new interface ("Kladde") with a light mode,

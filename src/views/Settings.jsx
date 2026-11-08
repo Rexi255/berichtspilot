@@ -1,5 +1,5 @@
-// Settings: appearance (mode + accent), behavior (start view), snippets
-// (autocomplete templates), connections (WebUntis), updates, data location and
+// Settings: appearance (mode + accent), behavior (start view), earlier weeks
+// (ignored when starting mid-training), snippets (autocomplete templates), connections (WebUntis), updates, data location and
 // a keyboard shortcut reference.
 // Each accent swatch carries data-accent={id} itself; that way its preview
 // colors (bg-accent …) render in that accent automatically — without
@@ -28,6 +28,9 @@ import { parseWebuntisAddress } from '../lib/webuntis.js'
 import { BACKUP_KINDS, backupTitle, sizeLabel } from '../lib/backups.js'
 import { SHORTCUT_HELP } from '../lib/shortcuts.js'
 import { ACCENTS, ACCENT_NAMES } from '../lib/model.js'
+import { ignoredRange, ignoredRangeLabel } from '../lib/overview.js'
+import { suggestIgnoredUntil } from '../lib/setup.js'
+import { formatDE, todayISO } from '../lib/dates.js'
 
 // Accents (schema v12, E-032) from the one list in model.js that migration
 // and validation use; the colors live in index.css per mode
@@ -443,6 +446,48 @@ function Backups() {
   )
 }
 
+/* ----------------------------- Earlier weeks ----------------------------- */
+
+// Started mid-training (schema v13): weeks from the training start up to a
+// date need no report — they count neither as due nor as missing
+function EarlierWeeks() {
+  const { data, updateSettings } = useStore()
+  const { trainingStart, ignoredUntil } = data.settings
+  const range = ignoredRange(data)
+  return (
+    <Card className="max-w-2xl" data-section="earlier-weeks">
+      <div className="flex flex-wrap items-end gap-3 px-4 py-3">
+        <label className="flex flex-col gap-1.5">
+          <span className="text-meta font-medium text-ink-2">Ignorieren bis einschließlich</span>
+          <Input
+            type="date"
+            value={ignoredUntil}
+            onChange={(e) => updateSettings({ ignoredUntil: e.target.value })}
+            className="w-44"
+          />
+        </label>
+        <Button size="sm" onClick={() => updateSettings({ ignoredUntil: suggestIgnoredUntil(todayISO()) })}>
+          Bis letzte Woche
+        </Button>
+        {ignoredUntil && (
+          <Button size="sm" variant="ghost" onClick={() => updateSettings({ ignoredUntil: '' })}>
+            <XIcon size={14} /> Entfernen
+          </Button>
+        )}
+      </div>
+      <p className="border-t border-line px-4 py-3 text-meta text-ink-2" role="status">
+        {range
+          ? `Ignoriert: ${ignoredRangeLabel(range)}. Berichte, die es aus dieser Zeit schon gibt, bleiben und zählen normal.`
+          : ignoredUntil && !trainingStart
+            ? 'Ohne Ausbildungsbeginn (unter Profile) zählt die App erst ab deinem ersten Bericht, davor ist nichts zu ignorieren.'
+            : ignoredUntil
+              ? `Das Datum liegt vor dem Ausbildungsbeginn (${formatDE(trainingStart)}), es wird nichts ignoriert.`
+              : 'Nichts ignoriert: jede Woche ab dem Ausbildungsbeginn braucht einen Bericht.'}
+      </p>
+    </Card>
+  )
+}
+
 /* -------------------------------- View -------------------------------- */
 
 // One settings section: heading, a sentence what it is for, the controls
@@ -561,6 +606,14 @@ export default function Settings() {
                 </Button>
               </div>
             </Card>
+          </Section>
+
+          <Section
+            id="earlier"
+            title="Frühere Wochen"
+            description="Berichtspilot erst mitten in der Ausbildung entdeckt? Wochen vom Ausbildungsbeginn bis zu einem Datum brauchen dann keinen Bericht und zählen in der Übersicht nicht als fehlend."
+          >
+            <EarlierWeeks />
           </Section>
 
           <Section
