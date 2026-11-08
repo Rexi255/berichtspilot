@@ -5,10 +5,11 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { MagnifyingGlassIcon, PencilSimpleLineIcon, WarningIcon, XIcon } from '@phosphor-icons/react'
 import { useStore } from '../store.jsx'
 import { Button, Card, DayCell, IconButton, Input, Kbd, StatusChip, StatusGlyph, DAY_STATE_LABELS, cx } from '../ui/basics.jsx'
-import { isoWeek, weekRangeLabel, mondayOf, todayISO, formatDE, addDays } from '../lib/dates.js'
+import { isoWeek, weekRangeLabel, todayISO, formatDE, addDays } from '../lib/dates.js'
 import { trainingProgress } from '../lib/model.js'
 import { overviewStats, yearBand, weekRows, WEEKDAY_SHORT } from '../lib/overview.js'
 import { matchShortcut, SHORTCUT_KEYS } from '../lib/shortcuts.js'
+import { useCurrentMonday } from '../ui/useCurrentMonday.js'
 
 // Year band geometry: 12 px cells, 3 px gap → one column every 15 px
 const BAND_STEP = 15
@@ -278,7 +279,7 @@ export default function Overview({ openWeek }) {
   const [showAll, setShowAll] = useState(false)
 
   const today = todayISO()
-  const currentMonday = mondayOf(new Date())
+  const currentMonday = useCurrentMonday()
   const { week: currentWeek, year: thisYear } = isoWeek(currentMonday)
 
   const stats = useMemo(() => overviewStats(data, currentMonday), [data, currentMonday])

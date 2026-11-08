@@ -26,13 +26,13 @@ function Part({ title, children }) {
   )
 }
 
-export default function PhrasingPanel({ week, weeks, onApply, onClose }) {
+export default function PhrasingPanel({ week, examples, onApply, onClose }) {
   const [answer, setAnswer] = useState('')
   const [deselected, setDeselected] = useState(() => new Set())
 
-  const prompt = useMemo(() => buildPrompt(week, weeks), [week, weeks])
+  const prompt = useMemo(() => buildPrompt(week, null, { examples }), [week, examples])
   // only the user's own text in the prompt (its rule lines mention "Kunden")
-  const sensitive = useMemo(() => promptSensitive(week, weeks), [week, weeks])
+  const sensitive = useMemo(() => promptSensitive(week, null, { examples }), [week, examples])
   const candidates = useMemo(() => phrasingCandidates(week), [week])
   const parsed = useMemo(() => parseResponse(answer), [answer])
 

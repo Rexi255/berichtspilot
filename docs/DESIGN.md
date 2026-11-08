@@ -180,7 +180,7 @@ One source: `src/lib/shortcuts.js`. Settings → Tastaturkürzel and every handl
 | Strg+1 / 2 / 3 | copy block 1 / 2 / 3 (editor, also with the preview hidden). With a privacy warning, a second press within 4 s copies ("Trotzdem kopieren") |
 | Strg+P | show/hide the preview (saved) |
 | Strg+Umschalt+N | show/hide the notes area (global, saved) |
-| Alt+1–5 (6) | select a day |
+| Alt+1–5 (6) | select a day (Alt+6 only with a Saturday) |
 | Alt+← / → | previous / next week |
 | Strg+N | create the week if missing |
 | Strg+F | search in the overview |
@@ -199,7 +199,10 @@ One source: `src/lib/shortcuts.js`. Settings → Tastaturkürzel and every handl
 | `DayCell` | the signature cell |
 | `Kbd` | keycap |
 | `Tooltip` | label on hover and focus |
-| `Menu` | small popover menu, e.g. the editor's "⋯" |
+| `Menu` | small popover menu, e.g. the editor's "⋯". An item with `confirm` (destructive: "Woche löschen") only arms on the first select and shows its confirm text; the second select runs it |
+
+Deleting (a week, a profile) always takes two steps: the button or menu item turns into "Wirklich
+löschen?" first, leaving it disarms; after deleting, the toast offers "Rückgängig" for 6 s.
 
 Dev only: `--view=styleguide` (unpackaged) renders every component in the current mode and accent.
 
@@ -217,7 +220,8 @@ Dev only: `--view=styleguide` (unpackaged) renders every component in the curren
 - Every icon-only button has a German `aria-label`; its tooltip repeats it for sighted users and is
   rendered only while shown (it never widens a scroll area).
 - The preview `<pre>` is focusable (long lines scroll sideways), named "Vorschau <Block>".
-- Day tabs are a real tab list (`role="tab"`, arrow keys, Alt+1–5); the sidebar marks the current view
+- Day tabs are a real tab list (`role="tab"`, plain arrow keys, Alt+1–5); Alt+←/→ on a tab changes the
+  week only. The sidebar marks the current view
   with `aria-current`.
 - axe-core (WCAG 2 A/AA + best practice) reported no violations in any view, both modes (2026-11-08).
 

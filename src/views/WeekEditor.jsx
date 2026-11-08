@@ -22,6 +22,7 @@ import { showToast } from '../ui/toast.jsx'
 import { isoWeek, weekRangeLabel, mondayOf, parseISO, addDays, todayISO } from '../lib/dates.js'
 import { profileForDate, restoreDays } from '../lib/model.js'
 import { formatAll } from '../lib/format.js'
+import { styleExamples } from '../lib/phrasing.js'
 import { fillWeekFromWebuntis } from '../lib/webuntis.js'
 import { dayState, weekProgress } from '../lib/overview.js'
 import { matchShortcut, SHORTCUT_KEYS } from '../lib/shortcuts.js'
@@ -119,6 +120,8 @@ export default function WeekEditor({ monday, setMonday }) {
   const blocks = useMemo(() => (week ? formatAll(week) : null), [week])
   const copier = useBlockCopy(blocks)
   const suggestions = useSuggestions(data)
+  // Style examples for the AI prompts, once for the notes area and the week panel
+  const examples = useMemo(() => styleExamples(data.weeks), [data.weeks])
   const progress = week ? weekProgress(week) : null
 
   // Default day: today, else the first open day, else Monday
@@ -158,14 +161,16 @@ export default function WeekEditor({ monday, setMonday }) {
 
   // Apply AI bullets ({ date: bullets }) — replaces those days' bullets. Undo
   // puts back only those bullets; edits made meanwhile elsewhere stay
-  const applyPhrasing = (result) => {
+  // keepPanel: a single day from the notes area leaves an open week panel
+  // (its pasted answer and ticks) alone
+  const applyPhrasing = (result, { keepPanel = false } = {}) => {
     const snapshot = week
     const dates = Object.keys(result)
     updateWeek(monday, (w) => ({
       ...w,
       days: w.days.map((d) => (result[d.date] ? { ...d, bullets: result[d.date] } : d)),
     }))
-    setPhrasingFor(null)
+    if (!keepPanel) setPhrasingFor(null)
     showToast(dates.length === 1 ? 'Stichpunkte für 1 Tag übernommen' : `Stichpunkte für ${dates.length} Tage übernommen`, {
       duration: 6000,
       action: { label: 'Rückgängig', onClick: () => updateWeek(monday, (w) => restoreDays(w, snapshot, dates, 'bullets')) },
@@ -269,7 +274,7 @@ export default function WeekEditor({ monday, setMonday }) {
             <Menu
               label="Weitere Aktionen"
               icon={<DotsThreeIcon size={18} />}
-              items={[{ label: 'Woche löschen', icon: <TrashIcon size={16} />, danger: true, onSelect: () => deleteWeek(monday) }]}
+              items={[{ label: 'Woche löschen', icon: <TrashIcon size={16} />, danger: true, confirm: 'Wirklich löschen?', onSelect: () => deleteWeek(monday) }]}
             />
           </div>
         )}
@@ -321,7 +326,7 @@ export default function WeekEditor({ monday, setMonday }) {
                   />
                 )}
                 {phrasingOpen && (
-                  <PhrasingPanel week={week} weeks={data.weeks} onApply={applyPhrasing} onClose={() => setPhrasingFor(null)} />
+                  <PhrasingPanel week={week} examples={examples} onApply={applyPhrasing} onClose={() => setPhrasingFor(null)} />
                 )}
                 <DayTabs days={week.days} selected={selected} onSelect={selectDay} today={today} />
                 {day && (
@@ -333,8 +338,8 @@ export default function WeekEditor({ monday, setMonday }) {
                     suggestions={suggestions}
                     notesVisible={notesVisible}
                     week={week}
-                    weeks={data.weeks}
-                    onApplyAi={(bullets) => applyPhrasing({ [day.date]: bullets })}
+                    examples={examples}
+                    onApplyAi={(bullets) => applyPhrasing({ [day.date]: bullets }, { keepPanel: true })}
                   />
                 )}
                 <Card>

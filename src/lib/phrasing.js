@@ -51,14 +51,14 @@ export function styleExamples(weeks, limit = 12) {
 
 /**
  * The complete prompt for the chat AI, or null if there are no notes to
- * phrase. `dates` limits it to those days (one day from the notes area). Day
+ * phrase. `dates` limits it to those days (one day from the notes area);
+ * `examples` takes style examples the caller computed once. Day
  * markers carry the ISO date so the answer can be mapped back reliably,
  * whatever the AI writes around it.
  */
-export function buildPrompt(week, weeks, { dates } = {}) {
+export function buildPrompt(week, weeks, { dates, examples = styleExamples(weeks) } = {}) {
   const days = phrasingCandidates(week, { dates })
   if (days.length === 0) return null
-  const examples = styleExamples(weeks)
   const notes = days
     .map((d) => `### ${d.date} (${weekdayName(d.date)}, ${formatDE(d.date)})\n${d.notes.trim()}`)
     .join('\n\n')
@@ -157,8 +157,12 @@ const SENSITIVE_PATTERNS = [
   ['phone', /(?:\+49|\b0)\d[\d /-]{6,}\d/g],
   // The word itself, also at the end of compounds ("Endkunde",
   // "Stammkundin"), and customer numbers. "Kundenwunsch" (LF02's title) or
-  // "Kundendienst" are no customer data and stay quiet.
-  ['customer', /[A-Za-zÄÖÜäöüß]*[Kk]und(?:innen|in|en|e|schaft)\b|[Kk]unden-?(?:nummer|nr\.?)/g],
+  // "Kundendienst" are no customer data and stay quiet, as are words that
+  // only contain the letters: "Urkunde", "Sekunden", "erkunden", "bekunden".
+  [
+    'customer',
+    /[A-Za-zÄÖÜäöüß]*(?<![Uu]r|[Ss]e|\b[Ee]r|\b[Bb]e)[Kk]und(?:innen|in|en|e|schaft)\b|[Kk]unden-?(?:nummer|nr\.?)/g,
+  ],
 ]
 
 /** German names of the kinds findSensitive() reports (warnings in the UI) */
@@ -201,8 +205,8 @@ export function findSensitive(text) {
  * own text in it — the notes and the style examples. The prompt's fixed rule
  * lines mention "Kunden" themselves and would always warn.
  */
-export function promptSensitive(week, weeks, { dates } = {}) {
+export function promptSensitive(week, weeks, { dates, examples = styleExamples(weeks) } = {}) {
   const days = phrasingCandidates(week, { dates })
   if (days.length === 0) return []
-  return findSensitive([...days.map((d) => d.notes), ...styleExamples(weeks)].join('\n'))
+  return findSensitive([...days.map((d) => d.notes), ...examples].join('\n'))
 }

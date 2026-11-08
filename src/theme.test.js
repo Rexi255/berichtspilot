@@ -2,6 +2,7 @@
 // pair, the muted text, the status colors and the marks. Reads the CSS so a
 // token tweak that breaks contrast fails here, not in someone's eyes.
 import { describe, it, expect } from 'vitest'
+import { ACCENTS, ACCENT_NAMES } from './lib/model.js'
 import fs from 'node:fs'
 import { contrastRatio } from './lib/contrast.js'
 
@@ -23,7 +24,6 @@ function accentTokens(mode) {
   return Object.fromEntries([...css.matchAll(re)].map((m) => [m[1], tokens(m[2])]))
 }
 
-const ACCENTS = ['blue', 'coral', 'lilac', 'green']
 const SURFACES = ['canvas', 'sidebar', 'surface', 'surface-2']
 const STATUS = ['draft', 'missing', 'holiday', 'sick', 'vacation', 'warn']
 
@@ -37,8 +37,9 @@ describe.each(['dark', 'light'])('%s mode', (mode) => {
     }
   })
 
-  it('has all four accents', () => {
+  it('has every accent of model.js, each with a name for Settings', () => {
     expect(Object.keys(accents).sort()).toEqual([...ACCENTS].sort())
+    expect(Object.keys(ACCENT_NAMES).sort()).toEqual([...ACCENTS].sort())
   })
 
   it.each(ACCENTS)('accent %s: 4.5:1 on every surface and for the text on it', (accent) => {

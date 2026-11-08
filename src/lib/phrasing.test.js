@@ -142,6 +142,13 @@ describe('findSensitive: the word "Kunde"', () => {
     expect(findSensitive('Arbeitsplätze nach Kundenwunsch ausstatten, Kundendienst erklärt')).toEqual([])
   })
 
+  it('stays quiet for words that only contain the letters (Urkunde, Sekunden, erkunden)', () => {
+    expect(findSensitive('Ausbildungsurkunde abgeholt, Urkunden beurkunden lassen')).toEqual([])
+    expect(findSensitive('Timeout nach 30 Sekunden, Netzwerk erkunden, Interesse bekunden')).toEqual([])
+    // compounds that name a real customer stay flagged
+    expect(kinds('Partnerkunde und Neukunde angerufen')).toEqual(['customer:Partnerkunde', 'customer:Neukunde'])
+  })
+
   it('does not report the "kunde" inside an e-mail address twice', () => {
     expect(kinds('Mail an max.muster@kunde.de')).toEqual(['email:max.muster@kunde.de'])
   })

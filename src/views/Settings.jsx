@@ -27,14 +27,11 @@ import { updateHint, updateSummary, canCheckForUpdate } from '../lib/update.js'
 import { parseWebuntisAddress } from '../lib/webuntis.js'
 import { BACKUP_KINDS, backupTitle, sizeLabel } from '../lib/backups.js'
 import { SHORTCUT_HELP } from '../lib/shortcuts.js'
+import { ACCENTS, ACCENT_NAMES } from '../lib/model.js'
 
-// Accents (schema v12, E-032); the colors live in index.css per mode
-export const ACCENT_OPTIONS = [
-  { id: 'blue', name: 'Logo-Blau' },
-  { id: 'coral', name: 'Koralle' },
-  { id: 'lilac', name: 'Flieder' },
-  { id: 'green', name: 'Grün' },
-]
+// Accents (schema v12, E-032) from the one list in model.js that migration
+// and validation use; the colors live in index.css per mode
+export const ACCENT_OPTIONS = ACCENTS.map((id) => ({ id, name: ACCENT_NAMES[id] }))
 
 // One accent, previewed in its own colors: the swatch carries data-accent
 // itself, so the button and the day cells inside render in that accent

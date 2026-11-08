@@ -32,7 +32,9 @@ export default function DayTabs({ days, selected, onSelect, today }) {
             onClick={() => onSelect(day.date)}
             onKeyDown={(e) => {
               // arrow keys move between the tabs, like every tab list
+              // (plain arrows only: Alt+←/→ belongs to the week change)
               if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return
+              if (e.altKey || e.ctrlKey || e.shiftKey || e.metaKey) return
               e.preventDefault()
               const next = days[(i + (e.key === 'ArrowRight' ? 1 : days.length - 1)) % days.length]
               onSelect(next.date)

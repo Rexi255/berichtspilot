@@ -17,7 +17,8 @@ versioning follows [Semantic Versioning](https://semver.org/).
   Woche, Profile, Einstellungen. It collapses to a narrow icon bar with the
   button at the bottom or Strg+B and remembers that. A switch for dark/light
   sits next to it. "Lokal · kein Konto" shows where your data lives and
-  turns red as "Nicht gespeichert" if saving ever fails.
+  turns red as "Nicht gespeichert" if saving ever fails. The number of
+  missing weeks updates on Monday even while the app stays open.
 - **New overview:** three figures (finished weeks of those due so far, with
   a bar; drafts; weeks without a report), a bar with the missing weeks to
   open them in one click, the **year band** (one column per week of the
@@ -35,7 +36,8 @@ versioning follows [Semantic Versioning](https://semver.org/).
   School days list each subject with its topic. The header shows the week's
   status (click to switch Entwurf/Fertig) and how many days are written;
   jumping to a date opens from the date range, deleting the week moved to
-  the ⋯ menu (with undo).
+  the ⋯ menu ("Wirklich löschen?" asks once more, then undo for 6 seconds).
+  Alt+←/→ changes the week even while a day tab has the focus.
 - **Exact preview:** the three blocks show exactly the text that gets
   copied, without wrapping or trimming (long lines scroll sideways); each
   block shows its number of lines and has its own copy button. "Leerzeichen
@@ -50,9 +52,11 @@ versioning follows [Semantic Versioning](https://semver.org/).
   (button in the editor header or Strg+Umschalt+N); the notes themselves
   stay per day.
 - **AI for one day:** in the notes area, "KI-Prompt kopieren" copies a
-  prompt with only this day's notes for any chat AI; "Antwort einfügen"
-  shows its bullets for a check before "Übernehmen" (with undo). The answer
-  may leave out the date line. Like the whole-week flow ("Mit KI
+  prompt with only this day's notes for any chat AI; "Auftrag ansehen" shows
+  that prompt (with the example bullets from earlier weeks) before you copy
+  it. "Antwort einfügen" shows its bullets for a check before "Übernehmen"
+  (with undo); an open "Mit KI formulieren" panel for the whole week stays
+  open with its pasted answer. The answer may leave out the date line. Like the whole-week flow ("Mit KI
   formulieren", still there), the button reads "Trotzdem kopieren" when the
   notes look like customer data.
 - **Profiles, settings and the setup wizard** in the new look: profiles as
@@ -72,7 +76,7 @@ versioning follows [Semantic Versioning](https://semver.org/).
   and IP addresses, MAC, ticket and phone numbers, the check before copying a
   prompt now flags "Kunde", "Kunden", "Endkunde" and customer numbers in your
   notes and in the example bullets it sends along. Words like "Kundenwunsch"
-  stay quiet.
+  stay quiet, and so do "Urkunde", "Sekunden", "erkunden" and "bekunden".
 
 ## [2.0.4] - 2026-11-07
 

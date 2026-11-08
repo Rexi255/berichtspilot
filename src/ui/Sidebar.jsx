@@ -17,7 +17,7 @@ import {
 } from '@phosphor-icons/react'
 import { useStore } from '../store.jsx'
 import { overviewStats } from '../lib/overview.js'
-import { mondayOf } from '../lib/dates.js'
+import { useCurrentMonday } from './useCurrentMonday.js'
 import { SHORTCUT_KEYS } from '../lib/shortcuts.js'
 import { Badge, IconButton, Tooltip, cx } from './basics.jsx'
 import UpdateHint from './UpdateHint.jsx'
@@ -99,12 +99,14 @@ export default function Sidebar({ view, onView }) {
   const collapsed = data.settings.layout.sidebarCollapsed
   const dark = data.settings.appearance.mode === 'dark'
 
-  // Badge: due weeks without a report (same count as the overview)
+  // Badge: due weeks without a report (same count as the overview); the
+  // running week updates on its own when the app stays open over a weekend
+  const currentMonday = useCurrentMonday()
   const missing = useMemo(
-    () => overviewStats(data, mondayOf(new Date())).missing.length,
-    // only the weeks and the training dates change the count
+    () => overviewStats(data, currentMonday).missing.length,
+    // only the weeks, the training dates and the running week change the count
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [data.weeks, data.settings.trainingStart, data.settings.trainingEnd]
+    [data.weeks, data.settings.trainingStart, data.settings.trainingEnd, currentMonday]
   )
 
   return (

@@ -2,7 +2,8 @@
 // fictional demo record. The preview must show exactly the text that gets
 // copied — in every state: whitespace markers on or off, preview hidden
 // (copy bar), button or Strg+1/2/3. Also: the privacy warning and the saved
-// layout switches.
+// layout switches, the AI per day next to the week panel, Alt+arrows on a day
+// tab and the two-step delete in the ⋯ menu.
 import { test, expect } from '@playwright/test'
 import fs from 'node:fs'
 
@@ -150,4 +151,45 @@ test('AI per day: the prompt holds only that day; the answer is checked, applied
   await expect.poll(() => preText(page, 'work')).toContain(day)
   await page.getByRole('button', { name: 'Rückgängig' }).click()
   await expect.poll(() => preText(page, 'work')).not.toContain('Tausch eines Druckers')
+})
+
+test('AI per day leaves an open week panel with its pasted answer alone; the prompt can be read first', async ({ page }) => {
+  await page.getByRole('button', { name: 'Mit KI formulieren' }).click()
+  const pasted = '### 2026-11-04\n- Antwort aus dem Wochen-Panel'
+  const panelAnswer = page.getByPlaceholder('### 2026-09-30\n- …')
+  await panelAnswer.fill(pasted)
+
+  await page.keyboard.press('Alt+Digit3')
+  const notes = page.getByRole('region', { name: 'Notizen' })
+  // hard rule 6: what gets copied is visible before copying
+  await notes.getByText('Auftrag ansehen').click()
+  await expect(notes.getByLabel('KI-Prompt für diesen Tag')).toContainText('### 2026-11-04')
+
+  await page.evaluate((text) => navigator.clipboard.writeText(text), '### 2026-11-04\n- Tausch eines Druckers')
+  await notes.getByRole('button', { name: 'Antwort einfügen' }).click()
+  await notes.getByRole('button', { name: 'Übernehmen', exact: true }).click()
+  await expect.poll(() => preText(page, 'work')).toContain('- Tausch eines Druckers')
+  await expect(panelAnswer).toHaveValue(pasted)
+})
+
+test('Alt+→ on a focused day tab changes only the week, not the day', async ({ page }) => {
+  await page.keyboard.press('Alt+Digit3')
+  await page.locator('[data-daytab="2026-11-04"]').focus()
+  await page.keyboard.press('Alt+ArrowRight')
+  await expect(page.getByRole('heading', { name: 'KW 46', exact: true })).toBeVisible()
+  await page.keyboard.press('Alt+ArrowLeft')
+  await expect(page.getByRole('heading', { name: 'KW 45', exact: true })).toBeVisible()
+  await expect(page.locator('[data-daytab="2026-11-04"]')).toHaveAttribute('aria-selected', 'true')
+})
+
+test('deleting a week takes two selects in the ⋯ menu and can be undone', async ({ page }) => {
+  await page.getByRole('button', { name: 'Weitere Aktionen' }).click()
+  await page.getByRole('menuitem', { name: 'Woche löschen' }).click()
+  // the first select only arms the item
+  await expect(page.getByRole('menuitem', { name: 'Wirklich löschen?' })).toBeVisible()
+  await expect(page.locator('[data-output="work"]')).toBeVisible()
+  await page.getByRole('menuitem', { name: 'Wirklich löschen?' }).click()
+  await expect(page.getByText('Für KW 45/2026 gibt es noch keinen Bericht.')).toBeVisible()
+  await page.getByRole('button', { name: 'Rückgängig' }).click()
+  await expect(page.locator('[data-output="work"]')).toBeVisible()
 })

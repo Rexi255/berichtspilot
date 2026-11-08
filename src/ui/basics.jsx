@@ -381,6 +381,9 @@ export function Tooltip({ label, shortcut, side = 'top', children, className }) 
  */
 export function Menu({ label, icon, items, className, side = 'bottom-end' }) {
   const [open, setOpen] = useState(false)
+  // Label of an item with `confirm` that was selected once: it shows its
+  // confirm text and runs only on the second select (destructive actions)
+  const [armed, setArmed] = useState(null)
   const ref = useRef(null)
 
   useEffect(() => {
@@ -410,7 +413,16 @@ export function Menu({ label, icon, items, className, side = 'bottom-end' }) {
 
   return (
     <div ref={ref} className={cx('relative', className)}>
-      <IconButton label={label} side={side} aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
+      <IconButton
+        label={label}
+        side={side}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        onClick={() => {
+          setArmed(null)
+          setOpen((o) => !o)
+        }}
+      >
         {icon}
       </IconButton>
       {open && (
@@ -421,6 +433,10 @@ export function Menu({ label, icon, items, className, side = 'bottom-end' }) {
               type="button"
               role="menuitem"
               onClick={() => {
+                if (item.confirm && armed !== item.label) {
+                  setArmed(item.label)
+                  return
+                }
                 setOpen(false)
                 item.onSelect()
               }}
@@ -430,7 +446,7 @@ export function Menu({ label, icon, items, className, side = 'bottom-end' }) {
               )}
             >
               {item.icon}
-              {item.label}
+              {armed === item.label ? item.confirm : item.label}
             </button>
           ))}
         </div>

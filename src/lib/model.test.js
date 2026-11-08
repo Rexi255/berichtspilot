@@ -822,6 +822,12 @@ describe('schema v12: appearance and layout', () => {
     expect(() => validateData(file({ appearance: { mode: 'light', accent: 'green' }, layout: { notesVisible: false } }))).not.toThrow()
   })
 
+  it('an import with an unknown appearance loads with the defaults instead of being refused', () => {
+    // the path every caller takes: validateData(migrateData(…))
+    const loaded = validateData(migrateData({ version: 12, settings: { appearance: { mode: 'sepia', accent: 'pink' } }, profiles: [], weeks: [] }))
+    expect(loaded.settings.appearance).toEqual({ mode: 'dark', accent: 'blue' })
+  })
+
   it('seed data starts dark with the logo blue and everything visible', () => {
     expect(seedData().settings.appearance).toEqual({ mode: 'dark', accent: 'blue' })
     expect(seedData().settings.layout).toEqual(DEFAULT_LAYOUT)

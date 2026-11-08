@@ -13,6 +13,8 @@ export const DATA_VERSION = 12
 // Appearance (schema v12, E-032/E-033): color mode and accent
 export const MODES = ['dark', 'light']
 export const ACCENTS = ['blue', 'coral', 'lilac', 'green']
+/** German names of the accents (Settings → Aussehen); one per entry in ACCENTS */
+export const ACCENT_NAMES = { blue: 'Logo-Blau', coral: 'Koralle', lilac: 'Flieder', green: 'Grün' }
 
 // Layout switches (schema v12) and their defaults
 export const LAYOUT_DEFAULTS = { sidebarCollapsed: false, previewVisible: true, notesVisible: true }
@@ -391,6 +393,11 @@ export function validateData(d) {
       (webuntis.school !== undefined && typeof webuntis.school !== 'string'))) {
     fail('Die WebUntis-Einstellung in der Datei ist ungültig.')
   }
+  // The device settings below (switches, appearance, layout) never fail after
+  // migrateData(): it resets an unknown value to the default on purpose, so an
+  // import with "accent: pink" loads with Logo-Blau instead of being refused.
+  // The checks guard the shape for anyone calling validateData() on its own
+  // and against a later migration step that forgets the reset.
   const autoCreate = d.settings?.autoCreateWeek
   if (autoCreate !== undefined && typeof autoCreate !== 'boolean') {
     fail('Die Einstellung „Aktuelle Woche beim Start anlegen" in der Datei ist ungültig.')

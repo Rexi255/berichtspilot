@@ -181,6 +181,7 @@ function WebuntisSubjectMap({ profile }) {
 
 function ProfileForm({ profile, onDuplicate }) {
   const { data, updateProfile, deleteProfile } = useStore()
+  const [armedId, setArmedId] = useState(null)
   const webuntisEnabled = data.settings.webuntis?.enabled === true
 
   const patch = (p) => updateProfile(profile.id, (old) => ({ ...old, ...p }))
@@ -218,8 +219,14 @@ function ProfileForm({ profile, onDuplicate }) {
           <Button size="sm" variant="ghost" onClick={onDuplicate} title="Kopie dieses Profils anlegen, z. B. fürs nächste Halbjahr">
             <CopyIcon size={14} /> Duplizieren
           </Button>
-          <Button size="sm" variant="danger" onClick={() => deleteProfile(profile.id)}>
-            <TrashIcon size={14} /> Löschen
+          {/* Two steps: the first click arms, the second deletes; leaving the button disarms */}
+          <Button
+            size="sm"
+            variant="danger"
+            onClick={() => (armedId === profile.id ? deleteProfile(profile.id) : setArmedId(profile.id))}
+            onBlur={() => setArmedId(null)}
+          >
+            <TrashIcon size={14} /> {armedId === profile.id ? 'Wirklich löschen?' : 'Löschen'}
           </Button>
         </CardHeader>
         <div className="flex flex-col gap-4 p-4">

@@ -39,17 +39,21 @@ function AiProposal({ bullets, replaces, onApply, onDiscard }) {
   )
 }
 
-export default function NotesArea({ day, onChange, week, weeks, onApplyAi }) {
+export default function NotesArea({ day, onChange, week, examples, onApplyAi }) {
   const hasNotes = Boolean(day.notes?.trim())
   const work = day.type === 'work'
   const [copied, setCopied] = useState(false)
   const [proposal, setProposal] = useState(null)
 
   // This day's prompt and what in it looks like customer data (only the
-  // user's own text is checked, never the prompt's rule lines)
+  // user's own text is checked, never the prompt's rule lines). The style
+  // examples come computed once from WeekEditor
   const dates = useMemo(() => [day.date], [day.date])
-  const prompt = useMemo(() => (work ? buildPrompt(week, weeks, { dates }) : null), [work, week, weeks, dates])
-  const sensitive = useMemo(() => (work ? promptSensitive(week, weeks, { dates }) : []), [work, week, weeks, dates])
+  const prompt = useMemo(() => (work ? buildPrompt(week, null, { dates, examples }) : null), [work, week, dates, examples])
+  const sensitive = useMemo(
+    () => (work ? promptSensitive(week, null, { dates, examples }) : []),
+    [work, week, dates, examples]
+  )
 
   // Each line or sentence becomes a bullet; empty placeholder rows go, the
   // notes stay for comparing
@@ -121,6 +125,20 @@ export default function NotesArea({ day, onChange, week, weeks, onApplyAi }) {
               ))}
               . Passe die Notizen an, bevor du ihn weitergibst.
             </Notice>
+          )}
+          {/* What leaves the machine is visible before it is copied (hard rule 6):
+              the notes plus the style examples from earlier weeks */}
+          {prompt && (
+            <details>
+              <summary className="cursor-pointer text-meta text-ink-2 hover:text-ink">Auftrag ansehen</summary>
+              <pre
+                tabIndex={0}
+                aria-label="KI-Prompt für diesen Tag"
+                className="selectable mt-1.5 max-h-56 overflow-auto whitespace-pre-wrap rounded-control border border-line bg-canvas px-3 py-2 font-mono text-[12px] leading-5 text-ink"
+              >
+                {prompt}
+              </pre>
+            </details>
           )}
           {copied && !proposal && (
             <p className="text-meta text-ink-2">
