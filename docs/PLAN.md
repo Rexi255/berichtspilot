@@ -98,13 +98,22 @@ week editor shows all days on one page under sticky day tiles; "Frühere
 Wochen ignorieren" (`settings.ignoredUntil`, **schema v13**, E-036) in
 Settings and the setup wizard.
 
-**Next:** ask the user whether more UI changes come first; then release
-**v2.2.0** — not 2.1.1: a new feature and a schema bump (2.1.x can't open a
-v13 file; the CHANGELOG says so). Procedure below. In that release's dry run, check
-the Linux build log: electron-builder must no longer warn "desktopName is not
-set", and the AppImage's `.desktop` should say `StartupWMClass=berichtspilot`
-(a Linux `dir` build on Windows writes no `.desktop` file, so this is
-unchecked so far).
+**v2.2.0 is out** (2026-11-08, release published 20:32 UTC, immutable;
+user: "Kann dann alles auf main als 2.2"). Version bump 6a24b0e → dry run
+42519911614 green (Linux: no `desktopName` warning any more, the AppImage's
+`.desktop` has `StartupWMClass=berichtspilot` — E-035 confirmed) → PR #30
+merged as merge commit 65af7b6 (same tree as 6a24b0e) → annotated tag
+`v2.2.0` → release run 42520343402 green. Feed checked: both `latest*.yml` =
+2.2.0, sizes match, installer `sha512` matches. `development`
+fast-forwarded to `main`.
+The user's only real record is on their work notebook with **v2.0.3**
+(schema v11): the in-app update goes straight to 2.2.0 (same update hosts
+in 2.0.3), and the migration v11 → v13 was checked against the demo record
+(identical output for every week).
+
+**Next:** wait for the user's feedback on 2.2.0 (the update on the work
+notebook, "Frühere Wochen"). No open roadmap step; the "Later / to-do" list
+below has the candidates.
 For any further UI work: check every visible change yourself with the
 `ui-shots` skill (Playwright, demo record) and read the screenshots — the user
 asked for that explicitly.
@@ -509,6 +518,7 @@ checkpoint is a styleguide in code, no HTML prototype.
       scrolls to its day (`src/views/editor/useDayScroll.js`); ignore
       earlier weeks (`settings.ignoredUntil`, schema v13, E-036) in Settings
       → "Frühere Wochen" and the wizard's training step (2026-11-08)
+- [x] 12.2 Release v2.2.0 (2026-11-08, PR #30 → 65af7b6, tag `v2.2.0`)
 
 ### Later / to-do
 - [ ] Warning list for customer data: a local list of customer names / host
@@ -629,4 +639,5 @@ checkpoint is a styleguide in code, no HTML prototype.
 | 2026-11-08 | 11.9: clean-up, a11y (axe-core) + copy pass, README; CI green (run 42482075316) | ad7bfce |
 | 2026-11-08 | 11.9b: fixes from code + security review (10 findings, 3 new e2e tests) | d034dfa |
 | 2026-11-08 | Dependabot alert #10: `minimatch` override (E-034) | see git log |
-| 2026-11-08 | 12.1: sidebar chip gone, all days on one page, ignore earlier weeks (schema v13, E-036) | see git log |
+| 2026-11-08 | 12.1: sidebar chip gone, all days on one page, ignore earlier weeks (schema v13, E-036) | d8fa67d |
+| 2026-11-08 | 12.2: release v2.2.0 | PR #30, 65af7b6, tag `v2.2.0` |
