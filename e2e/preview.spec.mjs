@@ -98,8 +98,8 @@ test('with the preview hidden, the copy bar and Strg+1–3 copy the same text; t
 
 test('a block with likely customer data warns; Strg+1 copies only on the second press', async ({ page }) => {
   await page.keyboard.press('Alt+Digit3')
-  await expect(page.locator('[data-daytab="2026-11-04"]')).toHaveAttribute('aria-selected', 'true')
-  await page.locator('[data-daycard]').getByPlaceholder('Tätigkeit beschreiben …').fill('Rückruf beim Kunden wegen Druckerstörung')
+  await expect(page.locator('[data-daytab="2026-11-04"]')).toHaveAttribute('aria-current', 'location')
+  await page.locator('[data-daycard="2026-11-04"]').getByPlaceholder('Tätigkeit beschreiben …').fill('Rückruf beim Kunden wegen Druckerstörung')
 
   const card = page.locator('[data-output="work"]')
   await expect(card.getByText('Mögliche Kundendaten')).toBeVisible()
@@ -118,7 +118,7 @@ test('a block with likely customer data warns; Strg+1 copies only on the second 
 })
 
 test('sidebar and notes switches are saved', async ({ page }) => {
-  await expect(page.getByRole('region', { name: 'Notizen' })).toBeVisible()
+  await expect(page.getByRole('region', { name: 'Notizen' }).first()).toBeVisible()
   await page.keyboard.press('Control+KeyB')
   await page.keyboard.press('Control+Shift+KeyN')
   await expect(page.getByRole('region', { name: 'Notizen' })).toHaveCount(0)
@@ -135,7 +135,7 @@ test('sidebar and notes switches are saved', async ({ page }) => {
 
 test('AI per day: the prompt holds only that day; the answer is checked, applied and undone', async ({ page }) => {
   await page.keyboard.press('Alt+Digit3')
-  const notes = page.getByRole('region', { name: 'Notizen' })
+  const notes = page.locator('[data-daycard="2026-11-04"]').getByRole('region', { name: 'Notizen' })
   await notes.getByRole('button', { name: 'KI-Prompt kopieren' }).click()
   const prompt = await lastCopy(page)
   expect(prompt).toContain('### 2026-11-04')
@@ -160,7 +160,7 @@ test('AI per day leaves an open week panel with its pasted answer alone; the pro
   await panelAnswer.fill(pasted)
 
   await page.keyboard.press('Alt+Digit3')
-  const notes = page.getByRole('region', { name: 'Notizen' })
+  const notes = page.locator('[data-daycard="2026-11-04"]').getByRole('region', { name: 'Notizen' })
   // hard rule 6: what gets copied is visible before copying
   await notes.getByText('Auftrag ansehen').click()
   await expect(notes.getByLabel('KI-Prompt für diesen Tag')).toContainText('### 2026-11-04')
@@ -172,14 +172,29 @@ test('AI per day leaves an open week panel with its pasted answer alone; the pro
   await expect(panelAnswer).toHaveValue(pasted)
 })
 
-test('Alt+→ on a focused day tab changes only the week, not the day', async ({ page }) => {
-  await page.keyboard.press('Alt+Digit3')
+test('all days on one page: a tile or Alt+1–5 scrolls to its day, the tiles stay on top', async ({ page }) => {
+  const days = ['2026-11-02', '2026-11-03', '2026-11-04', '2026-11-05', '2026-11-06']
+  for (const date of days) await expect(page.locator(`[data-daycard="${date}"]`)).toHaveCount(1)
+  // the week opens at today (Wednesday)
+  await expect(page.locator('[data-daytab="2026-11-04"]')).toHaveAttribute('aria-current', 'location')
+
+  await page.locator('[data-daytab="2026-11-02"]').click()
+  await expect(page.locator('[data-daytab="2026-11-02"]')).toHaveAttribute('aria-current', 'location')
+  await expect(page.locator('[data-daycard="2026-11-02"] h2')).toBeInViewport()
+
+  await page.keyboard.press('Alt+Digit5')
+  await expect(page.locator('[data-daytab="2026-11-06"]')).toHaveAttribute('aria-current', 'location')
+  await expect(page.locator('[data-daycard="2026-11-06"] h2')).toBeInViewport()
+  await expect(page.locator('[data-daytab="2026-11-02"]')).toBeInViewport()
+})
+
+test('Alt+→ on a focused day tile changes only the week', async ({ page }) => {
   await page.locator('[data-daytab="2026-11-04"]').focus()
   await page.keyboard.press('Alt+ArrowRight')
   await expect(page.getByRole('heading', { name: 'KW 46', exact: true })).toBeVisible()
   await page.keyboard.press('Alt+ArrowLeft')
   await expect(page.getByRole('heading', { name: 'KW 45', exact: true })).toBeVisible()
-  await expect(page.locator('[data-daytab="2026-11-04"]')).toHaveAttribute('aria-selected', 'true')
+  await expect(page.locator('[data-daytab="2026-11-04"]')).toHaveAttribute('aria-current', 'location')
 })
 
 test('deleting a week takes two selects in the ⋯ menu and can be undone', async ({ page }) => {

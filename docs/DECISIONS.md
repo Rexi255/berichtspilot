@@ -857,3 +857,27 @@ Fix: `"desktopName": "berichtspilot.desktop"` + `build.linux.syncDesktopName: tr
 file name, `StartupWMClass` and the window's `app_id` are all `berichtspilot` (lower case = the
 executable name, so the file name stays what it was). No effect on Windows or on the data folder
 (`userData` follows `productName`).
+
+### E-036 · Ignore earlier weeks with one date, `settings.ignoredUntil` (schema v13) · accepted
+The user (2026-11-08): someone who finds Berichtspilot in the middle of their training doesn't want to
+carry over all earlier reports — those weeks must not show up as missing.
+
+Options: (a) a list of ignored ranges (any stretch, e.g. a long sick leave); (b) **one date: from the
+training start up to `ignoredUntil`**; (c) move `trainingStart` forward (would also change the training
+week counter and the progress — wrong).
+Chosen (b), the shape the user described ("vom Ausbildungsbeginn bis Datum X"); a list can grow out of it
+later without breaking this field.
+
+Rules (`src/lib/overview.js`):
+- A week is ignored when its Monday is on or before `ignoredUntil` — the week containing the date counts
+  as a whole.
+- Only weeks **without** a report are left out: they are neither due nor missing, and the year band
+  shows them as `ignored`. A report written there anyway counts as usual (done/draft), so
+  done + drafts + missing = due still holds.
+- The training week counter ("Ausbildungswoche 62 von 157") and the year band's range don't change.
+
+Set in Settings → "Frühere Wochen" (date, "Bis letzte Woche", "Entfernen") and in the setup wizard's
+training step (switch "Ich steige mitten in der Ausbildung ein"; suggestion: the Sunday before the
+running week). It is part of the shared record: import "Ersetzen" takes it from the file.
+Schema v13 (migration adds `''`; a malformed value becomes `''`) — so 2.1.x can't open a v13 file
+(downgrade protection), as with every schema bump.

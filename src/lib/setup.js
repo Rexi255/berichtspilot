@@ -1,7 +1,7 @@
 // Setup wizard ("Einrichtung"): suggestions for a fresh install, the answers
 // pre-filled from existing data, per-step checks and applying the answers to
 // the record. Pure — the wizard UI lives in src/views/SetupWizard.jsx.
-import { WEEKDAY_KEYS, parseISO, toISO } from './dates.js'
+import { WEEKDAY_KEYS, addDays, mondayOf, parseISO, toISO } from './dates.js'
 import { newId, profileForDate } from './model.js'
 import { parseWebuntisAddress } from './webuntis.js'
 
@@ -32,6 +32,15 @@ export function trainingEndAfter(startISO, months) {
   return toISO(new Date(start.getFullYear(), start.getMonth() + months, start.getDate() - 1))
 }
 
+/**
+ * Suggested end of the ignored stretch (started mid-training): the Sunday
+ * before the running week — every earlier week needs no report, the current
+ * one is the first written with Berichtspilot.
+ */
+export function suggestIgnoredUntil(todayISO) {
+  return addDays(mondayOf(parseISO(todayISO)), -1)
+}
+
 /** Default week for a new half-year: Mon–Fri at work, Saturday off — school days are picked by the user. */
 const defaultWeekdays = () =>
   Object.fromEntries(WEEKDAY_KEYS.map((key) => [key, { type: key === 'sat' ? 'off' : 'work', subjects: [] }]))
@@ -52,6 +61,9 @@ export function setupDraft(data, todayISO) {
   return {
     trainingStart: settings.trainingStart ?? '',
     trainingEnd: settings.trainingEnd ?? '',
+    // started mid-training: earlier weeks need no report (schema v13)
+    ignoreEarlier: Boolean(settings.ignoredUntil),
+    ignoredUntil: settings.ignoredUntil || suggestIgnoredUntil(todayISO),
     state: current?.state ?? data.profiles?.[0]?.state ?? 'SH',
     profile: current
       ? {
@@ -80,6 +92,11 @@ export function setupErrors(step, answers) {
     if (start && !IS_ISO_DATE.test(start)) errors.push('Der Ausbildungsbeginn ist kein gültiges Datum.')
     if (end && !IS_ISO_DATE.test(end)) errors.push('Das Ausbildungsende ist kein gültiges Datum.')
     if (start && end && end <= start) errors.push('Das Ausbildungsende muss nach dem Beginn liegen.')
+    if (answers.ignoreEarlier) {
+      const until = answers.ignoredUntil
+      if (!IS_ISO_DATE.test(until ?? '')) errors.push('Bitte trag ein, bis wann frühere Wochen ignoriert werden.')
+      else if (start && IS_ISO_DATE.test(start) && until < start) errors.push('Das Datum für frühere Wochen liegt vor dem Ausbildungsbeginn.')
+    }
   }
   if (step === 'halfYear') {
     const { name, validFrom, validTo, weekdays } = answers.profile
@@ -116,6 +133,7 @@ export function applySetup(data, answers) {
     ...data.settings,
     trainingStart: answers.trainingStart,
     trainingEnd: answers.trainingEnd,
+    ignoredUntil: answers.ignoreEarlier ? answers.ignoredUntil : '',
     webuntis,
     autoCreateWeek: answers.autoCreateWeek,
     updateCheck: answers.updateCheck,

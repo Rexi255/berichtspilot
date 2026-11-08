@@ -16,7 +16,7 @@ const BAND_STEP = 15
 // Week chips shown in the warning bar before "+n weitere"
 const CHIPS_SHOWN = 8
 
-const STATUS_TEXT = { done: 'Fertig', draft: 'Entwurf', missing: 'Fehlt', future: 'später' }
+const STATUS_TEXT = { done: 'Fertig', draft: 'Entwurf', missing: 'Fehlt', future: 'später', ignored: 'ignoriert' }
 
 // "KW 12" — with the year when it isn't this year's
 function weekLabel(monday, thisYear) {
@@ -116,6 +116,8 @@ const LEGEND = [
 function YearBand({ band, openWeek }) {
   const scrollRef = useRef(null)
   const currentIndex = band.columns.findIndex((c) => c.current)
+  // the legend names "ignoriert" only when the band shows such weeks
+  const hasIgnored = band.columns.some((c) => c.status === 'ignored')
 
   // Open at the current week, a third from the right edge
   useEffect(() => {
@@ -185,7 +187,7 @@ function YearBand({ band, openWeek }) {
         </div>
       </div>
       <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2" aria-hidden="true">
-        {LEGEND.map(([state, label]) => (
+        {(hasIgnored ? [...LEGEND, ['ignored', 'ignoriert']] : LEGEND).map(([state, label]) => (
           <span key={state} className="flex items-center gap-1.5 text-meta text-ink-2">
             <DayCell size="band" state={state} /> {label}
           </span>

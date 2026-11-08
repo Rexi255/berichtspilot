@@ -130,7 +130,7 @@ electron/updater.js  auto-update via electron-updater (E-017): check / download 
 electron/webuntis-probe.js  dev spike `--webuntis-probe` (E-013); shape.js = JSON/URL anonymiser
 src/store.jsx        central state (React context), 400 ms autosave, all mutations
 src/lib/             PURE logic, fully tested: dates · holidays · format · model · notes · phrasing · webuntis · update · setup · backups · overview · preview · shortcuts · contrast
-src/views/           screens: overview · week editor (parts in editor/: tabs, day card, notes, preview; + PhrasingPanel, WebuntisPanel) · profiles · settings · setup wizard · dev Styleguide
+src/views/           screens: overview · week editor (parts in editor/: day tiles + scroll, day card, notes, preview; + PhrasingPanel, WebuntisPanel) · profiles · settings · setup wizard · dev Styleguide
 src/ui/              design system: Titlebar, Sidebar, UpdateHint, ErrorBoundary, basics (Card, StatusChip, DayCell …), toast, Logo
 src/index.css        Tailwind v4 + "Kladde" tokens: data-mode × data-accent on <html> (E-032), checked by src/theme.test.js
 e2e/                 Playwright: browser smoke + editor/preview · Electron end-to-end · packaged check (E-031); fixtures/ = fictional demo record

@@ -104,11 +104,12 @@ describe('migrateData', () => {
   it('migrates a full v2 file to the current version with English names and values', () => {
     const d = migrateData(v2File())
     expect(d.version).toBe(DATA_VERSION)
-    expect(DATA_VERSION).toBe(12)
+    expect(DATA_VERSION).toBe(13)
 
     expect(d.settings).toEqual({
       trainingStart: '2025-08-01',
       trainingEnd: '2028-07-31',
+      ignoredUntil: '',
       startView: 'profiles',
       snippets: ['Ticket bearbeitet'],
       eigenesFeld: 42,
@@ -244,7 +245,7 @@ describe('migrateData', () => {
     expect(d.version).toBe(DATA_VERSION)
     expect(d.settings).toEqual({
       startView: 'editor', snippets: ['a'], webuntis: { enabled: false, host: '', school: '' }, autoCreateWeek: true,
-      updateCheck: true, setupDone: true,
+      updateCheck: true, setupDone: true, ignoredUntil: '',
       appearance: { mode: 'dark', accent: 'green' }, layout: { sidebarCollapsed: false, previewVisible: true, notesVisible: true },
     })
     expect(() => validateData(d)).not.toThrow()
@@ -267,7 +268,7 @@ describe('migrateData', () => {
     expect(webuntisOf({ enabled: true })).toEqual({ enabled: true, host: '', school: '' })
     const d = migrateData({ version: 5, settings: 'kaputt', profiles: [], weeks: [] })
     expect(d.settings).toEqual({
-      startView: 'overview', snippets: [], webuntis: { enabled: false, host: '', school: '' }, autoCreateWeek: true, updateCheck: true, setupDone: true,
+      startView: 'overview', snippets: [], webuntis: { enabled: false, host: '', school: '' }, autoCreateWeek: true, updateCheck: true, setupDone: true, ignoredUntil: '',
       appearance: { mode: 'dark', accent: 'blue' }, layout: { sidebarCollapsed: false, previewVisible: true, notesVisible: true },
     })
     expect(() => validateData(d)).not.toThrow()
@@ -301,7 +302,7 @@ describe('migrateData', () => {
     expect(d.version).toBe(DATA_VERSION)
     expect(d.settings).toEqual({
       startView: 'overview', snippets: [], webuntis: { enabled: true, host: '', school: '' }, autoCreateWeek: true,
-      updateCheck: true, setupDone: true,
+      updateCheck: true, setupDone: true, ignoredUntil: '',
       appearance: { mode: 'dark', accent: 'green' }, layout: { sidebarCollapsed: false, previewVisible: true, notesVisible: true },
     })
     expect(() => validateData(d)).not.toThrow()
@@ -323,7 +324,7 @@ describe('migrateData', () => {
     expect(d.version).toBe(DATA_VERSION)
     expect(d.settings).toEqual({
       startView: 'overview', snippets: [], webuntis: { enabled: false, host: '', school: '' }, autoCreateWeek: false,
-      updateCheck: true, setupDone: true,
+      updateCheck: true, setupDone: true, ignoredUntil: '',
       appearance: { mode: 'dark', accent: 'green' }, layout: { sidebarCollapsed: false, previewVisible: true, notesVisible: true },
     })
     expect(() => validateData(d)).not.toThrow()
@@ -780,7 +781,7 @@ describe('schema v12: appearance and layout', () => {
     }
     for (const [theme, accent] of Object.entries(accents)) {
       const d = migrateData(v11({ theme, startView: 'editor' }))
-      expect(d.version).toBe(12)
+      expect(d.version).toBe(DATA_VERSION)
       expect(d.settings.appearance).toEqual({ mode: 'dark', accent })
       expect(d.settings.layout).toEqual(DEFAULT_LAYOUT)
       expect(d.settings).not.toHaveProperty('theme')
@@ -842,5 +843,35 @@ describe('schema v12: appearance and layout', () => {
     expect(result.settings.appearance).toEqual({ mode: 'light', accent: 'coral' })
     expect(result.settings.layout).toEqual(layout)
     expect(result.settings.startView).toBe('profiles')
+  })
+})
+
+describe('schema v13: ignored weeks', () => {
+  it('adds an empty ignoredUntil and keeps everything else', () => {
+    const d = migrateData({ version: 12, settings: { trainingStart: '2025-08-01', startView: 'editor' }, profiles: [], weeks: [] })
+    expect(d.version).toBe(13)
+    expect(d.settings.ignoredUntil).toBe('')
+    expect(d.settings.trainingStart).toBe('2025-08-01')
+    expect(d.settings.startView).toBe('editor')
+    expect(() => validateData(d)).not.toThrow()
+  })
+
+  it('keeps a valid date and resets a malformed one', () => {
+    const file = (ignoredUntil) => ({ version: 13, settings: { ignoredUntil }, profiles: [], weeks: [] })
+    expect(migrateData(file('2026-10-31')).settings.ignoredUntil).toBe('2026-10-31')
+    for (const bad of ['31.10.2026', 42, null, true]) expect(migrateData(file(bad)).settings.ignoredUntil).toBe('')
+  })
+
+  it('validateData rejects a malformed date', () => {
+    const file = (ignoredUntil) => ({ version: 13, settings: { ignoredUntil }, profiles: [], weeks: [] })
+    expect(() => validateData(file('gestern'))).toThrow(/Frühere Wochen ignorieren/)
+    expect(() => validateData(file(''))).not.toThrow()
+    expect(() => validateData(file('2026-10-31'))).not.toThrow()
+  })
+
+  it('seed data ignores nothing; import "Ersetzen" takes the date from the file', () => {
+    expect(seedData().settings.ignoredUntil).toBe('')
+    const imported = { ...seedData(), settings: { ...seedData().settings, ignoredUntil: '2026-01-31' } }
+    expect(replaceData(seedData(), imported).settings.ignoredUntil).toBe('2026-01-31')
   })
 })

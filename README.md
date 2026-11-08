@@ -46,7 +46,8 @@ Abschalten kannst du das unter Einstellungen → Updates.
 ## Funktionen
 
 - Übersicht mit Jahresband (jeder Tag der Ausbildung auf einen Blick) und Erkennung fehlender Wochen
-- Wocheneditor mit einem Tab pro Tag und einer Vorschau, die genau den Text zeigt, der kopiert wird
+- Mitten in der Ausbildung eingestiegen? Frühere Wochen lassen sich ignorieren, dann fehlen sie nicht
+- Wocheneditor mit allen Tagen auf einer Seite (Tageskacheln oben springen zum Tag) und einer Vorschau, die genau den Text zeigt, der kopiert wird
 - Notizen pro Tag, die per Klick zu Stichpunkten werden (mit oder ohne KI, für einen Tag oder die ganze Woche)
 - Warnung vor möglichen Kundendaten, bevor du kopierst oder Text an eine KI geht
 - Hell und Dunkel, vier Akzentfarben
@@ -72,7 +73,7 @@ Alles steckt in einer Datei: `daten.json`.
 - **Windows:** `%APPDATA%\Berichtspilot`. Bleibt bei der Deinstallation erhalten.
 - **Linux:** neben der AppImage. Ist der Ordner schreibgeschützt, dann `~/.config/Berichtspilot`.
 
-Daneben liegen bis zu drei Backups. Ist die Datei mal kaputt, nimmt die App automatisch das neueste intakte Backup. Den genauen Pfad siehst du unter Einstellungen → Daten oder, wenn du mit der Maus über „Lokal · kein Konto“ unten in der Seitenleiste fährst.
+Daneben liegen bis zu drei Backups. Ist die Datei mal kaputt, nimmt die App automatisch das neueste intakte Backup. Den genauen Pfad siehst du unter Einstellungen → Daten.
 
 Zusätzlich legt die App im Ordner `sicherungen` jeden Tag eine Sicherung an (die letzten 30 Tage bleiben) und eine weitere vor jedem Update, Import und Wiederherstellen. Zurückholen kannst du einen alten Stand unter **Einstellungen → Daten → Sicherungen**. Der aktuelle Stand wird dabei vorher selbst gesichert.
 

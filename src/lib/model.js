@@ -8,7 +8,7 @@ export const DAY_STATUSES = ['normal', 'holiday', 'sick', 'vacation']
 
 // Current schema version of daten.json. Older files are upgraded on load/import
 // via migrateData(); newer ones are rejected (downgrade protection).
-export const DATA_VERSION = 12
+export const DATA_VERSION = 13
 
 // Appearance (schema v12, E-032/E-033): color mode and accent
 export const MODES = ['dark', 'light']
@@ -273,6 +273,19 @@ function migrateV11toV12(d) {
   }
 }
 
+const IS_ISO_DATE = /^\d{4}-\d{2}-\d{2}$/
+
+/**
+ * Schema v12 -> v13: `settings.ignoredUntil` — weeks up to this date (from the
+ * training start) without a report count neither as due nor as missing, for
+ * users who start with Berichtspilot in the middle of their training.
+ * '' = nothing ignored.
+ */
+function migrateV12toV13(d) {
+  const settings = isObject(d.settings) ? d.settings : {}
+  return { ...d, version: 13, settings: { ignoredUntil: '', ...settings } }
+}
+
 /** Only string → string entries survive (hand-edited or broken files). */
 function cleanSubjectMap(map) {
   if (!isObject(map)) return {}
@@ -306,6 +319,7 @@ export function migrateData(raw) {
   if (d.version < 10) d = migrateV9toV10(d)
   if (d.version < 11) d = migrateV10toV11(d)
   if (d.version < 12) d = migrateV11toV12(d)
+  if (d.version < 13) d = migrateV12toV13(d)
 
   // Defensive defaults in case single fields are missing (e.g. hand-edited file)
   d.periods ??= []
@@ -317,6 +331,8 @@ export function migrateData(raw) {
   d.settings.updateCheck = d.settings.updateCheck !== false
   // Only a real `false` shows the wizard again — never for a malformed value
   d.settings.setupDone = d.settings.setupDone !== false
+  // A malformed date would hide or show weeks at random — it means "nothing ignored"
+  if (!IS_ISO_DATE.test(d.settings.ignoredUntil ?? '')) d.settings.ignoredUntil = ''
   // Unknown mode/accent → the defaults; layout switches only change for a real
   // boolean that differs from the default
   const appearance = isObject(d.settings.appearance) ? d.settings.appearance : {}
@@ -346,7 +362,6 @@ export function migrateData(raw) {
   return d
 }
 
-const IS_ISO_DATE = /^\d{4}-\d{2}-\d{2}$/
 
 /**
  * Structural check of (already migrated) data — throws with a readable German
@@ -416,6 +431,10 @@ export function validateData(d) {
   if (layout !== undefined && (!isObject(layout) ||
       Object.keys(LAYOUT_DEFAULTS).some((key) => layout[key] !== undefined && typeof layout[key] !== 'boolean'))) {
     fail('Die Einstellung „Layout“ in der Datei ist ungültig.')
+  }
+  const ignoredUntil = d.settings?.ignoredUntil
+  if (ignoredUntil !== undefined && ignoredUntil !== '' && !IS_ISO_DATE.test(String(ignoredUntil))) {
+    fail('Die Einstellung „Frühere Wochen ignorieren" in der Datei ist ungültig.')
   }
   const setupDone = d.settings?.setupDone
   if (setupDone !== undefined && typeof setupDone !== 'boolean') {
@@ -553,6 +572,7 @@ export function seedData() {
     settings: {
       trainingStart: '',
       trainingEnd: '',
+      ignoredUntil: '', // weeks up to this date need no report (schema v13)
       appearance: { mode: 'dark', accent: 'blue' },
       layout: { ...LAYOUT_DEFAULTS },
       startView: 'overview',

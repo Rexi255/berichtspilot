@@ -6,6 +6,23 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- **Ignore earlier weeks** (Settings → Frühere Wochen, also in the setup
+  wizard): if you start using Berichtspilot in the middle of your training,
+  the weeks from the training start up to a date of your choice no longer
+  count as missing. Reports you already have from that time stay and count
+  as usual. **Note:** after this update, older versions (2.1.x) can no
+  longer open the data file.
+
+### Changed
+
+- **Week editor: all days on one page.** The day tiles stay at the top, all
+  days are listed below them to scroll through. A click on a tile (or
+  Alt+1–5) scrolls to that day; the current week opens at today.
+- **Sidebar:** the "Lokal · kein Konto" box is gone. A red "Nicht
+  gespeichert" warning still appears there if saving ever fails.
+
 ### Fixed
 
 - **Linux:** the desktop now links the running window to the AppImage's

@@ -92,8 +92,15 @@ day: the `minimatch` fix (E-034) reached `main` by PR #29 (merge commit
 then two small to-dos: `vite.config.js` → `vite.config.mjs` (Vite's CJS
 warning is gone) and Linux `desktopName` + `linux.syncDesktopName` (E-035).
 
-**Next:** UI changes the user wants (they bring the list in a new chat) →
-then release **v2.1.1** (procedure below). In that release's dry run, check
+**UI changes after 2.1.0 (2026-11-08, step 12.1 below, done):** the
+"Lokal · kein Konto" chip is gone (a red chip only while saving fails); the
+week editor shows all days on one page under sticky day tiles; "Frühere
+Wochen ignorieren" (`settings.ignoredUntil`, **schema v13**, E-036) in
+Settings and the setup wizard.
+
+**Next:** ask the user whether more UI changes come first; then release
+**v2.2.0** — not 2.1.1: a new feature and a schema bump (2.1.x can't open a
+v13 file; the CHANGELOG says so). Procedure below. In that release's dry run, check
 the Linux build log: electron-builder must no longer warn "desktopName is not
 set", and the AppImage's `.desktop` should say `StartupWMClass=berichtspilot`
 (a Linux `dir` build on Windows writes no `.desktop` file, so this is
@@ -496,6 +503,13 @@ checkpoint is a styleguide in code, no HTML prototype.
 - [x] 11.10 Release v2.1.0 (2026-11-08, PR #28 → a4c47c5, tag `v2.1.0`;
       packaged check fix 8b906a0)
 
+### Phase 12 — Feedback on v2.1 (user, 2026-11-08)
+- [x] 12.1 Sidebar without "Lokal · kein Konto" (red save-error chip only);
+      week editor: all days on one page, sticky tiles, a tile/Alt+1–5
+      scrolls to its day (`src/views/editor/useDayScroll.js`); ignore
+      earlier weeks (`settings.ignoredUntil`, schema v13, E-036) in Settings
+      → "Frühere Wochen" and the wizard's training step (2026-11-08)
+
 ### Later / to-do
 - [ ] Warning list for customer data: a local list of customer names / host
       names that the "Mit KI formulieren" check warns about (the regex
@@ -615,3 +629,4 @@ checkpoint is a styleguide in code, no HTML prototype.
 | 2026-11-08 | 11.9: clean-up, a11y (axe-core) + copy pass, README; CI green (run 42482075316) | ad7bfce |
 | 2026-11-08 | 11.9b: fixes from code + security review (10 findings, 3 new e2e tests) | d034dfa |
 | 2026-11-08 | Dependabot alert #10: `minimatch` override (E-034) | see git log |
+| 2026-11-08 | 12.1: sidebar chip gone, all days on one page, ignore earlier weeks (schema v13, E-036) | see git log |

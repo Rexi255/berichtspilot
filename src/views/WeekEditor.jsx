@@ -1,5 +1,6 @@
-// Week editor (E-032): header with the week, its status and progress; one tab
-// per day (Alt+1–5) with the editor card of the selected day; the
+// Week editor (E-032): header with the week, its status and progress; the day
+// tiles stay at the top, below them every day's editor card on one page to
+// scroll through (user, 2026-11-08) — a tile or Alt+1–5 jumps to its day; the
 // instructions of the week; the preview of the three output blocks next to it
 // (below it in a narrow window). Parts live in src/views/editor/.
 import { useEffect, useMemo, useRef, useState } from 'react'
@@ -24,13 +25,14 @@ import { profileForDate, restoreDays } from '../lib/model.js'
 import { formatAll } from '../lib/format.js'
 import { styleExamples } from '../lib/phrasing.js'
 import { fillWeekFromWebuntis } from '../lib/webuntis.js'
-import { dayState, weekProgress } from '../lib/overview.js'
+import { weekProgress } from '../lib/overview.js'
 import { matchShortcut, SHORTCUT_KEYS } from '../lib/shortcuts.js'
 import PhrasingPanel from './PhrasingPanel.jsx'
 import WebuntisPanel from './WebuntisPanel.jsx'
 import DayTabs from './editor/DayTabs.jsx'
 import DayEditor from './editor/DayEditor.jsx'
 import Preview, { CopyBar, useBlockCopy } from './editor/Preview.jsx'
+import { useDayScroll } from './editor/useDayScroll.js'
 
 /* ------------------------------ Suggestions ------------------------------ */
 
@@ -109,8 +111,9 @@ export default function WeekEditor({ monday, setMonday }) {
   const [webuntisFor, setWebuntisFor] = useState(null)
   const webuntisEnabled = data.settings.webuntis?.enabled === true
   const webuntisOpen = webuntisFor === monday && webuntisEnabled
-  // Selected day per week (session only)
-  const [selectedByWeek, setSelectedByWeek] = useState({})
+  const rootRef = useRef(null)
+  const scrollRef = useRef(null)
+  const tilesRef = useRef(null)
 
   const today = todayISO()
   const week = data.weeks.find((w) => w.id === monday)
@@ -124,21 +127,29 @@ export default function WeekEditor({ monday, setMonday }) {
   const examples = useMemo(() => styleExamples(data.weeks), [data.weeks])
   const progress = week ? weekProgress(week) : null
 
-  // Default day: today, else the first open day, else Monday
-  const fallbackDay = week
-    ? (week.days.find((d) => d.date === today) ?? week.days.find((d) => dayState(d, today) === 'open') ?? week.days[0])?.date
-    : null
-  const chosen = selectedByWeek[monday]
-  const selected = week?.days.some((d) => d.date === chosen) ? chosen : fallbackDay
-  const day = week?.days.find((d) => d.date === selected)
-  const selectDay = (date) => setSelectedByWeek((s) => ({ ...s, [monday]: date }))
+  // The week opens at today when it is in it, otherwise at its first day
+  const dates = week ? week.days.map((d) => d.date) : []
+  const initial = dates.includes(today) ? today : (dates[0] ?? null)
+  const { active, jump } = useDayScroll({ rootRef, tilesRef, weekId: monday, dates, initial })
+  const hasWeek = Boolean(week)
+
+  // Opening (or creating) a week: back to the top, then to today
+  useEffect(() => {
+    if (!hasWeek) return
+    if (scrollRef.current) scrollRef.current.scrollTop = 0
+    if (!initial || initial === dates[0]) return
+    const frame = requestAnimationFrame(() => jump(initial, { smooth: false }))
+    return () => cancelAnimationFrame(frame)
+    // only when a week opens, not on every edit
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [monday, hasWeek])
 
   const changeWeek = (delta) => setMonday(addDays(monday, delta))
   const updateDay = (date, newDay) =>
     updateWeek(monday, (w) => ({ ...w, days: w.days.map((d) => (d.date === date ? newDay : d)) }))
   const toggleStatus = () => updateWeek(monday, (w) => ({ ...w, status: w.status === 'done' ? 'draft' : 'done' }))
 
-  // Editor shortcuts (src/lib/shortcuts.js): Alt+←/→ week, Alt+1–5 day,
+  // Editor shortcuts (src/lib/shortcuts.js): Alt+←/→ week, Alt+1–5 jump to a day,
   // Strg+1/2/3 copy a block (in both preview states), Strg+P preview,
   // Strg+Umschalt+N notes area, Strg+N create
   useEffect(() => {
@@ -147,7 +158,7 @@ export default function WeekEditor({ monday, setMonday }) {
       if (!hit) return
       if (hit.id === 'week') changeWeek(hit.arg * 7)
       else if (hit.id === 'copy' && week) copier.copyByShortcut(hit.arg)
-      else if (hit.id === 'day' && week?.days[hit.arg]) selectDay(week.days[hit.arg].date)
+      else if (hit.id === 'day' && week?.days[hit.arg]) jump(week.days[hit.arg].date)
       else if (hit.id === 'preview') setLayout({ previewVisible: !previewVisible })
       else if (hit.id === 'notes') setLayout({ notesVisible: !notesVisible })
       else if (hit.id === 'createWeek' && !week) createWeek(monday)
@@ -195,7 +206,7 @@ export default function WeekEditor({ monday, setMonday }) {
   }
 
   return (
-    <div className="flex h-full flex-col">
+    <div ref={rootRef} className="flex h-full flex-col">
       <header className="flex flex-wrap items-center gap-x-4 gap-y-3 px-6 pb-4 pt-5">
         <div className="flex items-center">
           <IconButton label="Vorherige Woche" shortcut="Alt+←" side="bottom" onClick={() => changeWeek(-7)}>
@@ -306,7 +317,7 @@ export default function WeekEditor({ monday, setMonday }) {
         </div>
       ) : (
         <div className="@container/editor flex min-h-0 flex-1 flex-col">
-          <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-6 @5xl/editor:overflow-hidden">
+          <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto px-6 pb-6 @5xl/editor:overflow-hidden">
             <div
               key={monday}
               className={cx(
@@ -315,6 +326,10 @@ export default function WeekEditor({ monday, setMonday }) {
               )}
             >
               <div className="flex min-w-0 flex-col gap-3 @5xl/editor:min-h-0 @5xl/editor:overflow-y-auto @5xl/editor:pb-2 @5xl/editor:pr-1">
+                {/* the tiles stay at the top of whichever element scrolls the days */}
+                <div ref={tilesRef} className="sticky top-0 z-10 -mb-1 bg-canvas pb-1">
+                  <DayTabs days={week.days} active={active} onJump={jump} today={today} />
+                </div>
                 {webuntisOpen && (
                   <WebuntisPanel
                     key={monday}
@@ -328,8 +343,7 @@ export default function WeekEditor({ monday, setMonday }) {
                 {phrasingOpen && (
                   <PhrasingPanel week={week} examples={examples} onApply={applyPhrasing} onClose={() => setPhrasingFor(null)} />
                 )}
-                <DayTabs days={week.days} selected={selected} onSelect={selectDay} today={today} />
-                {day && (
+                {week.days.map((day) => (
                   <DayEditor
                     key={day.date}
                     day={day}
@@ -341,7 +355,7 @@ export default function WeekEditor({ monday, setMonday }) {
                     examples={examples}
                     onApplyAi={(bullets) => applyPhrasing({ [day.date]: bullets }, { keepPanel: true })}
                   />
-                )}
+                ))}
                 <Card>
                   <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-line px-4 py-3">
                     <h2 className="text-title font-medium text-ink">Unterweisungen dieser Woche</h2>

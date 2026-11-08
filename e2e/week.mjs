@@ -18,10 +18,10 @@ export const BLOCK_1 = [
   '- Feiertag: Tag der Arbeit',
 ].join('\n')
 
-/** Select Wednesday's tab and type the bullet into its (first and only) bullet field. */
+/** Jump to Wednesday by its tile and type the bullet into its (first and only) bullet field. */
 export async function typeBullet(page) {
   await page.locator(`[data-daytab="${WEDNESDAY}"]`).click()
-  await page.locator('[data-daycard]', { hasText: 'Mittwoch' }).getByPlaceholder('Tätigkeit beschreiben …').fill(BULLET)
+  await page.locator(`[data-daycard="${WEDNESDAY}"]`).getByPlaceholder('Tätigkeit beschreiben …').fill(BULLET)
 }
 
 /** Text of output block 1 exactly as rendered (blank lines included). */

@@ -1,15 +1,14 @@
 // Navigation sidebar (E-032): four entries, a badge with the weeks still
 // missing, collapsible to a 68 px icon rail (Strg+B, saved in
-// settings.layout). At the bottom: the update hint, the storage chip — which
-// also shows a failed save, so data loss can't go unnoticed — and the
-// switches for the color mode and the rail.
+// settings.layout). At the bottom: the update hint, a red chip while a save
+// fails — so data loss can't go unnoticed — and the switches for the color
+// mode and the rail.
 import { useMemo } from 'react'
 import {
   SquaresFourIcon,
   PencilSimpleLineIcon,
   CalendarDotsIcon,
   GearSixIcon,
-  LockSimpleIcon,
   WarningIcon,
   SunIcon,
   MoonIcon,
@@ -66,36 +65,43 @@ function NavItem({ entry, index, active, collapsed, badge, onClick }) {
   )
 }
 
-/** "Lokal · kein Konto" — and "Nicht gespeichert" in red when a save failed */
-function StorageChip({ collapsed, saveStatus, dataPath, onOpen }) {
+/**
+ * "Nicht gespeichert" in red while a save fails; otherwise nothing — the
+ * normal case needs no badge (user, 2026-11-08). The live region stays
+ * mounted and only changes its text: a region that appears together with
+ * its text is often not announced.
+ */
+function SaveErrorChip({ collapsed, saveStatus, onOpen }) {
   const failed = saveStatus === 'error'
-  const Icon = failed ? WarningIcon : LockSimpleIcon
-  const text = failed ? 'Nicht gespeichert' : 'Lokal · kein Konto'
-  const tip = failed ? 'Speichern fehlgeschlagen, Einstellungen öffnen' : `Gespeichert in ${dataPath || 'daten.json'}`
+  const text = 'Nicht gespeichert'
+  const tip = 'Speichern fehlgeschlagen, Einstellungen öffnen'
   return (
-    <Tooltip label={tip} side={collapsed ? 'right' : 'top'} className={collapsed ? '' : 'w-full'}>
-      <button
-        type="button"
-        onClick={onOpen}
-        aria-label={collapsed ? `${text}. ${tip}` : undefined}
-        className={cx(
-          'flex h-8 items-center rounded-control border text-meta font-medium transition-colors duration-150',
-          collapsed ? 'w-11 justify-center' : 'w-full gap-2 px-2.5',
-          failed ? 'border-missing/60 text-missing hover:bg-missing/10' : 'border-line text-ink-2 hover:bg-surface hover:text-ink'
-        )}
-      >
-        <Icon size={15} className="shrink-0" />
-        {!collapsed && <span className="truncate">{text}</span>}
-        <span className="sr-only" aria-live="polite">
-          {failed ? 'Speichern fehlgeschlagen' : ''}
-        </span>
-      </button>
-    </Tooltip>
+    <>
+      <span className="sr-only" aria-live="polite">
+        {failed ? 'Speichern fehlgeschlagen' : ''}
+      </span>
+      {failed && (
+        <Tooltip label={tip} side={collapsed ? 'right' : 'top'} className={collapsed ? '' : 'w-full'}>
+          <button
+            type="button"
+            onClick={onOpen}
+            aria-label={collapsed ? `${text}. ${tip}` : undefined}
+            className={cx(
+              'flex h-8 items-center rounded-control border border-missing/60 text-meta font-medium text-missing transition-colors duration-150 hover:bg-missing/10',
+              collapsed ? 'w-11 justify-center' : 'w-full gap-2 px-2.5'
+            )}
+          >
+            <WarningIcon size={15} className="shrink-0" />
+            {!collapsed && <span className="truncate">{text}</span>}
+          </button>
+        </Tooltip>
+      )}
+    </>
   )
 }
 
 export default function Sidebar({ view, onView }) {
-  const { data, saveStatus, dataPath, setAppearance, setLayout } = useStore()
+  const { data, saveStatus, setAppearance, setLayout } = useStore()
   const collapsed = data.settings.layout.sidebarCollapsed
   const dark = data.settings.appearance.mode === 'dark'
 
@@ -104,9 +110,10 @@ export default function Sidebar({ view, onView }) {
   const currentMonday = useCurrentMonday()
   const missing = useMemo(
     () => overviewStats(data, currentMonday).missing.length,
-    // only the weeks, the training dates and the running week change the count
+    // only the weeks, the training dates, the ignored stretch and the running
+    // week change the count
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [data.weeks, data.settings.trainingStart, data.settings.trainingEnd, currentMonday]
+    [data.weeks, data.settings.trainingStart, data.settings.trainingEnd, data.settings.ignoredUntil, currentMonday]
   )
 
   return (
@@ -132,7 +139,7 @@ export default function Sidebar({ view, onView }) {
 
       <div className={cx('mt-auto flex flex-col gap-2 py-3', collapsed ? 'items-center' : 'px-3')}>
         {!collapsed && <UpdateHint />}
-        <StorageChip collapsed={collapsed} saveStatus={saveStatus} dataPath={dataPath} onOpen={() => onView('settings')} />
+        <SaveErrorChip collapsed={collapsed} saveStatus={saveStatus} onOpen={() => onView('settings')} />
         <div className={cx('flex gap-1', collapsed ? 'flex-col items-center' : 'items-center justify-between')}>
           <IconButton
             label={dark ? 'Helles Design' : 'Dunkles Design'}

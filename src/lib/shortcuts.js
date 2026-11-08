@@ -69,7 +69,7 @@ export const SHORTCUT_HELP = [
   ['Strg+1 / 2 / 3', 'Block Betrieb, Unterweisungen oder Berufsschule kopieren'],
   ['Strg+P', 'Vorschau ein- oder ausblenden'],
   ['Strg+Umschalt+N', 'Notizen-Bereich ein- oder ausblenden'],
-  ['Alt+1 … 6', 'Tag der Woche wählen (Alt+6 nur mit Samstag)'],
+  ['Alt+1 … 6', 'Zu einem Tag der Woche springen (Alt+6 nur mit Samstag)'],
   ['Alt+← / →', 'Vorherige oder nächste Woche'],
   ['Strg+N', 'Woche anlegen, falls sie noch fehlt'],
   ['Strg+F', 'In der Übersicht suchen'],
