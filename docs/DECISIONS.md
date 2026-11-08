@@ -828,3 +828,21 @@ replace:
 - **Start-up cache (11.9):** the window's `localStorage` keeps a copy of mode and accent (written by
   `App.jsx` once the data is loaded, read by `main.jsx` before the first render), so a light setup
   doesn't flash dark while `daten.json` loads. It is only a cache; `daten.json` stays the source.
+
+## Maintenance (from 2026-11-08)
+
+### E-034 · Patch vulnerable transitive dev dependencies with a ranged `overrides` entry · accepted
+Dependabot alert #10: `minimatch` 7.0.0–11.0.0 has a ReDoS ("globparts amplification", fixed in 11.0.1).
+It came in only through electron-builder (`app-builder-lib` → 10.2.6, `@electron/universal` → 9.0.9),
+build time only, never in the shipped app. `npm audit fix` would have *downgraded* electron-builder to 25.1.
+
+Fix: `package.json` → `"overrides": { "minimatch@>=7.0.0 <11.0.1": "^11.0.5" }`.
+- The key is a **version range**, so only the vulnerable copies move. The 3.x/5.x copies (ESLint, `glob`,
+  `filelist`) have a different API (default export) and stay untouched — a plain `"minimatch"` override
+  would have broken them.
+- Both affected callers use the named export `{ minimatch }`, which 11.x keeps; minimatch 11 needs
+  Node 20 / ≥ 22 (we require ≥ 22.12).
+- Checked: `npm audit` 0 vulnerabilities, lint, tests, e2e, `build:win` + packaged check green.
+
+Remove the entry once electron-builder ships minimatch ≥ 11.0.1 itself (check with `npm ls minimatch`
+after each electron-builder update). Same pattern for future transitive-only advisories.

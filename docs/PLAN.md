@@ -89,11 +89,10 @@ merged as merge commit a4c47c5 (same tree as 8b906a0) → annotated tag
 **Next:** ask the user whether their installed app updated to 2.1.0 and
 works (sidebar card or Settings → Updates; the data migrates to v12, an
 `update` snapshot lands in `sicherungen/` first). Then pick from
-"Later / to-do" with the user — candidates: the Dependabot alert #10
-(`minimatch` < 11.0.1, dev dependency only, moderate: check which package
-pulls it in and whether an update or an `overrides` entry fixes it), the
-`vite.config.mjs` rename, the Linux `desktopName`. Voice dictation stays
-parked.
+"Later / to-do" with the user — candidates: the `vite.config.mjs` rename,
+the Linux `desktopName`. Voice dictation stays parked. (Dependabot alert #10,
+`minimatch`, is fixed on `development` via an `overrides` entry — E-034; the
+alert closes once that reaches `main` with the next release.)
 For any further UI work: check every visible change yourself with the
 `ui-shots` skill (Playwright, demo record) and read the screenshots — the user
 asked for that explicitly.
@@ -498,6 +497,9 @@ checkpoint is a styleguide in code, no HTML prototype.
       patterns can't know names)
 - [ ] Export of the whole record as PDF/archive (e.g. for the exam registration)
 - [ ] Automatic entry into the IHK portal (deferred by the user, E-012)
+- [x] Dependabot alert #10 (`minimatch` < 11.0.1 via electron-builder):
+      ranged `overrides` entry (E-034); drop it once electron-builder ships
+      minimatch ≥ 11.0.1 itself
 - [ ] Rename `vite.config.js` → `vite.config.mjs`: Vite 8 warns that the
       config is ESM loaded as CommonJS (`configLoader: 'native'` will become
       the default in a future major)
@@ -607,3 +609,4 @@ checkpoint is a styleguide in code, no HTML prototype.
 | 2026-11-08 | 11.8: profiles, settings, setup wizard | b93c62e |
 | 2026-11-08 | 11.9: clean-up, a11y (axe-core) + copy pass, README; CI green (run 42482075316) | ad7bfce |
 | 2026-11-08 | 11.9b: fixes from code + security review (10 findings, 3 new e2e tests) | d034dfa |
+| 2026-11-08 | Dependabot alert #10: `minimatch` override (E-034) | see git log |
