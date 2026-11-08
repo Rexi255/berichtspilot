@@ -212,6 +212,15 @@ Dev only: `--view=styleguide` (unpackaged) renders every component in the curren
 - Count-up numbers, staggered list entrances, `hover:scale`, ping/pulse on things that aren't live.
 - Equal stat tiles in a row; "Wochen in Serie"-style filler numbers.
 
+## Accessibility notes
+
+- Every icon-only button has a German `aria-label`; its tooltip repeats it for sighted users and is
+  rendered only while shown (it never widens a scroll area).
+- The preview `<pre>` is focusable (long lines scroll sideways), named "Vorschau <Block>".
+- Day tabs are a real tab list (`role="tab"`, arrow keys, Alt+1–5); the sidebar marks the current view
+  with `aria-current`.
+- axe-core (WCAG 2 A/AA + best practice) reported no violations in any view, both modes (2026-11-08).
+
 ## Checking
 
 The `ui-shots` skill (`.claude/skills/ui-shots/`) screenshots every view with the fictional demo record in

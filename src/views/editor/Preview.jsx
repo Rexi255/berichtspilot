@@ -84,12 +84,16 @@ function SensitiveList({ found }) {
 const LINE_CLASS = { header: 'font-medium', subject: 'font-medium' }
 
 /** The block text, line by line; whitespace segments carry the marker classes */
-function PreviewText({ text, showWhitespace }) {
+function PreviewText({ text, showWhitespace, label }) {
   const lines = useMemo(() => previewLines(text), [text])
   return (
+    // focusable: long lines scroll sideways, and the keyboard must reach them
     <pre
+      tabIndex={0}
+      aria-label={label}
       className={cx(
         'selectable overflow-x-auto whitespace-pre px-4 py-3 font-mono text-[12.5px] leading-5 text-ink [tab-size:4]',
+        'focus-visible:outline-offset-[-2px]',
         showWhitespace && 'ws-on'
       )}
     >
@@ -159,7 +163,7 @@ function BlockCard({ meta, text, found, copied, onCopy, showWhitespace }) {
         </Notice>
       )}
       {text ? (
-        <PreviewText text={text} showWhitespace={showWhitespace} />
+        <PreviewText text={text} showWhitespace={showWhitespace} label={`Vorschau ${meta.title}`} />
       ) : (
         <p className="px-4 py-3 text-body text-ink-2">Leer, nichts zu kopieren.</p>
       )}

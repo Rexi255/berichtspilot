@@ -36,11 +36,18 @@ function Content() {
 
   // Mode and accent on <html>; the CSS tokens (data-mode, data-accent) follow.
   // Here rather than in the shell, so the setup wizard follows them too.
-  const mode = data?.settings?.appearance?.mode ?? 'dark'
-  const accent = data?.settings?.appearance?.accent ?? 'blue'
+  // Only once the data is there — until then main.jsx shows the cached values.
+  const mode = data?.settings?.appearance?.mode
+  const accent = data?.settings?.appearance?.accent
   useEffect(() => {
+    if (!mode) return
     document.documentElement.dataset.mode = mode
     document.documentElement.dataset.accent = accent
+    try {
+      localStorage.setItem('appearance', JSON.stringify({ mode, accent }))
+    } catch {
+      // a missing cache only costs the start-up colors
+    }
   }, [mode, accent])
 
   // Data comes from a newer app version, or daten.json and all backups are

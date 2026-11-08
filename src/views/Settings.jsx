@@ -20,7 +20,7 @@ import {
   UploadSimpleIcon,
 } from '@phosphor-icons/react'
 import { useStore, api } from '../store.jsx'
-import { Button, Card, IconButton, Input, Segment, Panel, Pill, Switch, DayCell, Kbd, cx } from '../ui/basics.jsx'
+import { Button, Card, IconButton, Input, Segment, Pill, Switch, DayCell, Kbd, cx } from '../ui/basics.jsx'
 import { showToast } from '../ui/toast.jsx'
 import { UpdateAction, useUpdateActions } from '../ui/UpdateHint.jsx'
 import { updateHint, updateSummary, canCheckForUpdate } from '../lib/update.js'
@@ -228,7 +228,7 @@ function WebuntisConnection() {
   }
 
   return (
-    <Panel className="max-w-2xl">
+    <Card className="max-w-2xl">
       <div className="flex items-center gap-4 px-4 py-3">
         <div className="min-w-0 flex-1">
           <Switch checked={enabled} onChange={toggle} label="WebUntis-Import" disabled={busy} />
@@ -304,7 +304,7 @@ function WebuntisConnection() {
           </p>
         </div>
       )}
-    </Panel>
+    </Card>
   )
 }
 
@@ -320,7 +320,7 @@ function UpdateSettings() {
   const unsupported = update?.state === 'unsupported'
 
   return (
-    <Panel className="max-w-2xl">
+    <Card className="max-w-2xl">
       <div className="flex items-center gap-3 px-4 py-3">
         <div className="min-w-0 flex-1">
           <div className="text-meta font-medium text-ink-2">
@@ -361,7 +361,7 @@ function UpdateSettings() {
           darauf klickst.
         </p>
       </div>
-    </Panel>
+    </Card>
   )
 }
 
@@ -403,7 +403,7 @@ function Backups() {
   const visible = showAll ? backups : backups?.slice(0, BACKUPS_SHOWN)
 
   return (
-    <Panel className="max-w-2xl overflow-hidden" data-section="backups">
+    <Card className="max-w-2xl overflow-hidden" data-section="backups">
       <div className="flex items-center gap-2 border-b border-line py-2 pl-4 pr-2">
         <ClockCounterClockwiseIcon size={16} className="text-ink-2" />
         <span className="mr-auto text-body font-medium text-ink">Sicherungen</span>
@@ -422,7 +422,7 @@ function Backups() {
           {visible.map((b, i) => (
             <div key={b.name} className={cx('flex items-center gap-3 px-4 py-2', i > 0 && 'border-t border-line')}>
               <span className="w-44 shrink-0 text-body tabular-nums text-ink">{backupTitle(b)}</span>
-              <Pill color={b.reason === 'daily' ? 'neutral' : 'accent'} dot={false}>
+              <Pill color={b.reason === 'daily' ? 'neutral' : 'accent'}>
                 {BACKUP_KINDS[b.reason] ?? 'Sicherung'}
               </Pill>
               <span className="mr-auto text-meta tabular-nums text-ink-2">{sizeLabel(b.size)}</span>
@@ -442,7 +442,7 @@ function Backups() {
           )}
         </>
       )}
-    </Panel>
+    </Card>
   )
 }
 

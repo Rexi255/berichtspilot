@@ -125,7 +125,7 @@ export function StoreProvider({ children }) {
         } catch (error) {
           setLoadError({
             message: String(error.message ?? error),
-            hint: 'Bitte aktualisiere Berichtspilot auf die neueste Version — deine daten.json bleibt unverändert.',
+            hint: 'Bitte aktualisiere Berichtspilot auf die neueste Version. Deine daten.json bleibt unverändert.',
           })
           return
         }
@@ -375,7 +375,7 @@ export function StoreProvider({ children }) {
     const created = shouldAutoCreate(next, toISO(today)) ? newWeek(mondayOf(today), next.profiles, next.periods) : null
     setData(created ? { ...next, weeks: [...next.weeks, created].sort(byId) } : next)
     setSetupRequested(false)
-    showToast(created ? `Eingerichtet — KW ${isoWeek(created.id).week} angelegt` : 'Berichtspilot ist eingerichtet')
+    showToast(created ? `Eingerichtet, KW ${isoWeek(created.id).week} angelegt` : 'Berichtspilot ist eingerichtet')
   }, [])
 
   // Skip / close: a fresh install keeps the sample data and won't ask again
@@ -404,7 +404,7 @@ export function StoreProvider({ children }) {
       const saved = dataRef.current ? await saveNow(dataRef.current) : { ok: true }
       res = saved.ok
         ? await api.updateInstall()
-        : { ok: false, error: 'Daten konnten nicht gespeichert werden — Update abgebrochen.' }
+        : { ok: false, error: 'Daten konnten nicht gespeichert werden, Update abgebrochen.' }
     } catch {
       res = { ok: false, error: 'Update konnte nicht installiert werden' }
     }
@@ -424,9 +424,9 @@ export function StoreProvider({ children }) {
   const snapshotBefore = useCallback(
     async (reason) => {
       const saved = await flush()
-      if (!saved.ok) return { ok: false, error: 'Die aktuellen Änderungen konnten nicht gespeichert werden — nichts geändert.' }
+      if (!saved.ok) return { ok: false, error: 'Die aktuellen Änderungen konnten nicht gespeichert werden, nichts geändert.' }
       const res = await api.createBackup(reason)
-      return res.ok ? res : { ok: false, error: `${res.error || 'Sicherung fehlgeschlagen'} — nichts geändert.` }
+      return res.ok ? res : { ok: false, error: `${res.error || 'Sicherung fehlgeschlagen'}, nichts geändert.` }
     },
     [flush]
   )
@@ -449,7 +449,7 @@ export function StoreProvider({ children }) {
       title: 'Daten importieren',
       message: 'Wie sollen die importierten Daten übernommen werden?',
       detail:
-        'Zusammenführen ergänzt nur Wochen, Profile und Zeiträume, die noch nicht existieren — Bestehendes bleibt unverändert. Ersetzen überschreibt den kompletten aktuellen Datenbestand.',
+        'Zusammenführen ergänzt nur Wochen, Profile und Zeiträume, die noch nicht existieren. Bestehendes bleibt unverändert. Ersetzen überschreibt den kompletten aktuellen Datenbestand.',
       buttons: ['Zusammenführen', 'Ersetzen', 'Abbrechen'],
       cancelId: 2,
     })
@@ -477,7 +477,7 @@ export function StoreProvider({ children }) {
         title: 'Sicherung wiederherstellen',
         message: `Stand „${BACKUP_KINDS[backup.reason] ?? 'Sicherung'}“ vom ${backupTitle(backup)} wiederherstellen?`,
         detail:
-          'Der aktuelle Datenbestand wird dabei komplett ersetzt. Vorher wird er selbst gesichert („Vor dem Wiederherstellen“) — du kannst also jederzeit zurück.',
+          'Der aktuelle Datenbestand wird dabei komplett ersetzt. Vorher wird er selbst gesichert („Vor dem Wiederherstellen“), du kannst also jederzeit zurück.',
         buttons: ['Wiederherstellen', 'Abbrechen'],
         cancelId: 1,
       })

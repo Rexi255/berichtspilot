@@ -824,3 +824,6 @@ replace:
 - **Import "Ersetzen" and restore keep the device's `appearance` and `layout`.** They are display
   preferences of this machine, like the network opt-ins `replaceData()` already keeps (E-017, E-019); a
   shared or restored file shouldn't flip the user's theme or hide their preview.
+- **Start-up cache (11.9):** the window's `localStorage` keeps a copy of mode and accent (written by
+  `App.jsx` once the data is loaded, read by `main.jsx` before the first render), so a light setup
+  doesn't flash dark while `daten.json` loads. It is only a cache; `daten.json` stays the source.

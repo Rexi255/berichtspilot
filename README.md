@@ -8,7 +8,7 @@
 ![Plattform](https://img.shields.io/badge/Plattform-Windows%20%C2%B7%20Linux-2ea043.svg)
 ![Lokal](https://img.shields.io/badge/lokal-online%20optional-blue.svg)
 
-<img src="docs/screenshots/overview.png" alt="Übersicht mit Statistik, Jahres-Heatmap und einer fehlenden Woche" width="820">
+<img src="docs/screenshots/overview.png" alt="Übersicht mit Kennzahlen, fehlenden Wochen, Jahresband und Wochenliste" width="820">
 
 </div>
 
@@ -45,20 +45,21 @@ Abschalten kannst du das unter Einstellungen → Updates.
 
 ## Funktionen
 
-- Übersicht aller Wochen mit Status, Jahres-Heatmap und Erkennung fehlender Wochen
-- Wocheneditor mit Live-Vorschau und Kopier-Buttons für alle drei Blöcke
-- Notizen pro Tag, die per Klick zu Stichpunkten werden (mit oder ohne KI)
-- Warnung vor möglichen Kundendaten, bevor Text an eine KI geht
+- Übersicht mit Jahresband (jeder Tag der Ausbildung auf einen Blick) und Erkennung fehlender Wochen
+- Wocheneditor mit einem Tab pro Tag und einer Vorschau, die genau den Text zeigt, der kopiert wird
+- Notizen pro Tag, die per Klick zu Stichpunkten werden (mit oder ohne KI, für einen Tag oder die ganze Woche)
+- Warnung vor möglichen Kundendaten, bevor du kopierst oder Text an eine KI geht
+- Hell und Dunkel, vier Akzentfarben
 - WebUntis-Import für jede Schule in der WebUntis-Cloud
 - Profile pro Schulhalbjahr, Urlaub und Schulferien als Zeiträume
 - Feiertage für alle 16 Bundesländer, komplett offline
 - Volltextsuche, Autovervollständigung, eigene Textbausteine
-- Tastenkürzel und deutsche Rechtschreibprüfung
+- Tastenkürzel (z. B. Strg+1/2/3 kopiert die Blöcke) und deutsche Rechtschreibprüfung
 - Einrichtungsassistent beim ersten Start
 
 Alle Änderungen: [CHANGELOG.md](CHANGELOG.md)
 
-| Wocheneditor | Profile |
+| Wocheneditor | Profile (hell) |
 | :---: | :---: |
 | ![Wocheneditor](docs/screenshots/editor.png) | ![Profile](docs/screenshots/profiles.png) |
 
@@ -71,7 +72,7 @@ Alles steckt in einer Datei: `daten.json`.
 - **Windows:** `%APPDATA%\Berichtspilot`. Bleibt bei der Deinstallation erhalten.
 - **Linux:** neben der AppImage. Ist der Ordner schreibgeschützt, dann `~/.config/Berichtspilot`.
 
-Daneben liegen bis zu drei Backups. Ist die Datei mal kaputt, nimmt die App automatisch das neueste intakte Backup. Den genauen Pfad siehst du unten links in der Seitenleiste.
+Daneben liegen bis zu drei Backups. Ist die Datei mal kaputt, nimmt die App automatisch das neueste intakte Backup. Den genauen Pfad siehst du unter Einstellungen → Daten oder, wenn du mit der Maus über „Lokal · kein Konto“ unten in der Seitenleiste fährst.
 
 Zusätzlich legt die App im Ordner `sicherungen` jeden Tag eine Sicherung an (die letzten 30 Tage bleiben) und eine weitere vor jedem Update, Import und Wiederherstellen. Zurückholen kannst du einen alten Stand unter **Einstellungen → Daten → Sicherungen**. Der aktuelle Stand wird dabei vorher selbst gesichert.
 

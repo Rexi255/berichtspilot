@@ -630,7 +630,7 @@ export function checkProfiles(profiles) {
       if (b.validFrom <= a.validTo) {
         const end = a.validTo < b.validTo ? a.validTo : b.validTo
         warnings.push(
-          `„${a.name}" und „${b.name}" überlappen sich (${formatDE(b.validFrom)} – ${formatDE(end)}) — es gewinnt das zuerst gelistete Profil.`
+          `„${a.name}" und „${b.name}" überlappen sich (${formatDE(b.validFrom)} – ${formatDE(end)}). Es gewinnt das zuerst gelistete Profil.`
         )
       }
     }
@@ -642,7 +642,7 @@ export function checkProfiles(profiles) {
     const gapStart = addDays(a.validTo, 1)
     if (gapStart < b.validFrom) {
       warnings.push(
-        `Lücke zwischen „${a.name}" und „${b.name}" (${formatDE(gapStart)} – ${formatDE(addDays(b.validFrom, -1))}) — Wochen dort nutzen den Standard Mo–Fr Betrieb.`
+        `Lücke zwischen „${a.name}" und „${b.name}" (${formatDE(gapStart)} – ${formatDE(addDays(b.validFrom, -1))}). Wochen dort nutzen den Standard Mo–Fr Betrieb.`
       )
     }
   }

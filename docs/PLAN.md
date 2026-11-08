@@ -74,14 +74,16 @@ before tagging matters.
 
 **Dependencies are current (8.7, 2026-11-07)** and ship as **v2.0.4**.
 
-**Now: the UI overhaul (v2.1) — Phase 11 below.** The user brought the
-direction from another chat and approved the plan on 2026-11-07 (design rules:
-`docs/DESIGN.md`, decisions E-032/E-033). Work through 11.1 → 11.9 in order,
-one commit each, CI green each time. **After every visible change, check it
-yourself with the `ui-shots` skill (Playwright, demo record) and read the
-screenshots** — the user asked for that explicitly. After 11.4 (tokens + basics)
-show the user the styleguide screenshots (both modes, all four accents) and
-wait for the go before rebuilding the views.
+**Now: release v2.1.0 (step 11.10) — waiting for the user's go.** The UI
+overhaul (phase 11, `docs/DESIGN.md`, E-032/E-033) is complete on
+`development` (11.1–11.9, 2026-11-07/08). Before tagging: ask the user whether
+they want to try the dev build first (`npm start` from a scratch folder, or
+`npm run build:win` + the unpacked app with `--user-data-dir`), then follow the
+release procedure below with version 2.1.0 (schema v12: older versions can't
+open the file afterwards — the CHANGELOG section must say so, like 2.0 did).
+For any further UI work: check every visible change yourself with the
+`ui-shots` skill (Playwright, demo record) and read the screenshots — the user
+asked for that explicitly.
 
 **Dependabot** (E-027) opens its PRs against `development` on Mondays. Merge
 green ones with `gh pr merge <n> --squash` (the repo deletes merged branches
@@ -452,10 +454,17 @@ checkpoint is a styleguide in code, no HTML prototype.
       periods in a narrow window; settings: one section component, switches
       for the notes area and the preview under "Verhalten"; wizard: progress
       as five segments, rows instead of boxes, no aurora)
-- [ ] 11.9 Clean-up: drop `gsap`, `lenis`, `@fontsource-variable/inter`;
+- [x] 11.9 Clean-up: drop `gsap`, `lenis`, `@fontsource-variable/inter`;
       `backgroundColor` in main; accessibility/critique/ux-copy reviews;
-      README screenshots from the demo record; CHANGELOG; then release
-      v2.1.0 on the user's go
+      README screenshots from the demo record; CHANGELOG (2026-11-08;
+      transition aliases and `Panel`/`SectionTitle` removed; start-up cache
+      of mode/accent against a dark flash; axe-core over every view in both
+      modes → the only finding, the scrollable preview, is focusable now;
+      UI copy without dashes as pauses or exclamation marks, also in store
+      messages, profile warnings and two Electron dialogs; README texts +
+      three screenshots from the demo record)
+- [ ] 11.10 Release v2.1.0 — **only on the user's go** (procedure under
+      "Next step")
 
 ### Later / to-do
 - [ ] Warning list for customer data: a local list of customer names / host

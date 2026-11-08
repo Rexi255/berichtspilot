@@ -60,6 +60,11 @@ versioning follows [Semantic Versioning](https://semver.org/).
   switches for the notes area and the preview; the wizard with a quiet
   progress bar.
 - **Export and import** moved from the sidebar to Settings → Daten.
+- **Keyboard and screen readers:** every icon button has a name and a
+  tooltip with its shortcut, the day tabs work with the arrow keys, and the
+  preview text can be reached with Tab to scroll long lines.
+- The app starts in the colors you chose last, without a dark flash while
+  the data loads.
 - **Keyboard shortcuts:** Strg+1/2/3 now copies output block 1/2/3 (was
   Strg+Umschalt+1/2/3); the views moved to Strg+Umschalt+1–4 (was Strg+1–4).
 

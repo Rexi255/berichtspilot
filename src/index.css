@@ -70,13 +70,6 @@
 
   --shadow-float: 0 10px 28px -10px rgb(0 0 0 / 0.55);
 
-  /* Transition aliases for views not yet rebuilt (phase 11; removed in 11.9) */
-  --color-base: var(--color-canvas);
-  --color-inset: var(--color-sidebar);
-  --color-ink-3: var(--color-ink-2);
-  --color-accent-light: var(--color-accent-hover);
-  --color-accent-deep: var(--color-accent-soft);
-  --color-done: var(--color-accent);
 }
 
 /* ------------------------------- Modes ---------------------------------- */

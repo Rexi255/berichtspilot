@@ -439,15 +439,7 @@ export function Menu({ label, icon, items, className, side = 'bottom-end' }) {
   )
 }
 
-/* ---------------- Transition exports (views not yet rebuilt) ---------------- */
-
-/** Old panel → the card (removed with phase 11.9) */
-export const Panel = Card
-
-/** Old small-caps heading → quiet sentence-case label */
-export function SectionTitle({ children, className }) {
-  return <h3 className={cx('text-meta font-medium text-ink-2', className)}>{children}</h3>
-}
+/* --------------------------------- Chips --------------------------------- */
 
 const PILL_COLORS = {
   done: 'text-accent',
@@ -460,7 +452,7 @@ const PILL_COLORS = {
   missing: 'text-missing',
 }
 
-/** Old status pill → a quiet chip (no dot) */
+/** Quiet text chip for a state in words (WebUntis login, update result) */
 export function Pill({ color = 'neutral', children, className }) {
   return (
     <span className={cx('inline-flex h-6 items-center rounded-chip border border-line px-2 text-meta font-medium', PILL_COLORS[color], className)}>
