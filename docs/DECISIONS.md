@@ -9,7 +9,8 @@ Status: **accepted** · **proposed** (waiting for a spike or the user) · **defe
 ---
 
 ### E-001 · Electron + Vite + React + Tailwind · accepted (v1.0)
-Native desktop app for Windows + Arch Linux from one codebase. GSAP/Lenis for animation.
+Native desktop app for Windows + Arch Linux from one codebase. GSAP/Lenis for animation
+(animation part superseded by E-032: CSS transitions only, both packages removed in v2.1).
 
 ### E-002 · A single `daten.json` as the database · accepted (v1.0, reconfirmed 2026-10)
 Configuration + all weeks in one JSON file: trivial export/import, human-readable,

@@ -23,14 +23,15 @@ Keep this file in sync when changing process boundaries, IPC or networking.
 └──────────────▲───────────────────────────────────────────────────────────────┘
                │
 ┌──────────────┴──── Renderer (Chromium, sandboxed, strict CSP) ───────────────┐
-│ src/main.jsx → App.jsx (shell: Titlebar, Sidebar, GSAP view transitions)     │
+│ src/main.jsx → App.jsx (shell: Titlebar, Sidebar, shortcuts, CSS fade)       │
 │ src/store.jsx  StoreProvider: loads on start, holds `data`, 400 ms autosave  │
-│ src/views/*    Overview · WeekEditor (+ PhrasingPanel, WebuntisPanel) ·      │
-│                Profiles · Settings · SetupWizard                             │
+│ src/views/*    Overview · WeekEditor (parts in editor/; + PhrasingPanel,     │
+│                WebuntisPanel) · Profiles · Settings · SetupWizard            │
 │ src/ui/*       Titlebar · Sidebar · UpdateHint · ErrorBoundary · basics ·    │
 │                toast                                                         │
 │ src/lib/*      pure logic: dates · holidays · format · model · notes ·       │
-│                phrasing · webuntis · update · setup · backups                │
+│                phrasing · webuntis · update · setup · backups · overview ·   │
+│                preview · shortcuts · contrast                                │
 └──────────────────────────────────────────────────────────────────────────────┘
 ```
 

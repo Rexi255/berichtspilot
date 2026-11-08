@@ -72,14 +72,15 @@ Releases are immutable: a published release can't get new or replaced files,
 a broken one is fixed with the next patch version — so the dry run right
 before tagging matters.
 
-**Dependencies are current (8.7, 2026-11-07)** and ship as **v2.0.4**.
+**v2.0.4 is out** (2026-11-07, release published 20:03 UTC): the dependency
+update 8.7 (Electron 45.2). `main` = v2.0.4 (merge of PR #27, 3ba9eec).
 
 **Now: release v2.1.0 (step 11.10) — waiting for the user's go.** The UI
 overhaul (phase 11, `docs/DESIGN.md`, E-032/E-033) is complete on
 `development` (11.1–11.9, 2026-11-07/08). Before tagging: ask the user whether
 they want to try the dev build first (`npm start` from a scratch folder, or
 `npm run build:win` + the unpacked app with `--user-data-dir`), then follow the
-release procedure below with version 2.1.0 (schema v12: older versions can't
+release procedure above with version 2.1.0 (schema v12: older versions can't
 open the file afterwards — the CHANGELOG section must say so, like 2.0 did).
 For any further UI work: check every visible change yourself with the
 `ui-shots` skill (Playwright, demo record) and read the screenshots — the user
@@ -111,6 +112,10 @@ Locally npm 11.16+ warns about `electron-winstaller`'s install script
 install script; it downloads its binary on the first start.
 
 ## Open questions (for the user)
+
+0. **Release v2.1.0 now, or test the dev build first?** (asked
+   2026-11-08, answer pending). Phase 11 is complete on `development`; the
+   release (step 11.10) starts only on the user's go.
 
 1. **Step 9.3b — the account part is left for the user (no decision
    needed):** two-factor authentication is on (user, 2026-10-20); still
@@ -568,3 +573,15 @@ checkpoint is a styleguide in code, no HTML prototype.
 | 2026-10-19 | 9.3b (repository part): rulesets `Release tags`/`main`/`development`, SHA pinning, release immutability, Dependabot alerts + security updates — set by Claude on the user's request; release dry run green (run 39316661700) | 07b0201 (docs) |
 | 2026-10-19 | v2.0.3: bump + CHANGELOG, dry run green (run 39325088802), PR #16 merged, tag pushed, release run green (39325719252, first real `release` job), feed checked | 21d4956, 183a6e1, tag `v2.0.3` |
 | 2026-10-20 | `main` and `development` brought level on the user's request (post-release docs + #17, no app code) | PR `development` → `main` |
+| 2026-11-07 | 8.7: all dependencies current (Electron 45.2), released as v2.0.4 | d5783b7, 09b8689, tag `v2.0.4` |
+| 2026-11-07 | 11.1: demo record + `ui-shots` skill (Playwright self-check) | 22187db |
+| 2026-11-07 | 11.2: `docs/DESIGN.md`, E-032, E-033, phase 11 | 00188d8 |
+| 2026-11-07 | 11.3: pure logic (overview, preview, shortcuts, contrast, per-day prompt, 5-way switch) | 4eb0c28 |
+| 2026-11-07 | 11.4: tokens, fonts, building blocks, schema v12, styleguide; checkpoint approved by the user | 88f54a8 |
+| 2026-11-07 | 11.5: shell (sidebar rail, title bar, CSS motion, global shortcuts) | 594cea1 |
+| 2026-11-07 | 11.6: overview (figures, missing weeks, year band, week list, search) | befbc8d |
+| 2026-11-07 | 11.7a: editor frame (day tabs, 5-way switch, notes area) | c1a23eb |
+| 2026-11-07 | 11.7b: exact preview, whitespace markers, privacy check, copy bar | 6e6513c |
+| 2026-11-07 | 11.7c: AI per day, week AI + WebUntis panels restyled | b8b30ec |
+| 2026-11-08 | 11.8: profiles, settings, setup wizard | b93c62e |
+| 2026-11-08 | 11.9: clean-up, a11y (axe-core) + copy pass, README; CI green (run 42482075316) | ad7bfce |
