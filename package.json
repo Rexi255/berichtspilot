@@ -1,6 +1,7 @@
 {
   "name": "berichtspilot",
   "productName": "Berichtspilot",
+  "desktopName": "berichtspilot.desktop",
   "version": "2.1.0",
   "description": "Ausbildungsnachweis-Generator für das digitale IHK-Berichtsheft",
   "author": "Rexi255",
@@ -92,7 +93,8 @@
         "AppImage"
       ],
       "category": "Office",
-      "artifactName": "Berichtspilot-${version}.AppImage"
+      "artifactName": "Berichtspilot-${version}.AppImage",
+      "syncDesktopName": true
     }
   },
   "dependencies": {

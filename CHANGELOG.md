@@ -6,6 +6,11 @@ versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **Linux:** the desktop now links the running window to the AppImage's
+  menu entry (icon and name in the taskbar/dock instead of a generic window).
+
 ## [2.1.0] - 2026-11-08
 
 The design release: a completely new interface ("Kladde") with a light mode,

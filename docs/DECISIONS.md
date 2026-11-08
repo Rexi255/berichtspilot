@@ -846,3 +846,14 @@ Fix: `package.json` → `"overrides": { "minimatch@>=7.0.0 <11.0.1": "^11.0.5" }
 
 Remove the entry once electron-builder ships minimatch ≥ 11.0.1 itself (check with `npm ls minimatch`
 after each electron-builder update). Same pattern for future transitive-only advisories.
+
+### E-035 · Linux `desktopName` = `berichtspilot.desktop` · accepted
+electron-builder 26.17+ warns that without `desktopName` in `package.json` desktops may not link the
+running window to the `.desktop` entry. Electron uses `desktopName` (default: `<productName>.desktop` =
+`Berichtspilot.desktop`) as Wayland `app_id` / X11 `WM_CLASS`; the AppImage's entry was named after the
+executable (`berichtspilot.desktop`) — the two didn't match.
+
+Fix: `"desktopName": "berichtspilot.desktop"` + `build.linux.syncDesktopName: true`, so the `.desktop`
+file name, `StartupWMClass` and the window's `app_id` are all `berichtspilot` (lower case = the
+executable name, so the file name stays what it was). No effect on Windows or on the data folder
+(`userData` follows `productName`).

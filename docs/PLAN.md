@@ -86,13 +86,18 @@ merged as merge commit a4c47c5 (same tree as 8b906a0) → annotated tag
 `latest*.yml` = 2.1.0, `sha512` + size match the installer and AppImage.
 `development` fast-forwarded to `main`.
 
-**Next:** ask the user whether their installed app updated to 2.1.0 and
-works (sidebar card or Settings → Updates; the data migrates to v12, an
-`update` snapshot lands in `sicherungen/` first). Then pick from
-"Later / to-do" with the user — candidates: the `vite.config.mjs` rename,
-the Linux `desktopName`. Voice dictation stays parked. (Dependabot alert #10,
-`minimatch`, is fixed on `development` via an `overrides` entry — E-034; the
-alert closes once that reaches `main` with the next release.)
+**The user's app updated to 2.1.0 and works** (user, 2026-11-08). The same
+day: the `minimatch` fix (E-034) reached `main` by PR #29 (merge commit
+49a8d55, `development` fast-forwarded), so Dependabot alert #10 closes there;
+then two small to-dos: `vite.config.js` → `vite.config.mjs` (Vite's CJS
+warning is gone) and Linux `desktopName` + `linux.syncDesktopName` (E-035).
+
+**Next:** UI changes the user wants (they bring the list in a new chat) →
+then release **v2.1.1** (procedure below). In that release's dry run, check
+the Linux build log: electron-builder must no longer warn "desktopName is not
+set", and the AppImage's `.desktop` should say `StartupWMClass=berichtspilot`
+(a Linux `dir` build on Windows writes no `.desktop` file, so this is
+unchecked so far).
 For any further UI work: check every visible change yourself with the
 `ui-shots` skill (Playwright, demo record) and read the screenshots — the user
 asked for that explicitly.
@@ -500,7 +505,7 @@ checkpoint is a styleguide in code, no HTML prototype.
 - [x] Dependabot alert #10 (`minimatch` < 11.0.1 via electron-builder):
       ranged `overrides` entry (E-034); drop it once electron-builder ships
       minimatch ≥ 11.0.1 itself
-- [ ] Rename `vite.config.js` → `vite.config.mjs`: Vite 8 warns that the
+- [x] Rename `vite.config.js` → `vite.config.mjs`: Vite 8 warns that the
       config is ESM loaded as CommonJS (`configLoader: 'native'` will become
       the default in a future major)
 - [ ] Release hardening, further (E-029/E-030 "considered"): `npm ci
@@ -508,7 +513,7 @@ checkpoint is a styleguide in code, no HTML prototype.
       scripts the build needs first); serve the renderer from a custom
       `app://` protocol, then turn the `grantFileProtocolExtraPrivileges` fuse
       off; build provenance attestations
-- [ ] Linux: set `desktopName` + `linux.syncDesktopName: true` in the
+- [x] Linux: set `desktopName` + `linux.syncDesktopName: true` in the
       electron-builder config so desktops link the running window to the
       AppImage's `.desktop` entry (hint printed by electron-builder 26.17)
 - [ ] Ideas from the old README roadmap: "copy all 3 blocks",
