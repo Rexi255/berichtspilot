@@ -75,21 +75,25 @@ before tagging matters.
 **v2.0.4 is out** (2026-11-07, release published 20:03 UTC): the dependency
 update 8.7 (Electron 45.2). `main` = v2.0.4 (merge of PR #27, 3ba9eec).
 
-**Release v2.1.0 (step 11.10) is running** (user's go + permission for the
-merge and the tag, 2026-11-08): version bump + CHANGELOG `## [2.1.0]` →
-dry run → PR `development` → `main` → tag `v2.1.0`. If this paragraph is
-still here, check `gh run list`, `gh pr list` and the tags and continue the
-procedure where it stopped. Background: the UI
-overhaul (phase 11, `docs/DESIGN.md`, E-032/E-033) is complete on
-`development` (11.1–11.9, 2026-11-07/08). On 2026-11-08 the user ran
-`/code-review` and `/security-review` over `main...development`: the security
-review found nothing; the 10 code-review findings are fixed in 11.9b (two-step
-delete, AI per day keeps the week panel, visible per-day prompt, "Urkunde" no
-longer flagged, badge follows the running week …). Before tagging: ask the user whether
-they want to try the dev build first (`npm start` from a scratch folder, or
-`npm run build:win` + the unpacked app with `--user-data-dir`), then follow the
-release procedure above with version 2.1.0 (schema v12: older versions can't
-open the file afterwards — the CHANGELOG section must say so, like 2.0 did).
+**v2.1.0 is out** (2026-11-08, release published 14:19 UTC, immutable):
+the UI overhaul "Kladde" (phase 11, `docs/DESIGN.md`, E-032/E-033, schema
+v12). Version bump c731f7d → first dry run failed only in Playwright's
+teardown of the packaged check on Linux (every assertion had passed; the
+CDP connection was still open when the app exited) → fixed in 8b906a0 (the
+test closes the connection itself) → dry run 42488676167 green → PR #28
+merged as merge commit a4c47c5 (same tree as 8b906a0) → annotated tag
+`v2.1.0` → release run 42488987891 green. Feed checked: both
+`latest*.yml` = 2.1.0, `sha512` + size match the installer and AppImage.
+`development` fast-forwarded to `main`.
+
+**Next:** ask the user whether their installed app updated to 2.1.0 and
+works (sidebar card or Settings → Updates; the data migrates to v12, an
+`update` snapshot lands in `sicherungen/` first). Then pick from
+"Later / to-do" with the user — candidates: the Dependabot alert #10
+(`minimatch` < 11.0.1, dev dependency only, moderate: check which package
+pulls it in and whether an update or an `overrides` entry fixes it), the
+`vite.config.mjs` rename, the Linux `desktopName`. Voice dictation stays
+parked.
 For any further UI work: check every visible change yourself with the
 `ui-shots` skill (Playwright, demo record) and read the screenshots — the user
 asked for that explicitly.
@@ -485,8 +489,8 @@ checkpoint is a styleguide in code, no HTML prototype.
       badge + overview, help "Alt+1 … 6", style examples computed once,
       comment + test on validateData after migrateData, accent options from
       `ACCENTS`/`ACCENT_NAMES`; 3 new e2e tests)
-- [ ] 11.10 Release v2.1.0 — **only on the user's go** (procedure under
-      "Next step")
+- [x] 11.10 Release v2.1.0 (2026-11-08, PR #28 → a4c47c5, tag `v2.1.0`;
+      packaged check fix 8b906a0)
 
 ### Later / to-do
 - [ ] Warning list for customer data: a local list of customer names / host
