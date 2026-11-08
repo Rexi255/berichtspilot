@@ -447,7 +447,11 @@ checkpoint is a styleguide in code, no HTML prototype.
       also takes an answer without the date line; the per-day prompt is
       checked like the week's (`promptSensitive()`), "Trotzdem kopieren"
       on a hit; e2e covers prompt → answer → apply → undo)
-- [ ] 11.8 Profiles, rest of Settings, setup wizard
+- [x] 11.8 Profiles, rest of Settings, setup wizard (2026-11-08; profiles:
+      one card level, weekdays as rows, stacked order list → form → dates and
+      periods in a narrow window; settings: one section component, switches
+      for the notes area and the preview under "Verhalten"; wizard: progress
+      as five segments, rows instead of boxes, no aurora)
 - [ ] 11.9 Clean-up: drop `gsap`, `lenis`, `@fontsource-variable/inter`;
       `backgroundColor` in main; accessibility/critique/ux-copy reviews;
       README screenshots from the demo record; CHANGELOG; then release

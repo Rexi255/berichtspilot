@@ -457,6 +457,7 @@ const PILL_COLORS = {
   holiday: 'text-holiday',
   neutral: 'text-ink-2',
   accent: 'text-accent',
+  missing: 'text-missing',
 }
 
 /** Old status pill → a quiet chip (no dot) */

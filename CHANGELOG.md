@@ -55,6 +55,10 @@ versioning follows [Semantic Versioning](https://semver.org/).
   may leave out the date line. Like the whole-week flow ("Mit KI
   formulieren", still there), the button reads "Trotzdem kopieren" when the
   notes look like customer data.
+- **Profiles, settings and the setup wizard** in the new look: profiles as
+  one list of half-years with their weekdays as rows; settings with
+  switches for the notes area and the preview; the wizard with a quiet
+  progress bar.
 - **Export and import** moved from the sidebar to Settings → Daten.
 - **Keyboard shortcuts:** Strg+1/2/3 now copies output block 1/2/3 (was
   Strg+Umschalt+1/2/3); the views moved to Strg+Umschalt+1–4 (was Strg+1–4).
