@@ -33,115 +33,41 @@ WebUntis "Lehrstoff" ─────────────┘    (daten.json) 
 
 ## Next step
 
-**Branch workflow since 2026-10-17 (E-025):** every session works on
-`development` (`git fetch origin development && git checkout development`, even
-if the session names a `claude/…` branch) and pushes there. No PR between
-releases; a release step opens the PR `development` → `main`. One exception
-so far: on 2026-10-20 the user asked to bring both branches level after
-v2.0.3 — the post-release docs and the dev-only `@eslint/js` bump (#17) went
-to `main` by PR; the app code on `main` is still exactly v2.0.3.
+> At most ~50 lines: where things stand and the concrete next move. Standing
+> procedures live in `CONTRIBUTING.md` ("Releasing", "Dependency updates"),
+> finished work goes to the "Done log" at the end.
 
-**The user continues locally in VS Code (Claude Code extension) from
-2026-10-17.** Locally git uses the user's own credentials — tag pushes and
-branch deletions work there (the 403s were the cloud proxy only). Before
-pushing a tag or merging into `main`, still ask the user.
-
-**v2.0.3 is out** (2026-10-19, `latest.yml` = 2.0.3, an immutable release).
-It ships Electron 44.7, the Dependabot PRs #7/#9 (8.5, 8.6) and phases 9–10
-(fuses + asar integrity E-029, release workflow E-030, end-to-end tests
-E-031). PR #16 merged as a merge commit (183a6e1, same tree as the dry-run
-commit 21d4956), annotated tag `v2.0.3` on it, release run 39325719252 green
-— the first real run of the new `release` job (draft → five files →
-published, `isImmutable: true`). Feed checked via `/releases/latest/download/`:
-both `latest*.yml` = 2.0.3, `sha512` + size match the published installer and
-AppImage. `main` fast-forwarded back into `development`.
-The user's installed app updated to 2.0.3 and works ("alles funktioniert",
-2026-10-20).
-
-**Release procedure** (as done for 2.0.3; the repository rules since
-2026-10-19, 9.3b, enforce parts of it): `npm version X.Y.Z
---no-git-tag-version` (package.json + lock) → CHANGELOG `## [X.Y.Z] - <date>`
-with an intro line → commit + push to `development` → dry run of exactly
-that commit (`gh workflow run release.yml --ref development`) → PR
-`development` → `main`; `main` only takes it once `pruefen` + `e2e` are green
-and only as a merge commit (`gh pr merge <n> --merge`) → **ask the user** →
-annotated tag `git tag -a vX.Y.Z <merge commit> -m "Berichtspilot X.Y.Z"` +
-push (works because the user is admin: bypass of the `Release tags` ruleset)
-→ watch the run, check the feed → fast-forward `development` to `main`.
-Releases are immutable: a published release can't get new or replaced files,
-a broken one is fixed with the next patch version — so the dry run right
-before tagging matters.
-
-**v2.0.4 is out** (2026-11-07, release published 20:03 UTC): the dependency
-update 8.7 (Electron 45.2). `main` = v2.0.4 (merge of PR #27, 3ba9eec).
-
-**v2.1.0 is out** (2026-11-08, release published 14:19 UTC, immutable):
-the UI overhaul "Kladde" (phase 11, `docs/DESIGN.md`, E-032/E-033, schema
-v12). Version bump c731f7d → first dry run failed only in Playwright's
-teardown of the packaged check on Linux (every assertion had passed; the
-CDP connection was still open when the app exited) → fixed in 8b906a0 (the
-test closes the connection itself) → dry run 42488676167 green → PR #28
-merged as merge commit a4c47c5 (same tree as 8b906a0) → annotated tag
-`v2.1.0` → release run 42488987891 green. Feed checked: both
-`latest*.yml` = 2.1.0, `sha512` + size match the installer and AppImage.
-`development` fast-forwarded to `main`.
-
-**The user's app updated to 2.1.0 and works** (user, 2026-11-08). The same
-day: the `minimatch` fix (E-034) reached `main` by PR #29 (merge commit
-49a8d55, `development` fast-forwarded), so Dependabot alert #10 closes there;
-then two small to-dos: `vite.config.js` → `vite.config.mjs` (Vite's CJS
-warning is gone) and Linux `desktopName` + `linux.syncDesktopName` (E-035).
-
-**UI changes after 2.1.0 (2026-11-08, step 12.1 below, done):** the
-"Lokal · kein Konto" chip is gone (a red chip only while saving fails); the
-week editor shows all days on one page under sticky day tiles; "Frühere
-Wochen ignorieren" (`settings.ignoredUntil`, **schema v13**, E-036) in
-Settings and the setup wizard.
-
-**v2.2.0 is out** (2026-11-08, release published 20:32 UTC, immutable;
-user: "Kann dann alles auf main als 2.2"). Version bump 6a24b0e → dry run
-42519911614 green (Linux: no `desktopName` warning any more, the AppImage's
-`.desktop` has `StartupWMClass=berichtspilot` — E-035 confirmed) → PR #30
-merged as merge commit 65af7b6 (same tree as 6a24b0e) → annotated tag
-`v2.2.0` → release run 42520343402 green. Feed checked: both `latest*.yml` =
-2.2.0, sizes match, installer `sha512` matches. `development`
-fast-forwarded to `main`.
+**State (2026-11-15):** v2.2.0 is out (2026-11-08, immutable release, feed
+checked); `main` = 65af7b6, `development` = `main` + docs. Schema v13 (E-036).
 The user's only real record is on their work notebook with **v2.0.3**
-(schema v11): the in-app update goes straight to 2.2.0 (same update hosts
-in 2.0.3), and the migration v11 → v13 was checked against the demo record
+(schema v11): the in-app update goes straight to 2.2.0 (same update hosts in
+2.0.3); the migration v11 → v13 was checked against the demo record
 (identical output for every week).
 
 **Next:** wait for the user's feedback on 2.2.0 (the update on the work
-notebook, "Frühere Wochen"). No open roadmap step; the "Later / to-do" list
-below has the candidates.
-For any further UI work: check every visible change yourself with the
-`ui-shots` skill (Playwright, demo record) and read the screenshots — the user
-asked for that explicitly.
+notebook, "Frühere Wochen"). No open roadmap step; the candidates are under
+"Later / to-do" (e.g. splitting `src/views/Settings.jsx`).
 
-**Dependabot** (E-027) opens its PRs against `development` on Mondays. Merge
-green ones with `gh pr merge <n> --squash` (the repo deletes merged branches
-itself since 2026-10-17); Electron PRs only
-after the checks in E-027, electron-builder/-updater after the checks named in
-`.github/dependabot.yml`. Its config is read from `main` (current since the
-v2.0.3 merge); dev-tool majors that still show up are closed with a short
-comment (like #10–#12).
-Dependabot **security** updates (on since 2026-10-19) target `main` instead:
-merge those with `--merge` (the `main` ruleset allows nothing else), then
-merge `main` back into `development`. SHA pinning is required since
-2026-10-19; Dependabot's own update runs work with it (checked 2026-10-19
-right after the v2.0.3 merge — they opened #17). Dependabot alert #1
-(`sprintf-js` ≤ 1.1.3, moderate, no fix yet) sits in the dev-only chain
-electron-builder → @electron/get → global-agent → roarr and doesn't ship
-(`npm audit --omit=dev` = 0); it goes away with an electron-builder update.
+**Ground rules for every session:**
+- Work on `development` only (E-025): `git fetch origin development && git
+  checkout development`, even if the session names a `claude/…` branch. No
+  PR between releases.
+- The user works locally in VS Code (Claude Code extension) since 2026-10-17;
+  tag pushes and merges into `main` work there — **ask the user before
+  either**.
+- Releases: follow `CONTRIBUTING.md` → "Releasing" step by step (dry run right
+  before the tag — published releases can't be changed).
+- Dependabot and Electron updates: `CONTRIBUTING.md` → "Dependency updates".
+- UI work: check every visible change yourself with the `ui-shots` skill and
+  read the screenshots (the user asked for that explicitly).
 
-Electron support window: we're on 45.2 since 8.7 (2026-11-07). Electron 46
-(alpha on 2026-11-05, ships Node 26) will come as a Dependabot PR once it's
-stable — check it per E-027 and move Node to 26 with it (E-026). Sync
-`safeStorage` calls are removed in 46 (we have none today — keep it that way).
-
-Locally npm 11.16+ warns about `electron-winstaller`'s install script
-(`allowScripts`): harmless, we build NSIS, not Squirrel. Electron has no
-install script; it downloads its binary on the first start.
+**Watch list:**
+- Electron 46 (alpha 2026-11-05, ships Node 26) comes as a Dependabot PR once
+  stable: check it per E-027 and move Node to 26 with it (E-026). Sync
+  `safeStorage` calls are removed in 46 — we have none, keep it that way.
+- Dependabot alert #1 (`sprintf-js`, dev-only chain under electron-builder,
+  doesn't ship) and the `minimatch` override (E-034) both go away with an
+  electron-builder update.
 
 ## Open questions (for the user)
 
@@ -540,6 +466,9 @@ checkpoint is a styleguide in code, no HTML prototype.
 - [x] Linux: set `desktopName` + `linux.syncDesktopName: true` in the
       electron-builder config so desktops link the running window to the
       AppImage's `.desktop` entry (hint printed by electron-builder 26.17)
+- [ ] Split `src/views/Settings.jsx` (~690 lines, 11 `useState`) into one
+      component per section under `src/views/settings/`, like the week editor
+      in `src/views/editor/` (user, 2026-11-15: planned, not now)
 - [ ] Ideas from the old README roadmap: "copy all 3 blocks",
       full export/PDF, copy a single day from the previous week, character
       counter (the light theme comes with phase 11)
@@ -641,3 +570,9 @@ checkpoint is a styleguide in code, no HTML prototype.
 | 2026-11-08 | Dependabot alert #10: `minimatch` override (E-034) | see git log |
 | 2026-11-08 | 12.1: sidebar chip gone, all days on one page, ignore earlier weeks (schema v13, E-036) | d8fa67d |
 | 2026-11-08 | 12.2: release v2.2.0 | PR #30, 65af7b6, tag `v2.2.0` |
+| 2026-11-08 | 11.10: v2.1.0 released — first dry run failed only in the packaged check's teardown (fixed in 8b906a0), dry run 42488676167 green, PR #28, release run 42488987891 green, feed checked | c731f7d, a4c47c5, tag `v2.1.0` |
+| 2026-11-08 | `minimatch` override (E-034) → `main` by PR #29, Dependabot alert #10 closed | addc52a, 49a8d55 |
+| 2026-11-08 | `vite.config.js` → `.mjs`; Linux `desktopName` (E-035) | 38c6964, bfc9c08 |
+| 2026-11-08 | 12.1: all days on one page, "Frühere Wochen ignorieren" (schema v13, E-036), storage chip gone | d8fa67d |
+| 2026-11-08 | 12.2: v2.2.0 released — dry run 42519911614 green (E-035 confirmed: no `desktopName` warning, `StartupWMClass=berichtspilot`), PR #30, release run 42520343402 green, feed checked; user's update path 2.0.3 → 2.2.0 checked | 6a24b0e, 65af7b6, tag `v2.2.0` |
+| 2026-11-15 | Docs clean-up: "Next step" ≤ 50 lines, release + dependency procedures → `CONTRIBUTING.md` | (this commit) |

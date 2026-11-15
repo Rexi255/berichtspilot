@@ -15,12 +15,16 @@ Goal: a fresh chat with zero context can continue seamlessly using only the repo
 2. **`docs/PLAN.md`:**
    - tick off finished items `[x]`, add a row to the "Done log" (date, step, commit/PR)
    - rewrite **"Next step"**: concrete files, acceptance criteria, tests — as
-     precise as the current entry
+     precise as the current entry, but **at most ~50 lines**. Finished work and
+     release stories go to the "Done log", standing procedures to
+     `CONTRIBUTING.md`
    - add new questions for the user under "Open questions", remove answered ones
      (record the answer in `DECISIONS.md` or in the plan)
 3. **`docs/DECISIONS.md`:** add new/changed decisions.
 4. **Other docs:** schema → `DATA_MODEL.md` (+ `GLOSSARY.md` for new terms);
    IPC/network → `ARCHITECTURE.md`; new commands/rules → `CLAUDE.md`.
+   Version mentioned in `CLAUDE.md` ("Current release") = the last released
+   `vX.Y.Z` tag?
 5. **`CHANGELOG.md`:** user-facing changes under `## [Unreleased]`
    (Added / Changed / Fixed).
 6. **Commit** (English, Conventional Commits) and **push to `development`**

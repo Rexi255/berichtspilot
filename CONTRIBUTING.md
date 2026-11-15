@@ -111,6 +111,47 @@ sharing it.
   `npm run test:e2e`) before opening a PR.
 - For UI changes, a screenshot is appreciated.
 
+## Releasing (maintainer)
+
+The repository rules (step 9.3b, see the checklist below) enforce parts of
+this; the rest is discipline. Published releases are immutable — a broken one
+is fixed with the next patch version — so the dry run right before tagging
+matters.
+
+1. `npm version X.Y.Z --no-git-tag-version` (package.json + lock).
+2. `CHANGELOG.md`: rename `## [Unreleased]` content to `## [X.Y.Z] - <date>`
+   with an intro line (the release workflow fails without that section);
+   update "Current release" in `CLAUDE.md`.
+3. Commit + push to `development`.
+4. Dry run of exactly that commit: `gh workflow run release.yml --ref
+   development` — must be green (it builds and checks, publishes nothing).
+5. PR `development` → `main`; it can only merge once `pruefen` + `e2e` are
+   green, and only as a merge commit: `gh pr merge <n> --merge`.
+6. **Ask the maintainer** (Claude sessions: the user) before tagging.
+7. Annotated tag on the merge commit: `git tag -a vX.Y.Z <merge commit> -m
+   "Berichtspilot X.Y.Z"` + push (only a repository admin may, via the
+   `Release tags` ruleset bypass). The tag must match `package.json` (E-017).
+8. Watch the release run; check the feed under `/releases/latest/download/`:
+   both `latest*.yml` show the new version, `sha512` + size match the
+   installer and AppImage.
+9. Fast-forward `development` to `main`.
+
+## Dependency updates (maintainer)
+
+- **Dependabot version updates** (E-027) open PRs against `development` on
+  Mondays. Merge green ones with `gh pr merge <n> --squash` (merged branches
+  are deleted automatically). Electron PRs only after the checks in E-027,
+  electron-builder/-updater only after the checks named in
+  `.github/dependabot.yml` (its config is read from `main`). Dev-tool majors
+  that still show up are closed with a short comment.
+- **Dependabot security updates** target `main`: merge them with `--merge`
+  (the `main` ruleset allows nothing else), then merge `main` back into
+  `development`.
+- A new Electron major that ships a newer Node moves CI, release and
+  `.nvmrc` to that Node together (E-026).
+- npm 11.16+ warns about `electron-winstaller`'s install script
+  (`allowScripts`): harmless, we build NSIS, not Squirrel.
+
 ## Maintainer checklist: GitHub security settings
 
 The Windows installer is unsigned (DECISIONS E-028), so an update is trusted
