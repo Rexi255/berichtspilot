@@ -575,4 +575,5 @@ checkpoint is a styleguide in code, no HTML prototype.
 | 2026-11-08 | `vite.config.js` → `.mjs`; Linux `desktopName` (E-035) | 38c6964, bfc9c08 |
 | 2026-11-08 | 12.1: all days on one page, "Frühere Wochen ignorieren" (schema v13, E-036), storage chip gone | d8fa67d |
 | 2026-11-08 | 12.2: v2.2.0 released — dry run 42519911614 green (E-035 confirmed: no `desktopName` warning, `StartupWMClass=berichtspilot`), PR #30, release run 42520343402 green, feed checked; user's update path 2.0.3 → 2.2.0 checked | 6a24b0e, 65af7b6, tag `v2.2.0` |
-| 2026-11-15 | Docs clean-up: "Next step" ≤ 50 lines, release + dependency procedures → `CONTRIBUTING.md` | (this commit) |
+| 2026-11-15 | Docs clean-up: "Next step" ≤ 50 lines, release + dependency procedures → `CONTRIBUTING.md` | e815f45 |
+| 2026-11-15 | `.mailmap`: the maintainer's old identities (`jannm.06`, `Jan`) shown as `Rexi255 <…@users.noreply.github.com>` | (this commit) |

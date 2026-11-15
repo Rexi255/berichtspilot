@@ -1,0 +1,5 @@
+# Shows older commit identities of the maintainer under one name in
+# git log / shortlog / blame (history itself is unchanged; GitHub's web UI
+# ignores this file). Commits made by Claude cloud sessions stay as they are.
+Rexi255 <220540716+Rexi255@users.noreply.github.com> jannm.06 <jann.mummert@proton.me>
+Rexi255 <220540716+Rexi255@users.noreply.github.com> Jan <jann.mummert@proton.me>
